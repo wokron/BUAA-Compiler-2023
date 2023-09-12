@@ -1,0 +1,10 @@
+21371326
+a[find]=10 >= 5
+other
+1 is odd, fibo[1]=1
+other
+3 is odd, fibo[3]=3
+other
+5 is odd, fibo[5]=8
+fibo[0]=1, fibo[9]=55
+!d && f != 0
