@@ -1,0 +1,74 @@
+// testfile2： 函数数组传参
+
+void copy(int dst[], int src[], int n) {
+    for (int i = 0; i < n; i = i+1) {
+        dst[i] = src[i];
+    }
+    return;
+}
+
+void sort(int arr[], int n) {
+    for (int i = 0; i < n - 1; i = i+1) {
+        int max = i;
+        for (int j = i + 1; j < n; j = j+1) {
+            if (arr[j] > arr[max]) {
+                max = j;
+            }
+        }
+        int tmp = arr[i];
+        arr[i] = arr[max];
+        arr[max] = tmp;
+    }
+}
+
+int find(int arr[], int n, int elm) {
+    for (int i = 0; i < n; i = i+1) {
+        if (arr[i] == elm) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void func1(int arr[][3]) {
+    printf("func1\n");
+    func2(arr[0]);
+    func3(arr[1]);
+}
+
+void func2(int arr[]) {
+    printf("func2: arr[1]=%d\n", arr[1]);
+    func3(arr);
+}
+
+void func3(int arr[]) {
+    printf("func3: arr[0]=%d\n", arr[0]);
+}
+
+int main() {
+    printf("21371326\n"); // 1
+    const int n = 10;
+    int a[10] = {4, 2, 6, 9, 4, 10, 2, 4, 8, 7};
+    int b[20];
+    copy(b, a, n);
+    sort(b, n);
+    printf("a[0]=%d, a[9]=%d\n", a[0], a[9]); // 2
+    printf("b[0]=%d, b[9]=%d\n", b[0], b[9]); // 3
+
+    int a_find_8 = find(a, n, 8);
+    printf("a[i]=8, i=%d\n", a_find_8); // 4
+
+    int b_find_8 = find(b, n, 8);
+    printf("b[i]=8, i=%d\n", b_find_8); // 5
+
+    int arr[2][3] = {
+        {1, 2, 3},
+        {6, 5, 4}
+    };
+    func1(arr); // 6-9
+
+    const int arr_c[3] = {1, 2, 3};
+    printf("arr_c[1]=%d\n", arr_c[1]); // 10
+
+    return 0;
+}
