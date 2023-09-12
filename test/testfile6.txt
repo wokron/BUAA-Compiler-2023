@@ -1,0 +1,44 @@
+// testfile6: 表达式和输入输出
+
+int main() {
+    printf("21371326\n"); // OutStmt, 1
+    int a; // VarDecl
+    a = getint(); // InStmt
+    const int ca = 3; // ConstDecl
+    int b = 10, c; // VarDecl
+    const int cb = 5, cc = 10; // ConstDecl
+
+    /* 接下来是表达式 */
+    b = a + ca; // AddExp
+    printf("b=a+ca=%d\n", b); // 2
+
+    c = b * (a + cb * cc); // MulExp
+    printf("c=b*(a+cb*cc)=%d\n", c); // 3
+
+    b = -b - ca; // UnaryOp
+    printf("b=-b-ca=%d\n", b); // 4
+
+    c = b / ca + 4; // IntConst
+    printf("c=b/ca+4=%d\n", c); // 5
+
+    b = c % 4 + 2;
+    printf("b=cmod4+2=%d\n", b); // 6
+
+    a = getint();
+    int d;
+    d = a <= 5;
+    printf("d=(a <= 5)=%d\n", d); // 7
+
+    d = a != a;
+    printf("d=(a != a)=%d\n", d); // 8
+
+    b = -+-+-b;
+    printf("b=-+-+-b=%d\n", b); // 9
+
+    {
+        int d = 10;
+        printf("(in block)d=%d\n", d); // 10
+    }
+
+    return 0;
+}
