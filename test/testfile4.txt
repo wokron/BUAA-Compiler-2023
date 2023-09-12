@@ -21,8 +21,9 @@ int provider() {
 }
 
 int calc_sum(int nums[], int count) {
+    int i;
     int sum = 0;
-    for (int i = 0; i < count; i = i+1) {
+    for (i = 0; i < count; i = i+1) {
         sum = add(sum, nums[i]);
     }
     return sum;
@@ -40,10 +41,23 @@ int main() {
     
     printf("(3+4)+(3+(3+4))=%d\n", add(add(3, 4), add(3, add(3, 4)))); // 6
 
+    for (;;) {
+        break;
+    }
+
+    int i;
+    for (i = 0; i < 2; i = i + 1) {
+        if (i < 2) {
+            continue;
+        } else {
+            break;
+        }
+    }
+
     const int n = 5;
     int a [5] = {1, 2, 3, 4, 5};
 
-    for (int i = n; i >= 2; i = i-1) {
+    for (i = n; i >= 2; i = i-1) {
         int sum = calc_sum(a, i);
         printf("sum=%d\n", sum); // 7-10
     }
