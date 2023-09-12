@@ -28,6 +28,9 @@ int main() {
     int arr3[2];
     int arr4[2][2];
 
+    arr3[0] = 1;
+    arr4[0][1] = 1;
+
     func3(arr3, arr2);
     func3(arr4[0], arr4[1]);
     func3(arr3, arr4[0]);
