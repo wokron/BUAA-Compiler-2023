@@ -30,10 +30,8 @@ int find(int arr[], int n, int elm) {
     return -1;
 }
 
-void func1(int arr[][3]) {
-    printf("func1\n");
-    func2(arr[0]);
-    func3(arr[1]);
+void func3(int arr[]) {
+    printf("func3: arr[0]=%d\n", arr[0]);
 }
 
 void func2(int arr[]) {
@@ -41,8 +39,10 @@ void func2(int arr[]) {
     func3(arr);
 }
 
-void func3(int arr[]) {
-    printf("func3: arr[0]=%d\n", arr[0]);
+void func1(int arr[][3]) {
+    printf("func1\n");
+    func2(arr[0]);
+    func3(arr[1]);
 }
 
 int main() {
