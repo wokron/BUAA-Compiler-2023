@@ -1,5 +1,11 @@
 // testfile1: 逻辑与或
 
+int global = 0;
+int func_cond() {
+    global = global + 1;
+    return 1;
+}
+
 void check(int a, int b, int c, int d) {
     if (a && b < 10 || c > 2 && d) {
         printf("check pass\n");
@@ -10,34 +16,26 @@ int main() {
     printf("21371326\n");
     int a = 3, b = 5, c = 10, d = 1;
 
-    if (b >= 5) {
-        printf("true\n");
-    } else {
-        printf("false\n");
-    }
-    
-    if (c <= 4) {
-        printf("true\n");
-    } else {
-        printf("false\n");
-    }
-    if (!d) {
-        printf("true\n");
-    } else {
-        printf("false\n");
+    printf("%d\n", global);
+    if (0 && func_cond()) {
+        ;
     }
 
-    if (a != 2 && b <= 4) {
-        printf("true\n");
-    } else {
-        printf("false\n");
+    printf("%d\n", global);
+    if (1 || func_cond()) {
+        ;
     }
 
-    if (c > 5 || !d) {
-        printf("true\n");
-    } else {
-        printf("false\n");
+    printf("%d\n", global);
+    if (1 && func_cond() && 0 && func_cond()) {
+        ;
     }
+
+    printf("%d\n", global);
+    if (0 || !func_cond() || 1 || !func_cond()) {
+        ;
+    }
+    printf("%d\n", global);
 
     if (a == 3 && b >= 5 && c <= 11 && !d) {
         printf("true\n");

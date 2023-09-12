@@ -1,9 +1,9 @@
 21371326
-true
-false
-false
-false
-true
+0
+0
+0
+1
+2
 false
 true
 true
