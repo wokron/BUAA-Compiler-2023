@@ -1,0 +1,65 @@
+// testfile4: 函数
+
+int fibo1(int n) {
+    if (n <= 0) {
+        return -1;
+    }
+    if (n == 1 || n == 2) {
+        return 1;
+    }
+    return fibo1(n-1) + fibo1(n-2);
+}
+
+int fibo2(int n) {
+    if (n <= 0 || n > 10) {
+        return -1;
+    }
+    int fibo[10];
+    fibo[0] = 1;
+    fibo[1] = 1;
+    for (int i = 0; i < n; i++) {
+        fibo[i] = fibo[i-1] + fibo[i-2];
+    }
+    return fibo[n-1];
+}
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int global = 1000;
+int provider() {
+    global = global + 1000;
+    return global;
+}
+
+int calc_sum(int nums[], int count) {
+    int sum = 0;
+    for (int i = 0; i < count; i = i+1) {
+        sum = add(sum, nums[i]);
+    }
+    return sum;
+}
+
+int main() {
+    printf("21371326\n"); // 1
+
+    printf("%d\n", provider()); // 2
+    printf("%d\n", provider()); // 3
+    
+    printf("fibo1[5]=%d\n", fibo1(5)); // 4
+    
+    printf("fibo2[5]=%d\n", fibo2(5)); // 5
+    
+    printf("(3+4)+(3+(3+4))=%d\n", add(add(3, 4), add(3, add(3, 4)))); // 6
+
+    const int n = 5;
+    int a [5] = {1, 2, 3, 4, 5};
+
+    for (int i = n; i >= 2; i = i-1) {
+        int sum = calc_sum(a, i);
+        printf("sum=%d\n", sum); // 7-10
+    }
+
+    return 0;
+}
