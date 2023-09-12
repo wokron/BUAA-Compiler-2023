@@ -37,17 +37,15 @@ int main() {
     }
     printf("%d\n", global);
 
-    if (a == 3 && b >= 5 && c <= 11 && !d) {
-        printf("true\n");
-    } else {
-        printf("false\n");
+    if (0 && func_cond() || func_cond() && 1) {
+        ;
     }
+    printf("%d\n", global);
 
-    if (a != 3 || b < 4 || c > 11 || d) {
-        printf("true\n");
-    } else {
-        printf("false\n");
+    if (0 || !func_cond() && func_cond() && 1) {
+        ;
     }
+    printf("%d\n", global);
 
     if (a == 3 && b >= 5 || c <= 11 && !d) {
         printf("true\n");
