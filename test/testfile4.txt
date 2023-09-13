@@ -42,22 +42,10 @@ int main() {
     
     printf("(3+4)+(3+(3+4))=%d\n", add(add(3, 4), add(3, add(3, 4)))); // 6
 
-    for (;;) {
-        break;
-    }
-
-    int i;
-    for (i = 0; i < 2; i = i + 1) {
-        if (i < 2) {
-            continue;
-        } else {
-            break;
-        }
-    }
-
     const int n = 5;
     int a [5] = {1, 2, 3, 4, 5};
 
+    int i;
     for (i = n; i >= 2; i = i-1) {
         int sum = calc_sum(a, i);
         printf("sum=%d\n", sum); // 7-10
