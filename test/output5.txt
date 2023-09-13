@@ -5,6 +5,6 @@
 70
 num > 5
 num >= 5
-num < 20
-num < 20
+num != 20
+num != 20
 num >= 8

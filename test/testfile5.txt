@@ -71,16 +71,16 @@ int main() {
         printf("num > 5\n"); // 6
     }
 
-    if (num < 5) {
+    if (num <= 5) {
         ;
     } else {
         printf("num >= 5\n"); // 7
     }
 
-    if (num < 5) {
+    if (num <= 5) {
         ;
-    } else if (num < 20) {
-        printf("num < 20\n"); // 8
+    } else if (num != 20) {
+        printf("num != 20\n"); // 8
     } else {
         ;
     }
@@ -89,8 +89,8 @@ int main() {
         ;
     } else if (num < 5) {
 
-    } else if (num < 20) {
-        printf("num < 20\n"); // 9
+    } else if (num != 20) {
+        printf("num != 20\n"); // 9
     }
 
     if (num < 3) {
