@@ -5,11 +5,8 @@ int main() {
     printf("21371326\n"); // 1
     const int n = 10;
     int a[10];
-    int idx = 0;
-    while (idx < n)
-    {
-        a[idx] = idx + 2;
-        idx = idx + 1;
+    for (i = 0; i < n; i = i + 1) {
+        a[i] = i + 2;
     }
 
     int find;
@@ -37,16 +34,14 @@ int main() {
         fibo[i] = fibo[i-1] + fibo[i-2];
     }
 
-    idx = 0;
-    while (1) {
-        if (idx < 6 && idx % 2 == 1) {
-            printf("%d is odd, fibo[%d]=%d\n", idx, idx, fibo[idx]); // 3-8
-        } else if (idx >= 6) {
+    for (i = 0; i == i; i = i + 1) {
+        if (i < 6 && i % 2 == 1) {
+            printf("%d is odd, fibo[%d]=%d\n", i, i, fibo[i]); // 3-8
+        } else if (i >= 6) {
             break;
         } else {
             printf("other\n"); // 3-8
         }
-        idx = idx + 1;
     }
     printf("fibo[0]=%d, fibo[9]=%d\n", fibo[0], fibo[9]); // 9
 
