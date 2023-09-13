@@ -7,6 +7,16 @@ int main() {
 
     }
 
+    int ta = 1 + 1 + 2 + 3 + 5;
+    int tb = 1 * 5 + 4 * 2;
+    int tc = 1 + 5 * 4 + 2;
+    int td = 3 * (1 + 4 + 3);
+    ta = ta + tb + tc;
+    tb = ta - tb + tc;
+    tc = ta + tb * tc;
+    ta = ta * tb + tc;
+    ta = +-+-+ta;
+
     int a; // VarDecl
     a = getint(); // InStmt
     const int ca = 3; // ConstDecl
