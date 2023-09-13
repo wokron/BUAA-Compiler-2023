@@ -1,58 +1,53 @@
 // testfile6: 表达式和输入输出
 
 int main() {
-    printf("21371326\n"); // OutStmt, 1
+    printf("21371326\n"); // 1
 
     {
 
     }
 
+    int a; 
+    a = getint(); 
+    printf("%d\n", a); // 2
+
     int ta = 1 + 1 + 2 + 3 + 5;
     int tb = 1 * 5 + 4 * 2;
     int tc = 1 + 5 * 4 + 2;
     int td = 3 * (1 + 4 + 3);
+    printf("%d, %d, %d, %d\n", ta, tb, tc, td); // 3
+
     ta = ta + tb + tc;
     tb = ta - tb + tc;
     tc = ta + tb * tc;
     ta = ta * tb + tc;
+    printf("%d, %d, %d, %d\n", ta, tb, tc, td); // 4
     ta = +-+-+ta;
+    printf("%d, %d, %d, %d\n", ta, tb, tc, td); // 5
 
-    int a; // VarDecl
-    a = getint(); // InStmt
-    const int ca = 3; // ConstDecl
-    int b = 10, c; // VarDecl
-    const int cb = 5, cc = 10; // ConstDecl
+    const int ca = 3; 
+    const int cb = 5, cc = 10; 
+    int b = 10, c; 
 
     /* 接下来是表达式 */
-    b = a + ca; // AddExp
-    printf("b=a+ca=%d\n", b); // 2
-
-    c = b * (a + cb * cc); // MulExp
-    printf("c=b*(a+cb*cc)=%d\n", c); // 3
-
-    b = -b - ca; // UnaryOp
-    printf("b=-b-ca=%d\n", b); // 4
-
-    c = b / ca + 4; // IntConst
-    printf("c=b/ca+4=%d\n", c); // 5
-
+    b = a + ca; 
+    c = b * (a + cb * cc);
+    b = -b - ca;
+    c = b / ca + 4;
+    printf("%d, %d\n", b, c); // 6
     b = c % 4 + 2;
-    printf("b=cmod4+2=%d\n", b); // 6
+    b = -+-+-b;
+    printf("%d, %d\n", b, c); // 7
 
-    a = getint();
     int d;
     d = a <= 5;
-    printf("d=(a <= 5)=%d\n", d); // 7
-
+    printf("%d\n", d); // 8
     d = a != a;
-    printf("d=(a != a)=%d\n", d); // 8
-
-    b = -+-+-b;
-    printf("b=-+-+-b=%d\n", b); // 9
+    printf("%d\n", d); // 9
 
     {
         int d = 10;
-        printf("(in block)d=%d\n", d); // 10
+        printf("%d\n", d); // 10
     }
 
     return 0;
