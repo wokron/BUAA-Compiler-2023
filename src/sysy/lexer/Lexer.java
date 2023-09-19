@@ -7,7 +7,7 @@ import java.io.Reader;
 import java.util.Map;
 
 public class Lexer {
-    private Reader in;
+    private final Reader in;
     private int pushbackChar;
     private boolean hasPushbackChar = false;
     private String token = null;
@@ -33,7 +33,7 @@ public class Lexer {
     }
 
     private static boolean isWord(int ch) {
-        return  ('a' <= ch && ch <= 'z') || ch == '_';
+        return ('a' <= ch && ch <= 'z') || ch == '_';
     }
 
     private static boolean isNonZeroDigit(int ch) {
@@ -55,12 +55,12 @@ public class Lexer {
     public boolean next() throws IOException, LexerException {
         StringBuilder sb = new StringBuilder();
         int ch = getChar();
-        sb.append((char)ch);
+        sb.append((char) ch);
 
         if (isWord(ch)) {
             ch = getChar();
             while (isWord(ch) || isDigit(ch)) {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 ch = getChar();
             }
             ungetChar(ch);
@@ -69,7 +69,7 @@ public class Lexer {
         } else if (isNonZeroDigit(ch)) {
             ch = getChar();
             while (isDigit(ch)) {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 ch = getChar();
             }
             ungetChar(ch);
@@ -81,18 +81,18 @@ public class Lexer {
         } else if (ch == '\"') {
             ch = getChar();
             while (ch == '%' || ch == '\\' || isNormalChar(ch)) {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 if (ch == '%') {
                     ch = getChar();
                     if (ch == 'd') {
-                        sb.append((char)ch);
+                        sb.append((char) ch);
                     } else {
                         throw new LexerException();
                     }
                 } else if (ch == '\\') {
                     ch = getChar();
                     if (ch == 'n') {
-                        sb.append((char)ch);
+                        sb.append((char) ch);
                     } else {
                         throw new LexerException();
                     }
@@ -100,7 +100,7 @@ public class Lexer {
                 ch = getChar();
             }
             if (ch == '\"') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 token = sb.toString();
                 type = LexType.STRCON;
             } else {
@@ -109,7 +109,7 @@ public class Lexer {
         } else if (ch == '!') {
             ch = getChar();
             if (ch == '=') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 token = sb.toString();
                 type = LexType.NEQ;
             } else {
@@ -120,7 +120,7 @@ public class Lexer {
         } else if (ch == '&') {
             ch = getChar();
             if (ch == '&') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 token = sb.toString();
                 type = LexType.AND;
             } else {
@@ -129,7 +129,7 @@ public class Lexer {
         } else if (ch == '|') {
             ch = getChar();
             if (ch == '|') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 token = sb.toString();
                 type = LexType.OR;
             } else {
@@ -147,31 +147,31 @@ public class Lexer {
         } else if (ch == '/') {
             ch = getChar();
             if (ch == '/') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 ch = getChar();
                 while (ch != '\n' && ch != -1) {
-                    sb.append((char)ch);
+                    sb.append((char) ch);
                     ch = getChar();
                 }
                 ungetChar(ch);
                 return next();  // note is not a token
             } else if (ch == '*') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 ch = getChar();
                 while (ch != -1) {
                     while (ch != -1 && ch != '*') {
-                        sb.append((char)ch);
+                        sb.append((char) ch);
                         if (ch == '\n') {
                             lineNum++;
                         }
                         ch = getChar();
                     }
                     while (ch != -1 && ch == '*') {
-                        sb.append((char)ch);
+                        sb.append((char) ch);
                         ch = getChar();
                     }
                     if (ch != -1 && ch == '/') {
-                        sb.append((char)ch);
+                        sb.append((char) ch);
                         return next(); // note is not a token
                     }
                 }
@@ -187,7 +187,7 @@ public class Lexer {
         } else if (ch == '<') {
             ch = getChar();
             if (ch == '=') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 token = sb.toString();
                 type = LexType.LEQ;
             } else {
@@ -198,7 +198,7 @@ public class Lexer {
         } else if (ch == '>') {
             ch = getChar();
             if (ch == '=') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 token = sb.toString();
                 type = LexType.GEQ;
             } else {
@@ -209,7 +209,7 @@ public class Lexer {
         } else if (ch == '=') {
             ch = getChar();
             if (ch == '=') {
-                sb.append((char)ch);
+                sb.append((char) ch);
                 token = sb.toString();
                 type = LexType.EQL;
             } else {
@@ -254,7 +254,7 @@ public class Lexer {
         return true;
     }
 
-    private int getChar() throws IOException{
+    private int getChar() throws IOException {
         if (hasPushbackChar) {
             hasPushbackChar = false;
             return pushbackChar;

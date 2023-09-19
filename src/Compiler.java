@@ -1,29 +1,17 @@
 import sysy.exception.LexerException;
 import sysy.lexer.Lexer;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
 public class Compiler {
     public static void main(String[] args) throws IOException, LexerException {
-        String code = """
-                const int array[2] = {1,2};
-                                
-                int main(){
-                    int c;
-                    c = getint();
-                    printf("output is %d",c);
-                    return c;
-                }
-                """;
-        InputStream is = new ByteArrayInputStream(code.getBytes());
-
-        var lexer = new Lexer(new InputStreamReader(is));
-
-        while (lexer.next()) {
-            System.out.printf("%s %s\n", lexer.getLexType().name(), lexer.getToken());
+        try (var in = new FileInputStream("testfile.txt");
+             var out = new FileOutputStream("output.txt")) {
+            var lexer = new Lexer(new InputStreamReader(in));
+            var output = new PrintStream(out);
+            while (lexer.next()) {
+                output.printf("%s %s\n", lexer.getLexType().name(), lexer.getToken());
+            }
         }
     }
 }
