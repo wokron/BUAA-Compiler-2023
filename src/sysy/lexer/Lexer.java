@@ -1,4 +1,6 @@
-package lexer;
+package sysy.lexer;
+
+import sysy.exception.LexerException;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -50,7 +52,7 @@ public class Lexer {
         this.in = in;
     }
 
-    public boolean next() throws IOException {
+    public boolean next() throws IOException, LexerException {
         StringBuilder sb = new StringBuilder();
         int ch = getChar();
         sb.append((char)ch);
@@ -85,14 +87,14 @@ public class Lexer {
                     if (ch == 'd') {
                         sb.append((char)ch);
                     } else {
-                        throw new RuntimeException();
+                        throw new LexerException();
                     }
                 } else if (ch == '\\') {
                     ch = getChar();
                     if (ch == 'n') {
                         sb.append((char)ch);
                     } else {
-                        throw new RuntimeException();
+                        throw new LexerException();
                     }
                 }
                 ch = getChar();
@@ -102,7 +104,7 @@ public class Lexer {
                 token = sb.toString();
                 type = LexType.STRCON;
             } else {
-                throw new RuntimeException();
+                throw new LexerException();
             }
         } else if (ch == '!') {
             ch = getChar();
@@ -122,7 +124,7 @@ public class Lexer {
                 token = sb.toString();
                 type = LexType.AND;
             } else {
-                throw new RuntimeException();
+                throw new LexerException();
             }
         } else if (ch == '|') {
             ch = getChar();
@@ -131,7 +133,7 @@ public class Lexer {
                 token = sb.toString();
                 type = LexType.OR;
             } else {
-                throw new RuntimeException();
+                throw new LexerException();
             }
         } else if (ch == '+') {
             token = sb.toString();
@@ -247,7 +249,7 @@ public class Lexer {
         } else if (ch == -1) {
             return false;
         } else {
-            throw new RuntimeException();
+            throw new LexerException();
         }
         return true;
     }
