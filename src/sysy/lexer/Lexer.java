@@ -33,7 +33,7 @@ public class Lexer {
     }
 
     private static boolean isWord(int ch) {
-        return ('a' <= ch && ch <= 'z') || ch == '_';
+        return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_';
     }
 
     private static boolean isNonZeroDigit(int ch) {
