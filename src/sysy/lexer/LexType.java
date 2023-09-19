@@ -1,4 +1,4 @@
-package lexer;
+package sysy.lexer;
 
 public enum LexType {
     IDENFR,

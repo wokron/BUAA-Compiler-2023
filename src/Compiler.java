@@ -1,4 +1,5 @@
-import lexer.Lexer;
+import sysy.exception.LexerException;
+import sysy.lexer.Lexer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -6,7 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class Compiler {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, LexerException {
         String code = """
                 const int array[2] = {1,2};
                                 
