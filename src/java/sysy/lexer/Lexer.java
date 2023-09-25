@@ -52,7 +52,7 @@ public class Lexer {
         this.in = in;
     }
 
-    public boolean next() throws IOException, LexerException {
+    public boolean next() throws LexerException {
         String value;
         LexType type;
         StringBuilder sb = new StringBuilder();
@@ -284,13 +284,17 @@ public class Lexer {
         return true;
     }
 
-    private int getChar() throws IOException {
-        if (hasPushbackChar) {
-            hasPushbackChar = false;
-            return pushbackChar;
-        } else {
-            int chByte = in.read();
-            return chByte;
+    private int getChar() throws LexerException {
+        try {
+            if (hasPushbackChar) {
+                hasPushbackChar = false;
+                return pushbackChar;
+            } else {
+                int chByte = in.read();
+                return chByte;
+            }
+        } catch (IOException e) {
+            throw new LexerException(e);
         }
     }
 
