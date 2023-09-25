@@ -4,6 +4,7 @@ import sysy.exception.LexerException;
 import sysy.exception.ParserException;
 import sysy.lexer.Lexer;
 import sysy.lexer.Token;
+import sysy.parser.ast.SyntaxNode;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -49,7 +50,9 @@ public class Parser {
         return result.getSubtree();
     }
 
-    private ParseResult parseCompUnit(Token currToken) {
+    private ParseResult parseCompUnit(Token currToken) throws IOException {
+//        Token preRead1 = preReadNext();
+//        Token preRead2 = preReadNext();
         throw new RuntimeException();  // need to implement
     }
 }
