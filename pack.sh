@@ -1,2 +1,2 @@
-cd src
-zip -r ../compiler.zip ./*
+cd src/java
+zip -r ../../compiler.zip ./*
