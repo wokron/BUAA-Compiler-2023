@@ -10,7 +10,8 @@ public class Compiler {
             var lexer = new Lexer(new InputStreamReader(in));
             var output = new PrintStream(out);
             while (lexer.next()) {
-                output.printf("%s %s\n", lexer.getLexType().name(), lexer.getToken());
+                var token = lexer.getToken();
+                output.printf("%s %s\n", token.getType().name(), token.getValue());
             }
         }
     }
