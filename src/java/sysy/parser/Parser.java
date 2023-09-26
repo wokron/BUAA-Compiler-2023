@@ -8,13 +8,10 @@ import sysy.lexer.Token;
 import sysy.parser.ast.SyntaxNode;
 
 public class Parser {
-    private final Lexer lexer;
-    private final int tokenBufLen = 3;
-    private final Token[] tokenBuf = new Token[tokenBufLen];
-    private int currTokenPos = 0;
+    private final PreReadBuffer buf;
 
-    public Parser(Lexer lexer) {
-        this.lexer = lexer;
+    public Parser(Lexer lexer) throws LexerException {
+        this.buf = new PreReadBuffer(lexer, 3);
     }
 
     private boolean match(Token token, LexType type) {
@@ -28,28 +25,14 @@ public class Parser {
     }
 
     private Token readNextToken() throws LexerException {
-        if (lexer.next()) {
-            tokenBuf[currTokenPos] = lexer.getToken();
-        } else {
-            tokenBuf[currTokenPos] = null;
-        }
-        currTokenPos = (currTokenPos + 1) % tokenBufLen;
-        return tokenBuf[currTokenPos];
+        return buf.readNextToken();
     }
 
     private Token readTokenByOffset(int offset) {
-        assert offset < tokenBufLen;
-        return tokenBuf[(currTokenPos + offset) % tokenBufLen];
+        return buf.readTokenByOffset(offset);
     }
 
     public SyntaxNode parse() throws LexerException, ParserException {
-        for (int i = 0; i < tokenBufLen && lexer.next(); i++) {
-            if (lexer.next()) {
-                tokenBuf[i] = lexer.getToken();
-            } else {
-                tokenBuf[i] = null;
-            }
-        }
         Token token = readNextToken();
         var result = parseCompUnit(token);
         token = result.getNextToken();
@@ -622,6 +605,46 @@ public class Parser {
         return new ParseResult(currToken, null);
     }
 }
+
+
+class PreReadBuffer {
+    private final Lexer lexer;
+    private final int tokenBufLen;
+    private final Token[] tokenBuf;
+    private int currTokenPos = 0;
+
+    public PreReadBuffer(Lexer lexer, int bufLen) throws LexerException {
+        assert bufLen >= 2;
+
+        this.lexer = lexer;
+        this.tokenBufLen = bufLen;
+        this.tokenBuf = new Token[this.tokenBufLen];
+
+        for (int i = 1; i < this.tokenBufLen; i++) {
+            if (this.lexer.next()) {
+                this.tokenBuf[i] = lexer.getToken();
+            } else {
+                this.tokenBuf[i] = null;
+            }
+        }
+    }
+
+    public Token readNextToken() throws LexerException {
+        if (lexer.next()) {
+            tokenBuf[currTokenPos] = lexer.getToken();
+        } else {
+            tokenBuf[currTokenPos] = null;
+        }
+        currTokenPos = (currTokenPos + 1) % tokenBufLen;
+        return tokenBuf[currTokenPos];
+    }
+
+    public Token readTokenByOffset(int offset) {
+        assert offset < tokenBufLen;
+        return tokenBuf[(currTokenPos + offset) % tokenBufLen];
+    }
+}
+
 
 class ParseResult {
     private final Token nextToken;
