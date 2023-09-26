@@ -1,4 +1,4 @@
-package sysy.parser.ast;
+package sysy.parser.syntaxtree;
 
 public abstract class SyntaxNode {
 

@@ -5,7 +5,7 @@ import sysy.exception.ParserException;
 import sysy.lexer.LexType;
 import sysy.lexer.Lexer;
 import sysy.lexer.Token;
-import sysy.parser.ast.SyntaxNode;
+import sysy.parser.syntaxtree.SyntaxNode;
 
 public class Parser {
     private final PreReadBuffer buf;
