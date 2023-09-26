@@ -661,7 +661,7 @@ class PreReadBuffer {
             if (this.lexer.next()) {
                 this.tokenBuf[i] = lexer.getToken();
             } else {
-                this.tokenBuf[i] = new Token("EOF", null);  // token not null
+                this.tokenBuf[i] = new Token("EOF", null, 0);  // token not null
             }
         }
     }
@@ -670,7 +670,7 @@ class PreReadBuffer {
         if (lexer.next()) {
             tokenBuf[currTokenPos] = lexer.getToken();
         } else {
-            tokenBuf[currTokenPos] = new Token("EOF", null);  // token not null
+            tokenBuf[currTokenPos] = new Token("EOF", null, 0);  // token not null
         }
         currTokenPos = (currTokenPos + 1) % tokenBufLen;
         return tokenBuf[currTokenPos];

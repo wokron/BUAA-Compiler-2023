@@ -11,7 +11,7 @@ public class Compiler {
             var output = new PrintStream(out);
             while (lexer.next()) {
                 var token = lexer.getToken();
-                output.printf("%s %s\n", token.getType().name(), token.getValue());
+                output.printf("%s %s %d\n", token.getType().name(), token.getValue(), token.getLineNum());
             }
         }
     }
