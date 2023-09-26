@@ -14,14 +14,23 @@ public class Parser {
         this.buf = new PreReadBuffer(lexer, 3);
     }
 
-    private boolean match(Token token, LexType type) {
+    private static boolean isMatch(Token token, LexType type) {
         return token.getType() == type;
     }
+    
+    private static boolean isNotMatch(Token token, LexType type) {
+        return token.getType() != type;
+    }
 
-    private void matchOrThrow(Token token, LexType type, ParserException e) throws ParserException {
-        if (!match(token, type)) {
+    private static void matchOrThrow(Token token, LexType type, ParserException e) throws ParserException {
+        if (isNotMatch(token, type)) {
             throw e;
         }
+    }
+    
+    private Token parseToken(Token token, LexType type, ParserException onFail) throws LexerException, ParserException {
+        matchOrThrow(token, type, onFail);
+        return buf.readNextToken();
     }
 
     public SyntaxNode parse() throws LexerException, ParserException {
@@ -37,10 +46,10 @@ public class Parser {
         ParseResult result;
         Token preRead = buf.readTokenByOffset(1);
         Token prePreRead = buf.readTokenByOffset(2);
-        while (currToken.getType() == LexType.CONSTTK
-                || (currToken.getType() == LexType.INTTK
-                && preRead.getType() == LexType.IDENFR
-                && prePreRead.getType() != LexType.LPARENT)
+        while (isMatch(currToken, LexType.CONSTTK)
+                || (isMatch(currToken, LexType.INTTK)
+                && isMatch(preRead, LexType.IDENFR)
+                && isNotMatch(prePreRead, LexType.LPARENT))
         ) {
             result = parseDecl(currToken);
             currToken = result.getNextToken();
@@ -49,9 +58,9 @@ public class Parser {
         }
 
         preRead = buf.readTokenByOffset(1);
-        while (currToken.getType() == LexType.VOIDTK
-                || (currToken.getType() == LexType.INTTK
-                && preRead.getType() == LexType.IDENFR)
+        while (isMatch(currToken, LexType.VOIDTK)
+                || (isMatch(currToken, LexType.INTTK)
+                && isMatch(preRead, LexType.IDENFR))
         ) {
             result = parseFuncDef(currToken);
             currToken = result.getNextToken();
@@ -68,16 +77,13 @@ public class Parser {
         ParseResult result;
         result = parseFuncType(currToken);
         currToken = result.getNextToken();
-        matchOrThrow(currToken, LexType.IDENFR, new ParserException());
-        currToken = buf.readNextToken();
-        matchOrThrow(currToken, LexType.LPARENT, new ParserException());
-        currToken = buf.readNextToken();
-        if (currToken.getType() == LexType.INTTK) {
+        currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
+        currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
+        if (isMatch(currToken, LexType.INTTK)) {
             result = parseFuncFParams(currToken);
             currToken = result.getNextToken();
         }
-        matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
         result = parseBlock(currToken);
         currToken = result.getNextToken();
 
@@ -88,7 +94,7 @@ public class Parser {
         ParseResult result;
         result = parseFuncFParam(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.COMMA) {
+        while (isMatch(currToken, LexType.COMMA)) {
             currToken = buf.readNextToken();
             result = parseFuncFParam(currToken);
             currToken = result.getNextToken();
@@ -101,18 +107,15 @@ public class Parser {
         ParseResult result;
         result = parseBType(currToken);
         currToken = result.getNextToken();
-        matchOrThrow(currToken, LexType.IDENFR, new ParserException());
-        currToken = buf.readNextToken();
-        if (currToken.getType() == LexType.LBRACK) {
+        currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
+        if (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.RBRACK, new ParserException());
-            currToken = buf.readNextToken();
-            while (currToken.getType() == LexType.LBRACK) {
+            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
+            while (isMatch(currToken, LexType.LBRACK)) {
                 currToken = buf.readNextToken();
                 result = parseConstExp(currToken);
                 currToken = result.getNextToken();
-                matchOrThrow(currToken, LexType.RBRACK, new ParserException());
-                currToken = buf.readNextToken();
+                currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
             }
         }
 
@@ -131,7 +134,7 @@ public class Parser {
         ParseResult result;
         result = parseMulExp(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.PLUS || currToken.getType() == LexType.MINU) {
+        while (isMatch(currToken, LexType.PLUS) || isMatch(currToken, LexType.MINU)) {
             currToken = buf.readNextToken();
             result = parseMulExp(currToken);
             currToken = result.getNextToken();
@@ -144,7 +147,7 @@ public class Parser {
         ParseResult result;
         result = parseUnaryExp(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.MULT || currToken.getType() == LexType.DIV || currToken.getType() == LexType.MOD) {
+        while (isMatch(currToken, LexType.MULT) || isMatch(currToken, LexType.DIV) || isMatch(currToken, LexType.MOD)) {
             currToken = buf.readNextToken();
             result = parseUnaryExp(currToken);
             currToken = result.getNextToken();
@@ -156,27 +159,24 @@ public class Parser {
     private ParseResult parseUnaryExp(Token currToken) throws LexerException, ParserException {
         ParseResult result;
         Token preRead = buf.readTokenByOffset(1);
-        if (currToken.getType() == LexType.LPARENT
-                || (currToken.getType() == LexType.IDENFR
-                && preRead.getType() != LexType.LPARENT)
-                || currToken.getType() == LexType.INTCON
+        if (isMatch(currToken, LexType.LPARENT)
+                || (isMatch(currToken, LexType.IDENFR)
+                && isNotMatch(preRead, LexType.LPARENT))
+                || isMatch(currToken, LexType.INTCON)
         ) {
             result = parsePrimaryExp(currToken);
             currToken = result.getNextToken();
-        } else if (currToken.getType() == LexType.IDENFR && preRead.getType() == LexType.LPARENT) {
-            matchOrThrow(currToken, LexType.IDENFR, new ParserException());
-            currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.LPARENT, new ParserException());
-            currToken = buf.readNextToken();
-            if (currToken.getType() != LexType.RPARENT) {
+        } else if (isMatch(currToken, LexType.IDENFR) && isMatch(preRead, LexType.LPARENT)) {
+            currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
+            currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
+            if (isNotMatch(currToken, LexType.RPARENT)) {
                 result = parseFuncRParams(currToken);
                 currToken = result.getNextToken();
             }
-            matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-            currToken = buf.readNextToken();
-        } else if (currToken.getType() == LexType.PLUS
-                || currToken.getType() == LexType.MINU
-                || currToken.getType() == LexType.NOT
+            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+        } else if (isMatch(currToken, LexType.PLUS)
+                || isMatch(currToken, LexType.MINU)
+                || isMatch(currToken, LexType.NOT)
         ) {
             result = parseUnaryOp(currToken);
             currToken = result.getNextToken();
@@ -190,9 +190,9 @@ public class Parser {
     }
 
     private ParseResult parseUnaryOp(Token currToken) throws LexerException, ParserException {
-        if (currToken.getType() == LexType.PLUS
-                || currToken.getType() == LexType.MINU
-                || currToken.getType() == LexType.NOT
+        if (isMatch(currToken, LexType.PLUS)
+                || isMatch(currToken, LexType.MINU)
+                || isMatch(currToken, LexType.NOT)
         ) {
             currToken = buf.readNextToken();
         } else {
@@ -206,7 +206,7 @@ public class Parser {
         ParseResult result;
         result = parseExp(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.COMMA) {
+        while (isMatch(currToken, LexType.COMMA)) {
             currToken = buf.readNextToken();
             result = parseExp(currToken);
             currToken = result.getNextToken();
@@ -225,16 +225,15 @@ public class Parser {
 
     private ParseResult parsePrimaryExp(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        if (currToken.getType() == LexType.LPARENT) {
+        if (isMatch(currToken, LexType.LPARENT)) {
             currToken = buf.readNextToken();
             result = parseExp(currToken);
             currToken = result.getNextToken();
-            matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-            currToken = buf.readNextToken();
-        } else if (currToken.getType() == LexType.IDENFR) {
+            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+        } else if (isMatch(currToken, LexType.IDENFR)) {
             result = parseLVal(currToken);
             currToken = result.getNextToken();
-        } else if (currToken.getType() == LexType.INTCON) {
+        } else if (isMatch(currToken, LexType.INTCON)) {
             result = parseNumber(currToken);
             currToken = result.getNextToken();
         } else {
@@ -246,38 +245,33 @@ public class Parser {
 
     private ParseResult parseLVal(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        matchOrThrow(currToken, LexType.IDENFR, new ParserException());
-        currToken = buf.readNextToken();
-        while (currToken.getType() == LexType.LBRACK) {
+        currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
+        while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
             result = parseExp(currToken);
             currToken = result.getNextToken();
-            matchOrThrow(currToken, LexType.RBRACK, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
         }
 
         return new ParseResult(currToken, null);
     }
 
     private ParseResult parseNumber(Token currToken) throws LexerException, ParserException {
-        matchOrThrow(currToken, LexType.INTCON, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.INTCON, new ParserException());
 
         return new ParseResult(currToken, null);
     }
 
     private ParseResult parseBType(Token currToken) throws LexerException, ParserException {
-        matchOrThrow(currToken, LexType.INTTK, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.INTTK, new ParserException());
 
         return new ParseResult(currToken, null);
     }
 
     private ParseResult parseBlock(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        matchOrThrow(currToken, LexType.LBRACE, new ParserException());
-        currToken = buf.readNextToken();
-        while (currToken.getType() != LexType.RBRACE) {
+        currToken = parseToken(currToken, LexType.LBRACE, new ParserException());
+        while (isNotMatch(currToken, LexType.RBRACE)) {
             result = parseBlockItem(currToken);
             currToken = result.getNextToken();
         }
@@ -288,7 +282,7 @@ public class Parser {
 
     private ParseResult parseBlockItem(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        if (currToken.getType() == LexType.INTTK || currToken.getType() == LexType.CONSTTK) {
+        if (isMatch(currToken, LexType.INTTK) || isMatch(currToken, LexType.CONSTTK)) {
             result = parseDecl(currToken);
             currToken = result.getNextToken();
         } else {
@@ -302,128 +296,109 @@ public class Parser {
     private ParseResult parseStmt(Token currToken) throws LexerException, ParserException {
         ParseResult result;
         Token preRead = buf.readTokenByOffset(1);
-        if (currToken.getType() == LexType.IDENFR
-                && (preRead.getType() == LexType.LBRACK
-                || preRead.getType() == LexType.ASSIGN)
+        if (isMatch(currToken, LexType.IDENFR)
+                && (isMatch(preRead, LexType.LBRACK)
+                || isMatch(preRead, LexType.ASSIGN))
         ) {
             result = parseLVal(currToken);
             currToken = result.getNextToken();
-            matchOrThrow(currToken, LexType.ASSIGN, new ParserException());
-            currToken = buf.readNextToken();
-            if (currToken.getType() == LexType.GETINTTK) {
+            currToken = parseToken(currToken, LexType.ASSIGN, new ParserException());
+            if (isMatch(currToken, LexType.GETINTTK)) {
                 currToken = buf.readNextToken();
-                matchOrThrow(currToken, LexType.LPARENT, new ParserException());
-                currToken = buf.readNextToken();
-                matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-                currToken = buf.readNextToken();
-                matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-                currToken = buf.readNextToken();
-            } else if (currToken.getType() == LexType.LPARENT
-                    || currToken.getType() == LexType.IDENFR
-                    || currToken.getType() == LexType.INTCON
-                    || currToken.getType() == LexType.PLUS
-                    || currToken.getType() == LexType.MINU
+                currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
+                currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+                currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+            } else if (isMatch(currToken, LexType.LPARENT)
+                    || isMatch(currToken, LexType.IDENFR)
+                    || isMatch(currToken, LexType.INTCON)
+                    || isMatch(currToken, LexType.PLUS)
+                    || isMatch(currToken, LexType.MINU)
             ) {
                 result = parseExp(currToken);
                 currToken = result.getNextToken();
-                matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-                currToken = buf.readNextToken();
+                currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
             } else {
                 throw new ParserException();
             }
-        } else if (currToken.getType() == LexType.LPARENT
-                || currToken.getType() == LexType.IDENFR
-                || currToken.getType() == LexType.INTCON
-                || currToken.getType() == LexType.PLUS
-                || currToken.getType() == LexType.MINU
+        } else if (isMatch(currToken, LexType.LPARENT)
+                || isMatch(currToken, LexType.IDENFR)
+                || isMatch(currToken, LexType.INTCON)
+                || isMatch(currToken, LexType.PLUS)
+                || isMatch(currToken, LexType.MINU)
         ) {
             result = parseExp(currToken);
             currToken = result.getNextToken();
-            matchOrThrow(currToken, LexType.SEMICN, new ParserException());
+            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+        } else if (isMatch(currToken, LexType.SEMICN)) {
             currToken = buf.readNextToken();
-        } else if (currToken.getType() == LexType.SEMICN) {
-            currToken = buf.readNextToken();
-        } else if (currToken.getType() == LexType.LBRACE) {
+        } else if (isMatch(currToken, LexType.LBRACE)) {
             result = parseBlock(currToken);
             currToken = result.getNextToken();
-        } else if (currToken.getType() == LexType.IFTK) {
+        } else if (isMatch(currToken, LexType.IFTK)) {
             currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.LPARENT, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
             result = parseCond(currToken);
             currToken = result.getNextToken();
-            matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
             result = parseStmt(currToken);
             currToken = result.getNextToken();
-            if (currToken.getType() == LexType.ELSETK) {
+            if (isMatch(currToken, LexType.ELSETK)) {
                 currToken = buf.readNextToken();
                 result = parseStmt(currToken);
                 currToken = result.getNextToken();
             }
-        } else if (currToken.getType() == LexType.FORTK) {
+        } else if (isMatch(currToken, LexType.FORTK)) {
             currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.LPARENT, new ParserException());
-            currToken = buf.readNextToken();
-            if (currToken.getType() == LexType.IDENFR) {
+            currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
+            if (isMatch(currToken, LexType.IDENFR)) {
                 result = parseForStmt(currToken);
                 currToken = result.getNextToken();
             }
-            matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-            currToken = buf.readNextToken();
-            if (currToken.getType() == LexType.LPARENT
-                    || currToken.getType() == LexType.IDENFR
-                    || currToken.getType() == LexType.INTCON
+            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+            if (isMatch(currToken, LexType.LPARENT)
+                    || isMatch(currToken, LexType.IDENFR)
+                    || isMatch(currToken, LexType.INTCON)
             ) {
                 result = parseCond(currToken);
                 currToken = result.getNextToken();
             }
-            matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-            currToken = buf.readNextToken();
-            if (currToken.getType() == LexType.IDENFR) {
+            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+            if (isMatch(currToken, LexType.IDENFR)) {
                 result = parseForStmt(currToken);
                 currToken = result.getNextToken();
             }
-            matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
             result = parseStmt(currToken);
             currToken = result.getNextToken();
-        } else if (currToken.getType() == LexType.BREAKTK) {
+        } else if (isMatch(currToken, LexType.BREAKTK)) {
             currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.SEMICN, new ParserException());
+            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+        } else if (isMatch(currToken, LexType.CONTINUETK)) {
             currToken = buf.readNextToken();
-        } else if (currToken.getType() == LexType.CONTINUETK) {
+            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+        } else if (isMatch(currToken, LexType.RETURNTK)) {
             currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-            currToken = buf.readNextToken();
-        } else if (currToken.getType() == LexType.RETURNTK) {
-            currToken = buf.readNextToken();
-            if (currToken.getType() == LexType.LPARENT
-                    || currToken.getType() == LexType.IDENFR
-                    || currToken.getType() == LexType.INTCON
-                    || currToken.getType() == LexType.PLUS
-                    || currToken.getType() == LexType.MINU
+            if (isMatch(currToken, LexType.LPARENT)
+                    || isMatch(currToken, LexType.IDENFR)
+                    || isMatch(currToken, LexType.INTCON)
+                    || isMatch(currToken, LexType.PLUS)
+                    || isMatch(currToken, LexType.MINU)
             ) {
                 result = parseExp(currToken);
                 currToken = result.getNextToken();
             }
-            matchOrThrow(currToken, LexType.SEMICN, new ParserException());
+            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+        } else if (isMatch(currToken, LexType.PRINTFTK)) {
             currToken = buf.readNextToken();
-        } else if (currToken.getType() == LexType.PRINTFTK) {
-            currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.LPARENT, new ParserException());
-            currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.STRCON, new ParserException());
-            currToken = buf.readNextToken();
-            while (currToken.getType() == LexType.COMMA) {
+            currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
+            currToken = parseToken(currToken, LexType.STRCON, new ParserException());
+            while (isMatch(currToken, LexType.COMMA)) {
                 currToken = buf.readNextToken();
                 result = parseExp(currToken);
                 currToken = result.getNextToken();
             }
-            matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-            currToken = buf.readNextToken();
-            matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
         } else {
             throw new ParserException();
         }
@@ -443,7 +418,7 @@ public class Parser {
         ParseResult result;
         result = parseLAndExp(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.OR) {
+        while (isMatch(currToken, LexType.OR)) {
             currToken = buf.readNextToken();
             result = parseLAndExp(currToken);
             currToken = result.getNextToken();
@@ -456,7 +431,7 @@ public class Parser {
         ParseResult result;
         result = parseEqExp(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.AND) {
+        while (isMatch(currToken, LexType.AND)) {
             currToken = buf.readNextToken();
             result = parseEqExp(currToken);
             currToken = result.getNextToken();
@@ -469,7 +444,7 @@ public class Parser {
         ParseResult result;
         result = parseRelExp(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.EQL || currToken.getType() == LexType.NEQ) {
+        while (isMatch(currToken, LexType.EQL) || isMatch(currToken, LexType.NEQ)) {
             currToken = buf.readNextToken();
             result = parseRelExp(currToken);
             currToken = result.getNextToken();
@@ -482,10 +457,10 @@ public class Parser {
         ParseResult result;
         result = parseAddExp(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.LSS
-                || currToken.getType() == LexType.GRE
-                || currToken.getType() == LexType.LEQ
-                || currToken.getType() == LexType.GEQ
+        while (isMatch(currToken, LexType.LSS)
+                || isMatch(currToken, LexType.GRE)
+                || isMatch(currToken, LexType.LEQ)
+                || isMatch(currToken, LexType.GEQ)
         ) {
             currToken = buf.readNextToken();
             result = parseAddExp(currToken);
@@ -499,8 +474,7 @@ public class Parser {
         ParseResult result;
         result = parseLVal(currToken);
         currToken = result.getNextToken();
-        matchOrThrow(currToken, LexType.ASSIGN, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.ASSIGN, new ParserException());
         result = parseExp(currToken);
         currToken = result.getNextToken();
 
@@ -508,7 +482,7 @@ public class Parser {
     }
 
     private ParseResult parseFuncType(Token currToken) throws LexerException, ParserException {
-        if (currToken.getType() == LexType.VOIDTK || currToken.getType() == LexType.INTTK) {
+        if (isMatch(currToken, LexType.VOIDTK) || isMatch(currToken, LexType.INTTK)) {
             currToken = buf.readNextToken();
         } else {
             throw new ParserException();
@@ -518,10 +492,10 @@ public class Parser {
 
     private ParseResult parseDecl(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        if (currToken.getType() == LexType.CONSTTK) {
+        if (isMatch(currToken, LexType.CONSTTK)) {
             result = parseConstDecl(currToken);
             currToken = result.getNextToken();
-        } else if (currToken.getType() == LexType.INTTK) {
+        } else if (isMatch(currToken, LexType.INTTK)) {
             result = parseVarDecl(currToken);
             currToken = result.getNextToken();
         } else {
@@ -533,36 +507,31 @@ public class Parser {
 
     private ParseResult parseConstDecl(Token currToken) throws LexerException, ParserException{
         ParseResult result;
-        matchOrThrow(currToken, LexType.CONSTTK, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.CONSTTK, new ParserException());
         result = parseBType(currToken);
         currToken = result.getNextToken();
         result = parseConstDef(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.COMMA) {
+        while (isMatch(currToken, LexType.COMMA)) {
             currToken = buf.readNextToken();
             result = parseConstDef(currToken);
             currToken = result.getNextToken();
         }
-        matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
 
         return new ParseResult(currToken, null);
     }
 
     private ParseResult parseConstDef(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        matchOrThrow(currToken, LexType.IDENFR, new ParserException());
-        currToken = buf.readNextToken();
-        while (currToken.getType() == LexType.LBRACK) {
+        currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
+        while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
             result = parseConstExp(currToken);
             currToken = result.getNextToken();
-            matchOrThrow(currToken, LexType.RBRACK, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
         }
-        matchOrThrow(currToken, LexType.ASSIGN, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.ASSIGN, new ParserException());
         result = parseConstInitVal(currToken);
         currToken = result.getNextToken();
 
@@ -571,27 +540,26 @@ public class Parser {
 
     private ParseResult parseConstInitVal(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        if (currToken.getType() == LexType.LPARENT
-                || currToken.getType() == LexType.IDENFR
-                || currToken.getType() == LexType.INTCON
-                || currToken.getType() == LexType.PLUS
-                || currToken.getType() == LexType.MINU
+        if (isMatch(currToken, LexType.LPARENT)
+                || isMatch(currToken, LexType.IDENFR)
+                || isMatch(currToken, LexType.INTCON)
+                || isMatch(currToken, LexType.PLUS)
+                || isMatch(currToken, LexType.MINU)
         ) {
             result = parseConstExp(currToken);
             currToken = result.getNextToken();
-        } else if (currToken.getType() == LexType.LBRACE) {
+        } else if (isMatch(currToken, LexType.LBRACE)) {
             currToken = buf.readNextToken();
-            if (currToken.getType() != LexType.RBRACE) {
+            if (isNotMatch(currToken, LexType.RBRACE)) {
                 result = parseConstInitVal(currToken);
                 currToken = result.getNextToken();
-                while (currToken.getType() == LexType.COMMA) {
+                while (isMatch(currToken, LexType.COMMA)) {
                     currToken = buf.readNextToken();
                     result = parseConstInitVal(currToken);
                     currToken = result.getNextToken();
                 }
             }
-            matchOrThrow(currToken, LexType.RBRACE, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RBRACE, new ParserException());
         } else {
             throw new ParserException();
         }
@@ -605,29 +573,26 @@ public class Parser {
         currToken = result.getNextToken();
         result = parseVarDef(currToken);
         currToken = result.getNextToken();
-        while (currToken.getType() == LexType.COMMA) {
+        while (isMatch(currToken, LexType.COMMA)) {
             currToken = buf.readNextToken();
             result = parseVarDef(currToken);
             currToken = result.getNextToken();
         }
-        matchOrThrow(currToken, LexType.SEMICN, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
 
         return new ParseResult(currToken, null);
     }
 
     private ParseResult parseVarDef(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        matchOrThrow(currToken, LexType.IDENFR, new ParserException());
-        currToken = buf.readNextToken();
-        while (currToken.getType() == LexType.LBRACK) {
+        currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
+        while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
             result = parseConstExp(currToken);
             currToken = result.getNextToken();
-            matchOrThrow(currToken, LexType.RBRACK, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
         }
-        if (currToken.getType() == LexType.ASSIGN) {
+        if (isMatch(currToken, LexType.ASSIGN)) {
             currToken = buf.readNextToken();
             result = parseInitVal(currToken);
             currToken = result.getNextToken();
@@ -638,27 +603,26 @@ public class Parser {
 
     private ParseResult parseInitVal(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        if (currToken.getType() == LexType.LPARENT
-                || currToken.getType() == LexType.IDENFR
-                || currToken.getType() == LexType.INTCON
-                || currToken.getType() == LexType.PLUS
-                || currToken.getType() == LexType.MINU
+        if (isMatch(currToken, LexType.LPARENT)
+                || isMatch(currToken, LexType.IDENFR)
+                || isMatch(currToken, LexType.INTCON)
+                || isMatch(currToken, LexType.PLUS)
+                || isMatch(currToken, LexType.MINU)
         ) {
             result = parseExp(currToken);
             currToken = result.getNextToken();
-        } else if (currToken.getType() == LexType.LBRACE) {
+        } else if (isMatch(currToken, LexType.LBRACE)) {
             currToken = buf.readNextToken();
-            if (currToken.getType() != LexType.RBRACK) {
+            if (isNotMatch(currToken, LexType.RBRACK)) {
                 result = parseInitVal(currToken);
                 currToken = result.getNextToken();
-                while (currToken.getType() == LexType.COMMA) {
+                while (isMatch(currToken, LexType.COMMA)) {
                     currToken = buf.readNextToken();
                     result = parseInitVal(currToken);
                     currToken = result.getNextToken();
                 }
             }
-            matchOrThrow(currToken, LexType.RBRACE, new ParserException());
-            currToken = buf.readNextToken();
+            currToken = parseToken(currToken, LexType.RBRACE, new ParserException());
         } else {
             throw new ParserException();
         }
@@ -668,14 +632,10 @@ public class Parser {
 
     private ParseResult parseMainFuncDef(Token currToken) throws LexerException, ParserException {
         ParseResult result;
-        matchOrThrow(currToken, LexType.INTTK, new ParserException());
-        currToken = buf.readNextToken();
-        matchOrThrow(currToken, LexType.MAINTK, new ParserException());
-        currToken = buf.readNextToken();
-        matchOrThrow(currToken, LexType.LPARENT, new ParserException());
-        currToken = buf.readNextToken();
-        matchOrThrow(currToken, LexType.RPARENT, new ParserException());
-        currToken = buf.readNextToken();
+        currToken = parseToken(currToken, LexType.INTTK, new ParserException());
+        currToken = parseToken(currToken, LexType.MAINTK, new ParserException());
+        currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
+        currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
         result = parseBlock(currToken);
         currToken = result.getNextToken();
 
