@@ -1,4 +1,8 @@
 package sysy.parser.syntaxtree;
 
-public class FuncRParamsNode {
+import java.util.ArrayList;
+import java.util.List;
+
+public class FuncRParamsNode extends SyntaxNode {
+    public List<ExpNode> exps = new ArrayList<>();
 }

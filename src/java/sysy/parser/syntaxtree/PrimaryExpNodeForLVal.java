@@ -1,4 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class PrimaryExpNodeForLVal {
+public class PrimaryExpNodeForLVal extends PrimaryExpNode {
+    public LValNode lVal;
 }

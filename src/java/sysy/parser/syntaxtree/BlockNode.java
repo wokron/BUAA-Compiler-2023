@@ -1,4 +1,8 @@
 package sysy.parser.syntaxtree;
 
-public class BlockNode {
+import java.util.ArrayList;
+import java.util.List;
+
+public class BlockNode extends SyntaxNode {
+    List<BlockItemNode> blockItems = new ArrayList<>();
 }

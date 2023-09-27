@@ -1,4 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class PrimaryExpNodeForExp {
+public class PrimaryExpNodeForExp extends PrimaryExpNode {
+    public ExpNode exp;
 }

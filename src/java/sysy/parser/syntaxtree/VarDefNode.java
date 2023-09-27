@@ -1,4 +1,10 @@
 package sysy.parser.syntaxtree;
 
-public class VarDefNode {
+import java.util.ArrayList;
+import java.util.List;
+
+public class VarDefNode extends SyntaxNode {
+    public String ident;
+    public List<ConstExpNode> dimensions = new ArrayList<>();
+    public InitValNode initVal;
 }

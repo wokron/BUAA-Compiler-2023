@@ -1,4 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class StmtNodeForBlock {
+public class StmtNodeForBlock extends StmtNode {
+    public BlockNode block;
 }

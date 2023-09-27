@@ -1,4 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class UnaryOpNode {
+public class UnaryOpNode extends SyntaxNode {
+    public String opType;
 }

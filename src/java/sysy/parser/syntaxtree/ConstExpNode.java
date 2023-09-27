@@ -1,4 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class ConsExpNode {
+public class ConstExpNode extends SyntaxNode {
+    public AddExpNode addExp;
 }

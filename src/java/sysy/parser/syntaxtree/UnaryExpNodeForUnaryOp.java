@@ -1,4 +1,6 @@
 package sysy.parser.syntaxtree;
 
-public class UnaryExpNodeForUnaryOp {
+public class UnaryExpNodeForUnaryOp extends UnaryExpNode {
+    public UnaryOpNode op;
+    public UnaryExpNode exp;
 }

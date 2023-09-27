@@ -1,4 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class AddExpNodeForSingle {
+public class AddExpNodeForSingle extends AddExpNode {
+    public MulExpNode mulExp;
 }

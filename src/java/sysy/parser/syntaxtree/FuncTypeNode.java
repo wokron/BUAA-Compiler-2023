@@ -1,4 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class FuncTypeNode {
+public class FuncTypeNode extends SyntaxNode {
+    public String type;
 }

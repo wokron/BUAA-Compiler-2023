@@ -1,2 +1,4 @@
-package sysy.parser.syntaxtree;public class DeclNode {
+package sysy.parser.syntaxtree;
+
+public class DeclNode extends SyntaxNode {
 }
