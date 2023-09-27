@@ -1,5 +1,7 @@
 package sysy.parser.syntaxtree;
 
+import sysy.lexer.LexType;
+
 public class StmtNodeForContinueBreak extends StmtNode {
-    public String type;
+    public LexType type;
 }

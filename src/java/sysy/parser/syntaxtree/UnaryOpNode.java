@@ -1,5 +1,7 @@
 package sysy.parser.syntaxtree;
 
+import sysy.lexer.LexType;
+
 public class UnaryOpNode extends SyntaxNode {
-    public String opType;
+    public LexType opType;
 }

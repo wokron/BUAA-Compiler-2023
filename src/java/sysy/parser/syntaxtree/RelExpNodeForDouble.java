@@ -1,7 +1,9 @@
 package sysy.parser.syntaxtree;
 
+import sysy.lexer.LexType;
+
 public class RelExpNodeForDouble extends RelExpNode {
     public RelExpNode relExp;
-    public String op;
+    public LexType op;
     public AddExpNode addExp;
 }

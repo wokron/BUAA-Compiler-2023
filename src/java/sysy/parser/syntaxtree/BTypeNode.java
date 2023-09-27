@@ -1,5 +1,7 @@
 package sysy.parser.syntaxtree;
 
+import sysy.lexer.LexType;
+
 public class BTypeNode extends SyntaxNode {
-    public String type = "int";
+    public LexType type = LexType.INTTK;
 }

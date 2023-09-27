@@ -7,8 +7,6 @@ import sysy.lexer.Lexer;
 import sysy.lexer.Token;
 import sysy.parser.syntaxtree.*;
 
-import java.util.concurrent.locks.Condition;
-
 public class Parser {
     private final PreReadBuffer buf;
 
@@ -173,7 +171,7 @@ public class Parser {
         ((AddExpNodeForSingle)subTree).mulExp = (MulExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.PLUS) || isMatch(currToken, LexType.MINU)) {
-            String op = currToken.getValue();
+            LexType op = currToken.getType();
 
             currToken = buf.readNextToken();
             result = parseMulExp(currToken);
@@ -198,7 +196,7 @@ public class Parser {
         ((MulExpNodeForSingle)subTree).unaryExp = (UnaryExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.MULT) || isMatch(currToken, LexType.DIV) || isMatch(currToken, LexType.MOD)) {
-            String op = currToken.getValue();
+            LexType op = currToken.getType();
 
             currToken = buf.readNextToken();
             result = parseUnaryExp(currToken);
@@ -273,7 +271,7 @@ public class Parser {
                 || isMatch(currToken, LexType.MINU)
                 || isMatch(currToken, LexType.NOT)
         ) {
-            subTree.opType = currToken.getValue();
+            subTree.opType = currToken.getType();
             currToken = buf.readNextToken();
         } else {
             throw new ParserException();
@@ -375,7 +373,7 @@ public class Parser {
     private ParseResult parseBType(Token currToken) throws LexerException, ParserException {
         BTypeNode subTree = new BTypeNode();
 
-        subTree.type = currToken.getValue();
+        subTree.type = currToken.getType();
         currToken = parseToken(currToken, LexType.INTTK, new ParserException());
 
         return new ParseResult(currToken, subTree);
@@ -548,7 +546,7 @@ public class Parser {
             subTree = newNode;
         } else if (isMatch(currToken, LexType.BREAKTK)) {
             var newNode = new StmtNodeForContinueBreak();
-            newNode.type = currToken.getValue();
+            newNode.type = currToken.getType();
 
             currToken = buf.readNextToken();
             currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
@@ -556,7 +554,7 @@ public class Parser {
             subTree = newNode;
         } else if (isMatch(currToken, LexType.CONTINUETK)) {
             var newNode = new StmtNodeForContinueBreak();
-            newNode.type = currToken.getValue();
+            newNode.type = currToken.getType();
 
             currToken = buf.readNextToken();
             currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
@@ -669,7 +667,7 @@ public class Parser {
         ((EqExpNodeForSingle)subTree).relExp = (RelExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.EQL) || isMatch(currToken, LexType.NEQ)) {
-            String op = currToken.getValue();
+            LexType op = currToken.getType();
             currToken = buf.readNextToken();
 
             result = parseRelExp(currToken);
@@ -697,7 +695,7 @@ public class Parser {
                 || isMatch(currToken, LexType.LEQ)
                 || isMatch(currToken, LexType.GEQ)
         ) {
-            String op = currToken.getValue();
+            LexType op = currToken.getType();
             currToken = buf.readNextToken();
 
             result = parseAddExp(currToken);
@@ -733,7 +731,7 @@ public class Parser {
         FuncTypeNode subTree = new FuncTypeNode();
 
         if (isMatch(currToken, LexType.VOIDTK) || isMatch(currToken, LexType.INTTK)) {
-            subTree.type = currToken.getValue();
+            subTree.type = currToken.getType();
 
             currToken = buf.readNextToken();
         } else {
