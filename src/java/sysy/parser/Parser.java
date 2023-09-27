@@ -7,6 +7,8 @@ import sysy.lexer.Lexer;
 import sysy.lexer.Token;
 import sysy.parser.syntaxtree.*;
 
+import java.util.ArrayList;
+
 public class Parser {
     private final PreReadBuffer buf;
 
@@ -136,6 +138,7 @@ public class Parser {
         subTree.ident = currToken.getValue();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         if (isMatch(currToken, LexType.LBRACK)) {
+            subTree.dimensions = new ArrayList<>();
             currToken = buf.readNextToken();
             currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
             while (isMatch(currToken, LexType.LBRACK)) {

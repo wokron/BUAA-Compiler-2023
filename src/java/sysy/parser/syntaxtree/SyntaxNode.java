@@ -1,5 +1,9 @@
 package sysy.parser.syntaxtree;
 
-public abstract class SyntaxNode {
+import sysy.lexer.Token;
 
+import java.util.function.Consumer;
+
+public abstract class SyntaxNode {
+    public abstract void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer);
 }
