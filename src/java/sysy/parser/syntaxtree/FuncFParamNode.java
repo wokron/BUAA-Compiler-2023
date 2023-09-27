@@ -30,4 +30,9 @@ public class FuncFParamNode extends SyntaxNode {
 
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
+
+    @Override
+    public String getType() {
+        return "FuncFParam";
+    }
 }

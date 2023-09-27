@@ -7,7 +7,7 @@ public class NonTerminalSymbol {
     private final SyntaxNode node;
 
     public NonTerminalSymbol(SyntaxNode node) {
-        this.type = node.toString();  // todo: add type
+        this.type = node.getType();
         this.node = node;
     }
 

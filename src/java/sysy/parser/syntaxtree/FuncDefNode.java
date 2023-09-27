@@ -30,4 +30,9 @@ public class FuncDefNode extends SyntaxNode {
 
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
+
+    @Override
+    public String getType() {
+        return "FuncDef";
+    }
 }

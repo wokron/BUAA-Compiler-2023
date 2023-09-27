@@ -1,5 +1,6 @@
 package sysy.parser.syntaxtree;
 
+import sysy.lexer.LexType;
 import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
 import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
@@ -12,9 +13,19 @@ public class BlockNode extends SyntaxNode {
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
+        terminalConsumer.accept(new TerminalSymbol(LexType.LBRACE));
+
         for (var blockItem : blockItems) {
             blockItem.walk(terminalConsumer, nonTerminalConsumer);
         }
+
+        terminalConsumer.accept(new TerminalSymbol(LexType.RBRACE));
+
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
+    }
+
+    @Override
+    public String getType() {
+        return "Block";
     }
 }

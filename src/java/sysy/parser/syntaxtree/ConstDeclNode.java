@@ -28,4 +28,9 @@ public class ConstDeclNode extends SyntaxNode {
         terminalConsumer.accept(new TerminalSymbol(LexType.SEMICN));
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
+
+    @Override
+    public String getType() {
+        return "ConstDecl";
+    }
 }

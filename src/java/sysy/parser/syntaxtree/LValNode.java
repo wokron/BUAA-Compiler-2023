@@ -26,4 +26,9 @@ public class LValNode extends SyntaxNode {
 
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
+
+    @Override
+    public String getType() {
+        return "LVal";
+    }
 }

@@ -26,4 +26,9 @@ public class FuncRParamsNode extends SyntaxNode {
 
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
+
+    @Override
+    public String getType() {
+        return "FuncRParams";
+    }
 }

@@ -31,4 +31,9 @@ public class ConstDefNode extends SyntaxNode {
 
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
+
+    @Override
+    public String getType() {
+        return "ConstDef";
+    }
 }

@@ -14,4 +14,9 @@ public class BTypeNode extends SyntaxNode {
         terminalConsumer.accept(new TerminalSymbol(type));
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
+
+    @Override
+    public String getType() {
+        return "BType";
+    }
 }
