@@ -1,5 +1,5 @@
 package sysy.parser.syntaxtree;
 
-public class MulExpNode extends SyntaxNode {
+public abstract class MulExpNode extends SyntaxNode {
 
 }

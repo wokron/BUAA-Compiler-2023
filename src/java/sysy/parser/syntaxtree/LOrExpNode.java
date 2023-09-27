@@ -1,4 +1,4 @@
 package sysy.parser.syntaxtree;
 
-public class LOrExpNode extends SyntaxNode {
+public abstract class LOrExpNode extends SyntaxNode {
 }

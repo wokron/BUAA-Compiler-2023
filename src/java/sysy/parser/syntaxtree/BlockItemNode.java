@@ -1,4 +1,4 @@
 package sysy.parser.syntaxtree;
 
-public class BlockItemNode extends SyntaxNode {
+public abstract class BlockItemNode extends SyntaxNode {
 }

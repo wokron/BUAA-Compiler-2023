@@ -1,4 +1,4 @@
 package sysy.parser.syntaxtree;
 
-public class ConstInitValNode extends SyntaxNode {
+public abstract class ConstInitValNode extends SyntaxNode {
 }

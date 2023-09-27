@@ -1,4 +1,4 @@
 package sysy.parser.syntaxtree;
 
-public class InitValNode extends SyntaxNode {
+public abstract class InitValNode extends SyntaxNode {
 }
