@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.function.Consumer;
 
@@ -11,21 +12,21 @@ public class StmtNodeForIfElse extends StmtNode {
     public StmtNode elseStmt;
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
-        terminalConsumer.accept(new Token(null, LexType.IFTK, -1));
-        terminalConsumer.accept(new Token(null, LexType.LPARENT, -1));
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
+        terminalConsumer.accept(new TerminalSymbol(LexType.IFTK));
+        terminalConsumer.accept(new TerminalSymbol(LexType.LPARENT));
 
         cond.walk(terminalConsumer, nonTerminalConsumer);
 
-        terminalConsumer.accept(new Token(null, LexType.RPARENT, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.RPARENT));
 
         ifStmt.walk(terminalConsumer, nonTerminalConsumer);
 
         if (elseStmt != null) {
-            terminalConsumer.accept(new Token(null, LexType.ELSETK, -1));
+            terminalConsumer.accept(new TerminalSymbol(LexType.ELSETK));
             elseStmt.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

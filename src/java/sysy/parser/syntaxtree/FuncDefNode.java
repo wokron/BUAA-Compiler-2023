@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.function.Consumer;
 
@@ -12,21 +13,21 @@ public class FuncDefNode extends SyntaxNode {
     public BlockNode block;
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
         funcType.walk(terminalConsumer, nonTerminalConsumer);
 
-        terminalConsumer.accept(new Token(ident, LexType.IDENFR, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.IDENFR, ident));
 
-        terminalConsumer.accept(new Token(null, LexType.LPARENT, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.LPARENT));
 
         if (params != null) {
             params.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        terminalConsumer.accept(new Token(null, LexType.RPARENT, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.RPARENT));
 
         block.walk(terminalConsumer, nonTerminalConsumer);
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

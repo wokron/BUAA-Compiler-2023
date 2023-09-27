@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.function.Consumer;
 
@@ -12,30 +13,30 @@ public class StmtNodeForLoop extends StmtNode {
     public StmtNode stmt;
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
-        terminalConsumer.accept(new Token(null, LexType.FORTK, -1));
-        terminalConsumer.accept(new Token(null, LexType.LPARENT, -1));
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
+        terminalConsumer.accept(new TerminalSymbol(LexType.FORTK));
+        terminalConsumer.accept(new TerminalSymbol(LexType.LPARENT));
 
         if (forStmt1 != null) {
             forStmt1.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        terminalConsumer.accept(new Token(null, LexType.SEMICN, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.SEMICN));
 
         if (cond != null) {
             cond.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        terminalConsumer.accept(new Token(null, LexType.SEMICN, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.SEMICN));
 
         if (forStmt2 != null) {
             forStmt2.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        terminalConsumer.accept(new Token(null, LexType.RPARENT, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.RPARENT));
 
         stmt.walk(terminalConsumer, nonTerminalConsumer);
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

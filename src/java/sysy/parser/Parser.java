@@ -19,7 +19,7 @@ public class Parser {
     private static boolean isMatch(Token token, LexType type) {
         return token.getType() == type;
     }
-    
+
     private static boolean isNotMatch(Token token, LexType type) {
         return token.getType() != type;
     }
@@ -29,7 +29,7 @@ public class Parser {
             throw e;
         }
     }
-    
+
     private Token parseToken(Token token, LexType type, ParserException onFail) throws LexerException, ParserException {
         matchOrThrow(token, type, onFail);
         return buf.readNextToken();
@@ -171,7 +171,7 @@ public class Parser {
 
         result = parseMulExp(currToken);
         currToken = result.getNextToken();
-        ((AddExpNodeForSingle)subTree).mulExp = (MulExpNode) result.getSubtree();
+        ((AddExpNodeForSingle) subTree).mulExp = (MulExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.PLUS) || isMatch(currToken, LexType.MINU)) {
             LexType op = currToken.getType();
@@ -196,7 +196,7 @@ public class Parser {
 
         result = parseUnaryExp(currToken);
         currToken = result.getNextToken();
-        ((MulExpNodeForSingle)subTree).unaryExp = (UnaryExpNode) result.getSubtree();
+        ((MulExpNodeForSingle) subTree).unaryExp = (UnaryExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.MULT) || isMatch(currToken, LexType.DIV) || isMatch(currToken, LexType.MOD)) {
             LexType op = currToken.getType();
@@ -489,7 +489,7 @@ public class Parser {
             currToken = result.getNextToken();
             newNode.block = (BlockNode) result.getSubtree();
 
-            subTree= newNode;
+            subTree = newNode;
         } else if (isMatch(currToken, LexType.IFTK)) {
             var newNode = new StmtNodeForIfElse();
 
@@ -623,7 +623,7 @@ public class Parser {
 
         result = parseLAndExp(currToken);
         currToken = result.getNextToken();
-        ((LOrExpNodeForSingle)subTree).lAndExp = (LAndExpNode) result.getSubtree();
+        ((LOrExpNodeForSingle) subTree).lAndExp = (LAndExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.OR)) {
             currToken = buf.readNextToken();
@@ -645,7 +645,7 @@ public class Parser {
 
         result = parseEqExp(currToken);
         currToken = result.getNextToken();
-        ((LAndExpNodeForSingle)subTree).eqExp = (EqExpNode) result.getSubtree();
+        ((LAndExpNodeForSingle) subTree).eqExp = (EqExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.AND)) {
             currToken = buf.readNextToken();
@@ -667,7 +667,7 @@ public class Parser {
 
         result = parseRelExp(currToken);
         currToken = result.getNextToken();
-        ((EqExpNodeForSingle)subTree).relExp = (RelExpNode) result.getSubtree();
+        ((EqExpNodeForSingle) subTree).relExp = (RelExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.EQL) || isMatch(currToken, LexType.NEQ)) {
             LexType op = currToken.getType();
@@ -691,7 +691,7 @@ public class Parser {
 
         result = parseAddExp(currToken);
         currToken = result.getNextToken();
-        ((RelExpNodeForSingle)subTree).addExp = (AddExpNode) result.getSubtree();
+        ((RelExpNodeForSingle) subTree).addExp = (AddExpNode) result.getSubtree();
 
         while (isMatch(currToken, LexType.LSS)
                 || isMatch(currToken, LexType.GRE)

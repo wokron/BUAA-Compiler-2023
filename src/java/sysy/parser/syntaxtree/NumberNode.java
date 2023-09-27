@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.function.Consumer;
 
@@ -9,9 +10,9 @@ public class NumberNode extends SyntaxNode {
     public String intConst;
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
-        terminalConsumer.accept(new Token(intConst, LexType.INTCON, -1));
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
+        terminalConsumer.accept(new TerminalSymbol(LexType.INTCON, intConst));
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

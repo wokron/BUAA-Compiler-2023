@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.function.Consumer;
 
@@ -9,15 +10,15 @@ public class StmtNodeForGetInt extends StmtNode {
     public LValNode lVal;
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
         lVal.walk(terminalConsumer, nonTerminalConsumer);
 
-        terminalConsumer.accept(new Token(null, LexType.ASSIGN, -1));
-        terminalConsumer.accept(new Token(null, LexType.GETINTTK, -1));
-        terminalConsumer.accept(new Token(null, LexType.LPARENT, -1));
-        terminalConsumer.accept(new Token(null, LexType.RPARENT, -1));
-        terminalConsumer.accept(new Token(null, LexType.SEMICN, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.ASSIGN));
+        terminalConsumer.accept(new TerminalSymbol(LexType.GETINTTK));
+        terminalConsumer.accept(new TerminalSymbol(LexType.LPARENT));
+        terminalConsumer.accept(new TerminalSymbol(LexType.RPARENT));
+        terminalConsumer.accept(new TerminalSymbol(LexType.SEMICN));
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,22 +14,22 @@ public class VarDefNode extends SyntaxNode {
     public InitValNode initVal;
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
-        terminalConsumer.accept(new Token(ident, LexType.IDENFR, -1));
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
+        terminalConsumer.accept(new TerminalSymbol(LexType.IDENFR, ident));
 
         for (var dim : dimensions) {
-            terminalConsumer.accept(new Token(null, LexType.LBRACK, -1));
+            terminalConsumer.accept(new TerminalSymbol(LexType.LBRACK));
 
             dim.walk(terminalConsumer, nonTerminalConsumer);
 
-            terminalConsumer.accept(new Token(null, LexType.RBRACK, -1));
+            terminalConsumer.accept(new TerminalSymbol(LexType.RBRACK));
         }
 
         if (initVal != null) {
-            terminalConsumer.accept(new Token(null, LexType.ASSIGN, -1));
+            terminalConsumer.accept(new TerminalSymbol(LexType.ASSIGN));
             initVal.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

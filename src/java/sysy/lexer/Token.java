@@ -18,7 +18,7 @@ public class Token {
     public LexType getType() {
         return type;
     }
-    
+
     public int getLineNum() {
         return lineNum;
     }

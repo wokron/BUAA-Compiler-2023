@@ -1,6 +1,7 @@
 package sysy.parser.syntaxtree;
 
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +11,10 @@ public class BlockNode extends SyntaxNode {
     public List<BlockItemNode> blockItems = new ArrayList<>();
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
         for (var blockItem : blockItems) {
             blockItem.walk(terminalConsumer, nonTerminalConsumer);
         }
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

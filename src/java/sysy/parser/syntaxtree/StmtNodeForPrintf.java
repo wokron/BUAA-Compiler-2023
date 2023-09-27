@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,20 +13,20 @@ public class StmtNodeForPrintf extends StmtNode {
     public List<ExpNode> exps = new ArrayList<>();
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
-        terminalConsumer.accept(new Token(null, LexType.PRINTFTK, -1));
-        terminalConsumer.accept(new Token(null, LexType.LPARENT, -1));
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
+        terminalConsumer.accept(new TerminalSymbol(LexType.PRINTFTK));
+        terminalConsumer.accept(new TerminalSymbol(LexType.LPARENT));
 
-        terminalConsumer.accept(new Token(formatString, LexType.STRCON, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.STRCON, formatString));
 
         for (var exp : exps) {
-            terminalConsumer.accept(new Token(null, LexType.COMMA, -1));
+            terminalConsumer.accept(new TerminalSymbol(LexType.COMMA));
             exp.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        terminalConsumer.accept(new Token(null, LexType.RPARENT, -1));
-        terminalConsumer.accept(new Token(null, LexType.SEMICN, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.RPARENT));
+        terminalConsumer.accept(new TerminalSymbol(LexType.SEMICN));
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

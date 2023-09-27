@@ -1,7 +1,8 @@
 package sysy.parser.syntaxtree;
 
 import sysy.lexer.LexType;
-import sysy.lexer.Token;
+import sysy.parser.syntaxtree.symbol.NonTerminalSymbol;
+import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 
 import java.util.function.Consumer;
 
@@ -10,16 +11,16 @@ public class UnaryExpNodeForFuncCall extends UnaryExpNode {
     public FuncRParamsNode params;
 
     @Override
-    public void walk(Consumer<Token> terminalConsumer, Consumer<SyntaxNode> nonTerminalConsumer) {
-        terminalConsumer.accept(new Token(ident, LexType.IDENFR, -1));
-        terminalConsumer.accept(new Token(null, LexType.LPARENT, -1));
+    public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
+        terminalConsumer.accept(new TerminalSymbol(LexType.IDENFR, ident));
+        terminalConsumer.accept(new TerminalSymbol(LexType.LPARENT));
 
         if (params != null) {
             params.walk(terminalConsumer, nonTerminalConsumer);
         }
 
-        terminalConsumer.accept(new Token(null, LexType.RPARENT, -1));
+        terminalConsumer.accept(new TerminalSymbol(LexType.RPARENT));
 
-        nonTerminalConsumer.accept(this);
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

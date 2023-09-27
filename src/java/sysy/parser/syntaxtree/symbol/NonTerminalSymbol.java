@@ -1,0 +1,26 @@
+package sysy.parser.syntaxtree.symbol;
+
+import sysy.parser.syntaxtree.SyntaxNode;
+
+public class NonTerminalSymbol {
+    private final String type;
+    private final SyntaxNode node;
+
+    public NonTerminalSymbol(SyntaxNode node) {
+        this.type = node.toString();  // todo: add type
+        this.node = node;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public SyntaxNode getNode() {
+        return node;
+    }
+
+    @Override
+    public String toString() {
+        return "<%s>".formatted(type);
+    }
+}
