@@ -4,5 +4,5 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlockNode extends SyntaxNode {
-    List<BlockItemNode> blockItems = new ArrayList<>();
+    public List<BlockItemNode> blockItems = new ArrayList<>();
 }

@@ -5,5 +5,5 @@ import java.util.List;
 
 public class VarDeclNode extends SyntaxNode {
     public BTypeNode type;
-    public List<VarDefNode> varDefs;
+    public List<VarDefNode> varDefs = new ArrayList<>();
 }
