@@ -25,6 +25,8 @@ public class InitValNodeForArray extends InitValNode {
             init.walk(terminalConsumer, nonTerminalConsumer);
         }
 
+        terminalConsumer.accept(new TerminalSymbol(LexType.RBRACE));
+
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }

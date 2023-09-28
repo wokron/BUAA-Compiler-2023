@@ -20,11 +20,11 @@ public class FuncFParamNode extends SyntaxNode {
 
         if (dimensions != null) {
             terminalConsumer.accept(new TerminalSymbol(LexType.LBRACK));
-            terminalConsumer.accept(new TerminalSymbol(LexType.RBRACK, ident));
+            terminalConsumer.accept(new TerminalSymbol(LexType.RBRACK));
             for (var dim : dimensions) {
                 terminalConsumer.accept(new TerminalSymbol(LexType.LBRACK));
                 dim.walk(terminalConsumer, nonTerminalConsumer);
-                terminalConsumer.accept(new TerminalSymbol(LexType.RBRACK, ident));
+                terminalConsumer.accept(new TerminalSymbol(LexType.RBRACK));
             }
         }
 

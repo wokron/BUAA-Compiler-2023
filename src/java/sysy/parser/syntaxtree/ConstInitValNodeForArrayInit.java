@@ -26,5 +26,7 @@ public class ConstInitValNodeForArrayInit extends ConstInitValNode {
         }
 
         terminalConsumer.accept(new TerminalSymbol(LexType.RBRACE));
+
+        nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 }
