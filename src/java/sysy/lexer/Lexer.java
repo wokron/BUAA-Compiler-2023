@@ -26,7 +26,7 @@ public class Lexer {
             Map.entry("void", LexType.VOIDTK)
     );
     private static final int EOF = -1;
-    private int lineNum = 0;
+    private int lineNum = 1;
 
     private static boolean isDigit(int ch) {
         return '0' <= ch && ch <= '9';
@@ -68,7 +68,7 @@ public class Lexer {
             ungetChar(ch);
             value = sb.toString();
             type = reserveWords.getOrDefault(value, LexType.IDENFR);
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (isNonZeroDigit(ch)) {
             ch = getChar();
             while (isDigit(ch)) {
@@ -78,11 +78,11 @@ public class Lexer {
             ungetChar(ch);
             value = sb.toString();
             type = LexType.INTCON;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '0') {
             value = sb.toString();
             type = LexType.INTCON;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '\"') {
             ch = getChar();
             while (ch == '%' || ch == '\\' || isNormalChar(ch)) {
@@ -108,7 +108,7 @@ public class Lexer {
                 sb.append((char) ch);
                 value = sb.toString();
                 type = LexType.STRCON;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             } else {
                 throw new LexerException();
             }
@@ -118,12 +118,12 @@ public class Lexer {
                 sb.append((char) ch);
                 value = sb.toString();
                 type = LexType.NEQ;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             } else {
                 ungetChar(ch);
                 value = sb.toString();
                 type = LexType.NOT;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             }
         } else if (ch == '&') {
             ch = getChar();
@@ -131,7 +131,7 @@ public class Lexer {
                 sb.append((char) ch);
                 value = sb.toString();
                 type = LexType.AND;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             } else {
                 throw new LexerException();
             }
@@ -141,22 +141,22 @@ public class Lexer {
                 sb.append((char) ch);
                 value = sb.toString();
                 type = LexType.OR;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             } else {
                 throw new LexerException();
             }
         } else if (ch == '+') {
             value = sb.toString();
             type = LexType.PLUS;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '-') {
             value = sb.toString();
             type = LexType.MINU;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '*') {
             value = sb.toString();
             type = LexType.MULT;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '/') {
             ch = getChar();
             if (ch == '/') {
@@ -193,24 +193,24 @@ public class Lexer {
                 ungetChar(ch);
                 value = sb.toString();
                 type = LexType.DIV;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             }
         } else if (ch == '%') {
             value = sb.toString();
             type = LexType.MOD;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '<') {
             ch = getChar();
             if (ch == '=') {
                 sb.append((char) ch);
                 value = sb.toString();
                 type = LexType.LEQ;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             } else {
                 ungetChar(ch);
                 value = sb.toString();
                 type = LexType.LSS;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             }
         } else if (ch == '>') {
             ch = getChar();
@@ -218,12 +218,12 @@ public class Lexer {
                 sb.append((char) ch);
                 value = sb.toString();
                 type = LexType.GEQ;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             } else {
                 ungetChar(ch);
                 value = sb.toString();
                 type = LexType.GRE;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             }
         } else if (ch == '=') {
             ch = getChar();
@@ -231,45 +231,45 @@ public class Lexer {
                 sb.append((char) ch);
                 value = sb.toString();
                 type = LexType.EQL;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             } else {
                 ungetChar(ch);
                 value = sb.toString();
                 type = LexType.ASSIGN;
-                token = new Token(value, type);
+                token = new Token(value, type, lineNum);
             }
         } else if (ch == ';') {
             value = sb.toString();
             type = LexType.SEMICN;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == ',') {
             value = sb.toString();
             type = LexType.COMMA;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '(') {
             value = sb.toString();
             type = LexType.LPARENT;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == ')') {
             value = sb.toString();
             type = LexType.RPARENT;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '[') {
             value = sb.toString();
             type = LexType.LBRACK;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == ']') {
             value = sb.toString();
             type = LexType.RBRACK;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '{') {
             value = sb.toString();
             type = LexType.LBRACE;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '}') {
             value = sb.toString();
             type = LexType.RBRACE;
-            token = new Token(value, type);
+            token = new Token(value, type, lineNum);
         } else if (ch == '\n') {
             lineNum++;
             return next();
