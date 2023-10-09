@@ -7,7 +7,9 @@ import sysy.lexer.Lexer;
 import sysy.lexer.Token;
 import sysy.parser.syntaxtree.*;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Queue;
 
 public class Parser {
     private final PreReadBuffer buf;
@@ -428,8 +430,7 @@ public class Parser {
 
         Token preRead = buf.readTokenByOffset(1);
         if (isMatch(currToken, LexType.IDENFR)
-                && (isMatch(preRead, LexType.LBRACK)
-                || isMatch(preRead, LexType.ASSIGN))
+                && (buf.findUntil(LexType.ASSIGN, LexType.SEMICN))
         ) {
             LValNode tmpLVal;
             result = parseLVal(currToken);
@@ -529,6 +530,9 @@ public class Parser {
             if (isMatch(currToken, LexType.LPARENT)
                     || isMatch(currToken, LexType.IDENFR)
                     || isMatch(currToken, LexType.INTCON)
+                    || isMatch(currToken, LexType.PLUS)
+                    || isMatch(currToken, LexType.MINU)
+                    || isMatch(currToken, LexType.NOT)
             ) {
                 result = parseCond(currToken);
                 currToken = result.getNextToken();
@@ -981,6 +985,7 @@ class PreReadBuffer {
     private final int tokenBufLen;
     private final Token[] tokenBuf;
     private int currTokenPos = 0;
+    private final Queue<Token> findBuffer = new ArrayDeque<>();
 
     public PreReadBuffer(Lexer lexer, int bufLen) throws LexerException {
         assert bufLen >= 2;
@@ -999,7 +1004,9 @@ class PreReadBuffer {
     }
 
     public Token readNextToken() throws LexerException {
-        if (lexer.next()) {
+        if (!findBuffer.isEmpty()) {
+            tokenBuf[currTokenPos] = findBuffer.poll();
+        } else if (lexer.next()) {
             tokenBuf[currTokenPos] = lexer.getToken();
         } else {
             tokenBuf[currTokenPos] = new Token("EOF", null, 0);  // token not null
@@ -1011,6 +1018,27 @@ class PreReadBuffer {
     public Token readTokenByOffset(int offset) {
         assert offset < tokenBufLen;
         return tokenBuf[(currTokenPos + offset) % tokenBufLen];
+    }
+
+    public boolean findUntil(LexType find, LexType until) throws LexerException {
+        for (int i = 0, j = currTokenPos; i < tokenBufLen; i++, j = (currTokenPos + 1) % tokenBufLen) {
+            if (tokenBuf[j].getType() == find) {
+                return true;
+            } else if (tokenBuf[j].getType() == until) {
+                return false;
+            }
+        }
+
+        while (lexer.next()) {
+            var token = lexer.getToken();
+            findBuffer.add(lexer.getToken());
+            if (token.getType() == find) {
+                return true;
+            } else if (token.getType() == until) {
+                return false;
+            }
+        }
+        return false;
     }
 }
 
