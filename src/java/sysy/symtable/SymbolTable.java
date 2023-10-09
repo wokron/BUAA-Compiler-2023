@@ -13,10 +13,11 @@ public class SymbolTable {
     private final List<SymbolTable> nextTables = new ArrayList<>();
     private final Map<String, Symbol> symbolMap = new HashMap<>();
 
-    public void insertSymbol(Symbol symbol) throws DuplicateIdentException {
-        if (symbolMap.containsKey(symbol.ident)) {
-            throw new DuplicateIdentException();
-        }
+    public boolean contains(String name) {
+        return symbolMap.containsKey(name);
+    }
+
+    public void insertSymbol(Symbol symbol) {
         symbolMap.put(symbol.ident, symbol);
         symbol.table = this;
     }
@@ -27,7 +28,7 @@ public class SymbolTable {
         }
 
         if (preTable != null) {
-            return preTable.preTable.getSymbol(ident);
+            return preTable.getSymbol(ident);
         } else {
             return null;
         }

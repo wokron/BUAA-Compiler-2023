@@ -3,6 +3,8 @@ import sysy.exception.LexerException;
 import sysy.exception.ParserException;
 import sysy.lexer.Lexer;
 import sysy.parser.Parser;
+import sysy.parser.syntaxtree.CompUnitNode;
+import sysy.visitor.Visitor;
 
 import java.io.*;
 
@@ -55,7 +57,10 @@ public class Compiler {
             var out = new PrintStream(outputFile);
             var lexer = new Lexer(new InputStreamReader(testFile), recorder);
             var parser = new Parser(lexer, recorder);
-            parser.parse();
+            var result = parser.parse();
+
+            var visitor = new Visitor(recorder);
+            visitor.visitCompUnitNode((CompUnitNode) result);
 
             for (var error : recorder.getErrors()) {
                 out.println(error);

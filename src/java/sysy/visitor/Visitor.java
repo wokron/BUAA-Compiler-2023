@@ -1,13 +1,24 @@
 package sysy.visitor;
 
+import sysy.error.CompileErrorType;
+import sysy.error.ErrorRecorder;
 import sysy.lexer.LexType;
 import sysy.parser.syntaxtree.*;
 import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 import sysy.symtable.SymbolTable;
+import sysy.symtable.symbol.ArraySymbol;
+import sysy.symtable.symbol.FunctionSymbol;
+import sysy.symtable.symbol.VarSymbol;
 
 public class Visitor {
+    private final ErrorRecorder errorRecorder;
     private final SymbolTable table = new SymbolTable();
     private SymbolTable currTable = table;
+
+    public Visitor(ErrorRecorder errorRecorder) {
+        this.errorRecorder = errorRecorder;
+    }
+
     public void visitAddExpNodeForDouble(AddExpNodeForDouble elm) {
         visitAddExpNode(elm.addExp);
         visitMulExpNode(elm.mulExp);
@@ -74,6 +85,22 @@ public class Visitor {
     }
 
     public void visitConstDefNode(ConstDefNode elm) {
+        if (currTable.contains(elm.ident)) {
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+        }
+
+        if (elm.dimensions.isEmpty()) {
+            var varSym = new VarSymbol();
+            varSym.ident = elm.ident;;
+            varSym.isConst = true;
+            currTable.insertSymbol(varSym);
+        } else {
+            var arrSym = new ArraySymbol();
+            arrSym.ident = elm.ident;
+            arrSym.isConst = true;
+            currTable.insertSymbol(arrSym);
+        }
+
         for (var dimension : elm.dimensions) {
             visitConstExpNode(dimension);
         }
@@ -146,12 +173,42 @@ public class Visitor {
     }
 
     public void visitFuncDefNode(FuncDefNode elm) {
+        if (currTable.contains(elm.ident)) {
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+        }
+
+        var sym = new FunctionSymbol();
+        sym.ident = elm.ident;
+        sym.retType = elm.funcType.type.toString();
+        currTable.insertSymbol(sym);
+
         visitFuncTypeNode(elm.funcType);
+
+        currTable = currTable.createSubTable();
         visitFuncFParamsNode(elm.params);
+
         visitBlockNode(elm.block);
+
+        currTable = currTable.getPreTable();
     }
 
     public void visitFuncFParamNode(FuncFParamNode elm) {
+        if (currTable.contains(elm.ident)) {
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+        }
+
+        if (elm.dimensions == null) {
+            var varSym = new VarSymbol();
+            varSym.ident = elm.ident;
+            varSym.isConst = false;
+            currTable.insertSymbol(varSym);
+        } else {
+            var arrSym = new ArraySymbol();
+            arrSym.ident = elm.ident;;
+            arrSym.isConst = false;
+            currTable.insertSymbol(arrSym);
+        }
+
         visitBTypeNode(elm.type);
         if (elm.dimensions != null) {
             for (var dim : elm.dimensions) {
@@ -229,13 +286,24 @@ public class Visitor {
     }
 
     public void visitLValNode(LValNode elm) {
+        if (currTable.getSymbol(elm.ident) == null) {
+            errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, -1); // todo: add line num
+        }
+
         for (var dim : elm.dimensions) {
             visitExpNode(dim);
         }
     }
 
     public void visitMainFuncDefNode(MainFuncDefNode elm) {
+        var sym = new FunctionSymbol();
+        sym.retType = "int";
+        sym.ident = "main";
+        currTable.insertSymbol(sym);
+
+        currTable = currTable.createSubTable();
         visitBlockNode(elm.mainBlock);
+        currTable = currTable.getPreTable();
     }
 
     public void visitMulExpNodeForDouble(MulExpNodeForDouble elm) {
@@ -304,7 +372,9 @@ public class Visitor {
     }
 
     public void visitStmtNodeForBlock(StmtNodeForBlock elm) {
+        currTable = currTable.createSubTable();
         visitBlockNode(elm.block);
+        currTable = currTable.getPreTable();
     }
 
     public void visitStmtNodeForContinueBreak(StmtNodeForContinueBreak elm) {
@@ -344,35 +414,68 @@ public class Visitor {
     }
 
     public void visitStmtNodeForPrintf(StmtNodeForPrintf elm) {
-
+        for (var exp : elm.exps) {
+            visitExpNode(exp);
+        }
     }
 
     public void visitStmtNodeForReturn(StmtNodeForReturn elm) {
-
+        if (elm.exp != null) {
+            if (elm.isExpNotNeed()) {
+                errorRecorder.addError(CompileErrorType.RETURN_NOT_MATCH, -1); // todo: add line num
+            }
+            visitExpNode(elm.exp);
+        }
     }
 
     public void visitStmtNode(StmtNode elm) {
-
-    }
-
-    public void visitSyntaxNode(SyntaxNode elm) {
-
+        if (elm instanceof StmtNodeForAssign e) {
+            visitStmtNodeForAssign(e);
+        } else if (elm instanceof StmtNodeForBlock e) {
+            visitStmtNodeForBlock(e);
+        } else if (elm instanceof StmtNodeForContinueBreak e) {
+            visitStmtNodeForContinueBreak(e);
+        } else if (elm instanceof StmtNodeForExp e) {
+            visitStmtNodeForExp(e);
+        } else if (elm instanceof StmtNodeForGetInt e) {
+            visitStmtNodeForGetInt(e);
+        } else if (elm instanceof StmtNodeForIfElse e) {
+            visitStmtNodeForIfElse(e);
+        } else if (elm instanceof StmtNodeForLoop e) {
+            visitStmtNodeForLoop(e);
+        } else if (elm instanceof StmtNodeForPrintf e) {
+            visitStmtNodeForPrintf(e);
+        } else {
+            visitStmtNodeForReturn((StmtNodeForReturn) elm);
+        }
     }
 
     public void visitUnaryExpNodeForFuncCall(UnaryExpNodeForFuncCall elm) {
+        if (currTable.getSymbol(elm.ident) == null) {
+            errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, -1); // todo: add line num
+        }
 
+        if (elm.params != null) {
+            visitFuncRParamsNode(elm.params);
+        }
     }
 
     public void visitUnaryExpNodeForPrimaryExp(UnaryExpNodeForPrimaryExp elm) {
-
+        visitPrimaryExpNode(elm.primaryExp);
     }
 
     public void visitUnaryExpNodeForUnaryOp(UnaryExpNodeForUnaryOp elm) {
-
+        visitUnaryExpNode(elm.exp);
     }
 
     public void visitUnaryExpNode(UnaryExpNode elm) {
-
+        if (elm instanceof UnaryExpNodeForFuncCall) {
+            visitUnaryExpNodeForFuncCall((UnaryExpNodeForFuncCall) elm);
+        } else if (elm instanceof UnaryExpNodeForPrimaryExp) {
+            visitUnaryExpNodeForPrimaryExp((UnaryExpNodeForPrimaryExp) elm);
+        } else {
+            visitUnaryExpNodeForUnaryOp((UnaryExpNodeForUnaryOp) elm);
+        }
     }
 
     public void visitUnaryOpNode(UnaryOpNode elm) {
@@ -380,10 +483,35 @@ public class Visitor {
     }
 
     public void visitVarDeclNode(VarDeclNode elm) {
-
+        visitBTypeNode(elm.type);
+        for (var varDef : elm.varDefs) {
+            visitVarDefNode(varDef);
+        }
     }
 
     public void visitVarDefNode(VarDefNode elm) {
+        if (currTable.contains(elm.ident)) {
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+        }
 
+        if (elm.dimensions.isEmpty()) {
+            var varSym = new VarSymbol();
+            varSym.isConst = false;
+            varSym.ident = elm.ident;
+            currTable.insertSymbol(varSym);
+        } else {
+            var arrSym = new ArraySymbol();
+            arrSym.isConst = false;
+            arrSym.ident = elm.ident;
+            currTable.insertSymbol(arrSym);
+        }
+
+        for (var dim : elm.dimensions) {
+            visitConstExpNode(dim);
+        }
+
+        if (elm.initVal != null) {
+            visitInitValNode(elm.initVal);
+        }
     }
 }
