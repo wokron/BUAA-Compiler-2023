@@ -11,7 +11,8 @@ public class Compiler {
 
     public static void main(String[] args) throws IOException, LexerException, ParserException {
 //        task1();
-        task2();
+//        task2();
+        task3();
     }
 
     private static void task1() throws IOException, LexerException {
@@ -45,6 +46,20 @@ public class Compiler {
                         }
                     }
             );
+        }
+    }
+
+    private static void task3() throws IOException, LexerException, ParserException {
+        try (var testFile = new FileInputStream("testfile.txt");
+             var outputFile = new FileOutputStream("output.txt")) {
+            var out = new PrintStream(outputFile);
+            var lexer = new Lexer(new InputStreamReader(testFile), recorder);
+            var parser = new Parser(lexer, recorder);
+            parser.parse();
+
+            for (var error : recorder.getErrors()) {
+                out.println(error);
+            }
         }
     }
 }

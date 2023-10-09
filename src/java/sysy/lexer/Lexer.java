@@ -1,5 +1,6 @@
 package sysy.lexer;
 
+import sysy.error.CompileErrorType;
 import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
 
@@ -88,7 +89,7 @@ public class Lexer {
             token = new Token(value, type, lineNum);
         } else if (ch == '\"') {
             ch = getChar();
-            while (ch == '%' || ch == '\\' || isNormalChar(ch)) {
+            while (ch != EOF && ch != '\"') {
                 sb.append((char) ch);
                 if (ch == '%') {
                     ch = getChar();
@@ -104,6 +105,8 @@ public class Lexer {
                     } else {
                         throw new LexerException();
                     }
+                } else if (!isNormalChar(ch)) {
+                    errorRecorder.addError(CompileErrorType.ILLEGAL_SYMBOL, lineNum);
                 }
                 ch = getChar();
             }
