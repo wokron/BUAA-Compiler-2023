@@ -1,5 +1,6 @@
 package sysy.parser;
 
+import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
 import sysy.exception.ParserException;
 import sysy.lexer.LexType;
@@ -13,9 +14,11 @@ import java.util.Queue;
 
 public class Parser {
     private final PreReadBuffer buf;
+    private final ErrorRecorder errorRecorder;
 
-    public Parser(Lexer lexer) throws LexerException {
+    public Parser(Lexer lexer, ErrorRecorder errorRecorder) throws LexerException {
         this.buf = new PreReadBuffer(lexer, 3);
+        this.errorRecorder = errorRecorder;
     }
 
     private static boolean isMatch(Token token, LexType type) {

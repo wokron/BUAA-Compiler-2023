@@ -1,5 +1,6 @@
 package sysy.lexer;
 
+import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
 
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.util.Map;
 
 public class Lexer {
     private final Reader in;
+    private final ErrorRecorder errorRecorder;
     private int pushbackChar;
     private boolean hasPushbackChar = false;
     private Token token = null;
@@ -48,8 +50,9 @@ public class Lexer {
         return Character.isWhitespace(ch) && ch != '\n';
     }
 
-    public Lexer(Reader in) {
+    public Lexer(Reader in, ErrorRecorder errorRecorder) {
         this.in = in;
+        this.errorRecorder = errorRecorder;
     }
 
     public boolean next() throws LexerException {
