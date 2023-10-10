@@ -1,6 +1,14 @@
 package sysy.symtable.symbol;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class VarSymbol extends Symbol {
     public boolean isConst = false;
-    public int value = 0;
+    public List<Integer> values = new ArrayList<>();
+    public List<Integer> dims = new ArrayList<>();
+
+    public boolean isArray() {
+        return !dims.isEmpty();
+    }
 }

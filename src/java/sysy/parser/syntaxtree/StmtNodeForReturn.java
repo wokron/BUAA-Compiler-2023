@@ -8,6 +8,8 @@ import java.util.function.Consumer;
 
 public class StmtNodeForReturn extends StmtNode {
     public ExpNode exp;
+    public int returnLineNum = -1;
+
 
     private boolean expNotNeed;
 

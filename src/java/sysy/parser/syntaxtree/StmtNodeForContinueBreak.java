@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 public class StmtNodeForContinueBreak extends StmtNode {
     public LexType type;
+    public int tkLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {

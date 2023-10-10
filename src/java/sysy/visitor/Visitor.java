@@ -4,35 +4,46 @@ import sysy.error.CompileErrorType;
 import sysy.error.ErrorRecorder;
 import sysy.lexer.LexType;
 import sysy.parser.syntaxtree.*;
-import sysy.parser.syntaxtree.symbol.TerminalSymbol;
 import sysy.symtable.SymbolTable;
-import sysy.symtable.symbol.ArraySymbol;
 import sysy.symtable.symbol.FunctionSymbol;
+import sysy.symtable.symbol.ParamType;
 import sysy.symtable.symbol.VarSymbol;
+
+import java.util.ArrayList;
 
 public class Visitor {
     private final ErrorRecorder errorRecorder;
     private final SymbolTable table = new SymbolTable();
     private SymbolTable currTable = table;
+    private int isInLoop = 0;
 
     public Visitor(ErrorRecorder errorRecorder) {
         this.errorRecorder = errorRecorder;
     }
 
-    public void visitAddExpNodeForDouble(AddExpNodeForDouble elm) {
-        visitAddExpNode(elm.addExp);
-        visitMulExpNode(elm.mulExp);
-    }
-
-    public void visitAddExpNodeForSingle(AddExpNodeForSingle elm) {
-        visitMulExpNode(elm.mulExp);
-    }
-
-    public void visitAddExpNode(AddExpNode elm) {
-        if (elm instanceof AddExpNodeForSingle) {
-            visitAddExpNodeForSingle((AddExpNodeForSingle) elm);
+    public Integer visitAddExpNodeForDouble(AddExpNodeForDouble elm) {
+        var val1 = visitAddExpNode(elm.addExp);
+        var val2 = visitMulExpNode(elm.mulExp);
+        if (val1 == null || val2 == null) {
+            return null;
         } else {
-            visitAddExpNodeForDouble((AddExpNodeForDouble) elm);
+            if (elm.op == LexType.PLUS) {
+                return val1 + val2;
+            } else {
+                return val1 - val2;
+            }
+        }
+    }
+
+    public Integer visitAddExpNodeForSingle(AddExpNodeForSingle elm) {
+        return visitMulExpNode(elm.mulExp);
+    }
+
+    public Integer visitAddExpNode(AddExpNode elm) {
+        if (elm instanceof AddExpNodeForSingle) {
+            return visitAddExpNodeForSingle((AddExpNodeForSingle) elm);
+        } else {
+            return visitAddExpNodeForDouble((AddExpNodeForDouble) elm);
         }
     }
 
@@ -56,6 +67,7 @@ public class Visitor {
         for (var blockItem : elm.blockItems) {
             visitBlockItemNode(blockItem);
         }
+
     }
 
     public void visitBTypeNode(BTypeNode elm) {
@@ -86,47 +98,48 @@ public class Visitor {
 
     public void visitConstDefNode(ConstDefNode elm) {
         if (currTable.contains(elm.ident)) {
-            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, elm.identLineNum);
+            return;
         }
 
-        if (elm.dimensions.isEmpty()) {
-            var varSym = new VarSymbol();
-            varSym.ident = elm.ident;;
-            varSym.isConst = true;
-            currTable.insertSymbol(varSym);
-        } else {
-            var arrSym = new ArraySymbol();
-            arrSym.ident = elm.ident;
-            arrSym.isConst = true;
-            currTable.insertSymbol(arrSym);
-        }
+        var varSym = new VarSymbol();
+        varSym.ident = elm.ident;
+        varSym.isConst = true;
 
         for (var dimension : elm.dimensions) {
-            visitConstExpNode(dimension);
+            varSym.dims.add(visitConstExpNode(dimension));
         }
 
-        visitConstInitValNode(elm.constInitVal);
+        varSym.values.addAll(visitConstInitValNode(elm.constInitVal));
+
+        currTable.insertSymbol(varSym);
     }
 
-    public void visitConstExpNode(ConstExpNode elm) {
-        visitAddExpNode(elm.addExp);
+    public Integer visitConstExpNode(ConstExpNode elm) {
+        var val = visitAddExpNode(elm.addExp);
+        assert val != null;
+        return val;
     }
 
-    public void visitConstInitValNodeForArrayInit(ConstInitValNodeForArrayInit elm) {
+    public ArrayList<Integer> visitConstInitValNodeForArrayInit(ConstInitValNodeForArrayInit elm) {
+        var rt = new ArrayList<Integer>();
         for (var init : elm.initValues) {
-            visitConstInitValNode(init);
+            rt.addAll(visitConstInitValNode(init));
         }
+        return rt;
     }
 
-    public void visitConstInitValNodeForConstExp(ConstInitValNodeForConstExp elm) {
-        visitConstExpNode(elm.constExp);
+    public ArrayList<Integer> visitConstInitValNodeForConstExp(ConstInitValNodeForConstExp elm) {
+        var rt = new ArrayList<Integer>();
+        rt.add(visitConstExpNode(elm.constExp));
+        return rt;
     }
 
-    public void visitConstInitValNode(ConstInitValNode elm) {
+    public ArrayList<Integer> visitConstInitValNode(ConstInitValNode elm) {
         if (elm instanceof ConstInitValNodeForArrayInit) {
-            visitConstInitValNodeForArrayInit((ConstInitValNodeForArrayInit) elm);
+            return visitConstInitValNodeForArrayInit((ConstInitValNodeForArrayInit) elm);
         } else {
-            visitConstInitValNodeForConstExp((ConstInitValNodeForConstExp) elm);
+            return visitConstInitValNodeForConstExp((ConstInitValNodeForConstExp) elm);
         }
     }
 
@@ -163,8 +176,8 @@ public class Visitor {
         }
     }
 
-    public void visitExpNode(ExpNode elm) {
-        visitAddExpNode(elm.addExp);
+    public Integer visitExpNode(ExpNode elm) {
+        return visitAddExpNode(elm.addExp);
     }
 
     public void visitForStmtNode(ForStmtNode elm) {
@@ -174,53 +187,64 @@ public class Visitor {
 
     public void visitFuncDefNode(FuncDefNode elm) {
         if (currTable.contains(elm.ident)) {
-            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, elm.identLineNum);
+            return;
         }
 
         var sym = new FunctionSymbol();
         sym.ident = elm.ident;
-        sym.retType = elm.funcType.type.toString();
-        currTable.insertSymbol(sym);
 
-        visitFuncTypeNode(elm.funcType);
+        String retType = visitFuncTypeNode(elm.funcType);
+        sym.retType = retType;
 
         currTable = currTable.createSubTable();
-        visitFuncFParamsNode(elm.params);
+        if (elm.params != null) {
+            sym.paramTypeList.addAll(visitFuncFParamsNode(elm.params));
+        }
+
+        currTable.getPreTable().insertSymbol(sym);
 
         visitBlockNode(elm.block);
+
+        if (!sym.retType.equals("void") && elm.block.isWithoutReturn()) {
+            errorRecorder.addError(CompileErrorType.RETURN_IS_MISSING, elm.block.blockRLineNum);
+        }
 
         currTable = currTable.getPreTable();
     }
 
-    public void visitFuncFParamNode(FuncFParamNode elm) {
+    public ParamType visitFuncFParamNode(FuncFParamNode elm) {
         if (currTable.contains(elm.ident)) {
-            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, elm.identLineNum);
+            return null; // this may be error
         }
 
-        if (elm.dimensions == null) {
-            var varSym = new VarSymbol();
-            varSym.ident = elm.ident;
-            varSym.isConst = false;
-            currTable.insertSymbol(varSym);
-        } else {
-            var arrSym = new ArraySymbol();
-            arrSym.ident = elm.ident;;
-            arrSym.isConst = false;
-            currTable.insertSymbol(arrSym);
-        }
+        var varSym = new VarSymbol();
+        varSym.ident = elm.ident;
+        varSym.isConst = false;
 
         visitBTypeNode(elm.type);
         if (elm.dimensions != null) {
+            varSym.dims.add(null); // for dim 0
             for (var dim : elm.dimensions) {
-                visitConstExpNode(dim);
+                varSym.dims.add(visitConstExpNode(dim));
             }
         }
+
+        currTable.insertSymbol(varSym);
+
+        var rt = new ParamType();
+        rt.type = "int";
+        rt.dims.addAll(varSym.dims);
+        return rt;
     }
 
-    public void visitFuncFParamsNode(FuncFParamsNode elm) {
+    public ArrayList<ParamType> visitFuncFParamsNode(FuncFParamsNode elm) {
+        var rt = new ArrayList<ParamType>();
         for (var param : elm.params) {
-            visitFuncFParamNode(param);
+            rt.add(visitFuncFParamNode(param));
         }
+        return rt;
     }
 
     public void visitFuncRParamsNode(FuncRParamsNode elm) {
@@ -229,8 +253,8 @@ public class Visitor {
         }
     }
 
-    public void visitFuncTypeNode(FuncTypeNode elm) {
-
+    public String visitFuncTypeNode(FuncTypeNode elm) {
+        return elm.type.toString();
     }
 
     public void visitInitValNodeForArray(InitValNodeForArray elm) {
@@ -285,14 +309,18 @@ public class Visitor {
         }
     }
 
-    public void visitLValNode(LValNode elm) {
-        if (currTable.getSymbol(elm.ident) == null) {
-            errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, -1); // todo: add line num
+    public VarSymbol visitLValNode(LValNode elm) {
+        var rt = currTable.getSymbol(elm.ident);
+        if (rt == null || rt instanceof FunctionSymbol) {
+            errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, elm.identLineNum);
+            return null;
         }
 
         for (var dim : elm.dimensions) {
             visitExpNode(dim);
         }
+
+        return (VarSymbol) rt;
     }
 
     public void visitMainFuncDefNode(MainFuncDefNode elm) {
@@ -302,50 +330,68 @@ public class Visitor {
         currTable.insertSymbol(sym);
 
         currTable = currTable.createSubTable();
+
         visitBlockNode(elm.mainBlock);
+
+        if (!sym.retType.equals("void") && elm.mainBlock.isWithoutReturn()) {
+            errorRecorder.addError(CompileErrorType.RETURN_IS_MISSING, elm.mainBlock.blockRLineNum);
+        }
+
         currTable = currTable.getPreTable();
     }
 
-    public void visitMulExpNodeForDouble(MulExpNodeForDouble elm) {
-        visitMulExpNode(elm.mulExp);
-        visitUnaryExpNode(elm.unaryExp);
-    }
-
-    public void visitMulExpNodeForSingle(MulExpNodeForSingle elm) {
-        visitUnaryExpNode(elm.unaryExp);
-    }
-
-    public void visitMulExpNode(MulExpNode elm) {
-        if (elm instanceof MulExpNodeForDouble) {
-            visitMulExpNodeForDouble((MulExpNodeForDouble) elm);
+    public Integer visitMulExpNodeForDouble(MulExpNodeForDouble elm) {
+        var val1 = visitMulExpNode(elm.mulExp);
+        var val2 = visitUnaryExpNode(elm.unaryExp);
+        if (val1 == null || val2 == null) {
+            return null;
         } else {
-            visitMulExpNodeForSingle((MulExpNodeForSingle) elm);
+            if (elm.op == LexType.MULT) {
+                return val1 * val2;
+            } else if (elm.op == LexType.DIV) {
+                return val1 / val2;
+            } else {
+                return val1 % val2;
+            }
         }
     }
 
-    public void visitNumberNode(NumberNode elm) {
-
+    public Integer visitMulExpNodeForSingle(MulExpNodeForSingle elm) {
+        return visitUnaryExpNode(elm.unaryExp);
     }
 
-    public void visitPrimaryExpNodeForExp(PrimaryExpNodeForExp elm) {
-        visitExpNode(elm.exp);
-    }
-
-    public void visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
-        visitLValNode(elm.lVal);
-    }
-
-    public void visitPrimaryExpNodeForNumber(PrimaryExpNodeForNumber elm) {
-        visitNumberNode(elm.number);
-    }
-
-    public void visitPrimaryExpNode(PrimaryExpNode elm) {
-        if (elm instanceof PrimaryExpNodeForExp) {
-            visitPrimaryExpNodeForExp((PrimaryExpNodeForExp) elm);
-        } else if (elm instanceof PrimaryExpNodeForLVal) {
-            visitPrimaryExpNodeForLVal((PrimaryExpNodeForLVal) elm);
+    public Integer visitMulExpNode(MulExpNode elm) {
+        if (elm instanceof MulExpNodeForDouble) {
+            return visitMulExpNodeForDouble((MulExpNodeForDouble) elm);
         } else {
-            visitPrimaryExpNodeForNumber((PrimaryExpNodeForNumber) elm);
+            return visitMulExpNodeForSingle((MulExpNodeForSingle) elm);
+        }
+    }
+
+    public int visitNumberNode(NumberNode elm) {
+        return Integer.parseInt(elm.intConst);
+    }
+
+    public Integer visitPrimaryExpNodeForExp(PrimaryExpNodeForExp elm) {
+        return visitExpNode(elm.exp);
+    }
+
+    public Integer visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
+        visitLValNode(elm.lVal);
+        return null;
+    }
+
+    public Integer visitPrimaryExpNodeForNumber(PrimaryExpNodeForNumber elm) {
+        return visitNumberNode(elm.number);
+    }
+
+    public Integer visitPrimaryExpNode(PrimaryExpNode elm) {
+        if (elm instanceof PrimaryExpNodeForExp) {
+            return visitPrimaryExpNodeForExp((PrimaryExpNodeForExp) elm);
+        } else if (elm instanceof PrimaryExpNodeForLVal) {
+            return visitPrimaryExpNodeForLVal((PrimaryExpNodeForLVal) elm);
+        } else {
+            return visitPrimaryExpNodeForNumber((PrimaryExpNodeForNumber) elm);
         }
     }
 
@@ -367,7 +413,11 @@ public class Visitor {
     }
 
     public void visitStmtNodeForAssign(StmtNodeForAssign elm) {
-        visitLValNode(elm.lVal);
+        var lValSym = visitLValNode(elm.lVal);
+        if (lValSym != null && lValSym.isConst) {
+            errorRecorder.addError(CompileErrorType.TRY_TO_CHANGE_VAL_OF_CONST, elm.lVal.identLineNum);
+        }
+
         visitExpNode(elm.exp);
     }
 
@@ -378,7 +428,9 @@ public class Visitor {
     }
 
     public void visitStmtNodeForContinueBreak(StmtNodeForContinueBreak elm) {
-
+        if (isInLoop == 0) {
+            errorRecorder.addError(CompileErrorType.BREAK_OR_CONTINUE_NOT_IN_LOOP, elm.tkLineNum);
+        }
     }
 
     public void visitStmtNodeForExp(StmtNodeForExp elm) {
@@ -386,7 +438,10 @@ public class Visitor {
     }
 
     public void visitStmtNodeForGetInt(StmtNodeForGetInt elm) {
-        visitLValNode(elm.lVal);
+        var lValSym = visitLValNode(elm.lVal);
+        if (lValSym != null && lValSym.isConst) {
+            errorRecorder.addError(CompileErrorType.TRY_TO_CHANGE_VAL_OF_CONST, elm.lVal.identLineNum);
+        }
     }
 
     public void visitStmtNodeForIfElse(StmtNodeForIfElse elm) {
@@ -410,19 +465,26 @@ public class Visitor {
             visitForStmtNode(elm.forStmt2);
         }
 
+        isInLoop++;
         visitStmtNode(elm.stmt);
+        isInLoop--;
     }
 
     public void visitStmtNodeForPrintf(StmtNodeForPrintf elm) {
         for (var exp : elm.exps) {
             visitExpNode(exp);
         }
+
+        var fCharNum = (elm.formatString.length() - String.join("", elm.formatString.split("%d")).length()) / 2;
+        if (fCharNum != elm.exps.size()) {
+            errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_IN_PRINTF_NOT_MATCH, elm.printfLineNum);
+        }
     }
 
     public void visitStmtNodeForReturn(StmtNodeForReturn elm) {
         if (elm.exp != null) {
-            if (elm.isExpNotNeed()) {
-                errorRecorder.addError(CompileErrorType.RETURN_NOT_MATCH, -1); // todo: add line num
+            if (elm.isExpNotNeed()) { // todo: need to modify
+                errorRecorder.addError(CompileErrorType.RETURN_NOT_MATCH, elm.returnLineNum);
             }
             visitExpNode(elm.exp);
         }
@@ -450,31 +512,50 @@ public class Visitor {
         }
     }
 
-    public void visitUnaryExpNodeForFuncCall(UnaryExpNodeForFuncCall elm) {
-        if (currTable.getSymbol(elm.ident) == null) {
-            errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, -1); // todo: add line num
+    public Integer visitUnaryExpNodeForFuncCall(UnaryExpNodeForFuncCall elm) {
+        var sym = currTable.getSymbol(elm.ident);
+        if (sym == null || sym instanceof VarSymbol) {
+            errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, elm.identLineNum);
+            return null;
         }
+        FunctionSymbol funcSym = (FunctionSymbol) sym;
 
         if (elm.params != null) {
             visitFuncRParamsNode(elm.params);
+
+            if (elm.params.exps.size() != funcSym.paramTypeList.size()) {
+                errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_NOT_MATCH, elm.identLineNum);
+                return null;
+            }
+
+            // todo: param type not match error check
+        }
+
+        return null;
+    }
+
+    public Integer visitUnaryExpNodeForPrimaryExp(UnaryExpNodeForPrimaryExp elm) {
+        return visitPrimaryExpNode(elm.primaryExp);
+    }
+
+    public Integer visitUnaryExpNodeForUnaryOp(UnaryExpNodeForUnaryOp elm) {
+        var val = visitUnaryExpNode(elm.exp);
+        if (elm.op.opType == LexType.MINU) {
+            return -val;
+        } else if (elm.op.opType == LexType.PLUS) {
+            return val;
+        } else {
+            return val == 0 ? 0 : 1;
         }
     }
 
-    public void visitUnaryExpNodeForPrimaryExp(UnaryExpNodeForPrimaryExp elm) {
-        visitPrimaryExpNode(elm.primaryExp);
-    }
-
-    public void visitUnaryExpNodeForUnaryOp(UnaryExpNodeForUnaryOp elm) {
-        visitUnaryExpNode(elm.exp);
-    }
-
-    public void visitUnaryExpNode(UnaryExpNode elm) {
+    public Integer visitUnaryExpNode(UnaryExpNode elm) {
         if (elm instanceof UnaryExpNodeForFuncCall) {
-            visitUnaryExpNodeForFuncCall((UnaryExpNodeForFuncCall) elm);
+            return visitUnaryExpNodeForFuncCall((UnaryExpNodeForFuncCall) elm);
         } else if (elm instanceof UnaryExpNodeForPrimaryExp) {
-            visitUnaryExpNodeForPrimaryExp((UnaryExpNodeForPrimaryExp) elm);
+            return visitUnaryExpNodeForPrimaryExp((UnaryExpNodeForPrimaryExp) elm);
         } else {
-            visitUnaryExpNodeForUnaryOp((UnaryExpNodeForUnaryOp) elm);
+            return visitUnaryExpNodeForUnaryOp((UnaryExpNodeForUnaryOp) elm);
         }
     }
 
@@ -491,27 +572,22 @@ public class Visitor {
 
     public void visitVarDefNode(VarDefNode elm) {
         if (currTable.contains(elm.ident)) {
-            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, -1); // todo: add linenum
+            errorRecorder.addError(CompileErrorType.NAME_REDEFINE, elm.identLineNum);
+            return;
         }
 
-        if (elm.dimensions.isEmpty()) {
-            var varSym = new VarSymbol();
-            varSym.isConst = false;
-            varSym.ident = elm.ident;
-            currTable.insertSymbol(varSym);
-        } else {
-            var arrSym = new ArraySymbol();
-            arrSym.isConst = false;
-            arrSym.ident = elm.ident;
-            currTable.insertSymbol(arrSym);
-        }
+        var varSym = new VarSymbol();
+        varSym.isConst = false;
+        varSym.ident = elm.ident;
 
         for (var dim : elm.dimensions) {
-            visitConstExpNode(dim);
+            varSym.dims.add(visitConstExpNode(dim));
         }
 
         if (elm.initVal != null) {
             visitInitValNode(elm.initVal);
         }
+
+        currTable.insertSymbol(varSym);
     }
 }

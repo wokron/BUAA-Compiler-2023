@@ -98,6 +98,7 @@ public class Parser {
         subTree.funcType = (FuncTypeNode) result.getSubtree();
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
         if (isMatch(currToken, LexType.INTTK)) {
@@ -148,6 +149,7 @@ public class Parser {
         subTree.type = (BTypeNode) result.getSubtree();
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         if (isMatch(currToken, LexType.LBRACK)) {
             subTree.dimensions = new ArrayList<>();
@@ -256,6 +258,7 @@ public class Parser {
         } else if (isMatch(currToken, LexType.IDENFR) && isMatch(preRead, LexType.LPARENT)) {
             var newNode = new UnaryExpNodeForFuncCall();
             newNode.ident = currToken.getValue();
+            newNode.identLineNum = currToken.getLineNum();
 
             currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
             currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
@@ -383,6 +386,7 @@ public class Parser {
         ParseResult result;
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
@@ -428,6 +432,7 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.blockItems.add((BlockItemNode) result.getSubtree());
         }
+        subTree.blockRLineNum = currToken.getLineNum();
         currToken = buf.readNextToken();
 
         return new ParseResult(currToken, subTree);
@@ -626,6 +631,7 @@ public class Parser {
             subTree = newNode;
         } else if (isMatch(currToken, LexType.BREAKTK)) {
             var newNode = new StmtNodeForContinueBreak();
+            newNode.tkLineNum = currToken.getLineNum();
             newNode.type = currToken.getType();
 
             currToken = buf.readNextToken();
@@ -639,6 +645,7 @@ public class Parser {
             subTree = newNode;
         } else if (isMatch(currToken, LexType.CONTINUETK)) {
             var newNode = new StmtNodeForContinueBreak();
+            newNode.tkLineNum = currToken.getLineNum();
             newNode.type = currToken.getType();
 
             currToken = buf.readNextToken();
@@ -652,6 +659,7 @@ public class Parser {
             subTree = newNode;
         } else if (isMatch(currToken, LexType.RETURNTK)) {
             var newNode = new StmtNodeForReturn();
+            newNode.returnLineNum = currToken.getLineNum();
 
             currToken = buf.readNextToken();
             if (isMatch(currToken, LexType.LPARENT)
@@ -674,6 +682,7 @@ public class Parser {
             subTree = newNode;
         } else if (isMatch(currToken, LexType.PRINTFTK)) {
             var newNode = new StmtNodeForPrintf();
+            newNode.printfLineNum = currToken.getLineNum();
 
             currToken = buf.readNextToken();
             currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
@@ -908,6 +917,7 @@ public class Parser {
         ParseResult result;
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
@@ -1009,6 +1019,7 @@ public class Parser {
         ParseResult result;
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();

@@ -1,6 +1,7 @@
 package sysy.error;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class ErrorRecorder {
@@ -11,10 +12,11 @@ public class ErrorRecorder {
     }
 
     public void addError(CompileErrorType type, int lineNum) {
-        errorList.add(new CompileError(type, lineNum));
+        addError(new CompileError(type, lineNum));
     }
 
     public List<CompileError> getErrors() {
+        errorList.sort(Comparator.comparingInt(CompileError::getLineNum));
         return errorList;
     }
 }

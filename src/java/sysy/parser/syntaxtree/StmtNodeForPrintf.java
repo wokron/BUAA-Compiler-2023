@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 public class StmtNodeForPrintf extends StmtNode {
     public String formatString;
     public List<ExpNode> exps = new ArrayList<>();
+    public int printfLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {

@@ -11,6 +11,7 @@ public class FuncDefNode extends SyntaxNode {
     public String ident;
     public FuncFParamsNode params;
     public BlockNode block;
+    public int identLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
