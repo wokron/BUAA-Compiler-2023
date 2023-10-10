@@ -10,17 +10,6 @@ public class StmtNodeForReturn extends StmtNode {
     public ExpNode exp;
     public int returnLineNum = -1;
 
-
-    private boolean expNotNeed;
-
-    public void setExpNotNeed(boolean expNotNeed) {
-        this.expNotNeed = expNotNeed;
-    }
-
-    public boolean isExpNotNeed() {
-        return expNotNeed;
-    }
-
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
         terminalConsumer.accept(new TerminalSymbol(LexType.RETURNTK));

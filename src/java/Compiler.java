@@ -53,8 +53,8 @@ public class Compiler {
 
     private static void task3() throws IOException, LexerException, ParserException {
         try (var testFile = new FileInputStream("testfile.txt");
-             var outputFile = new FileOutputStream("output.txt")) {
-            var out = new PrintStream(outputFile);
+             var errFile = new FileOutputStream("error.txt")) {
+            var err = new PrintStream(errFile);
             var lexer = new Lexer(new InputStreamReader(testFile), recorder);
             var parser = new Parser(lexer, recorder);
             var result = parser.parse();
@@ -63,7 +63,7 @@ public class Compiler {
             visitor.visitCompUnitNode((CompUnitNode) result);
 
             for (var error : recorder.getErrors()) {
-                out.println(error);
+                err.println(error);
             }
         }
     }

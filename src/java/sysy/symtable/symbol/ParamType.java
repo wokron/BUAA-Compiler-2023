@@ -5,5 +5,5 @@ import java.util.List;
 
 public class ParamType {
     public String type;
-    public List<Integer> dims = new ArrayList<>();
+    public final List<Integer> dims = new ArrayList<>();
 }

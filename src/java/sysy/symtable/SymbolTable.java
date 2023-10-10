@@ -1,6 +1,5 @@
 package sysy.symtable;
 
-import sysy.exception.DuplicateIdentException;
 import sysy.symtable.symbol.Symbol;
 
 import java.util.ArrayList;

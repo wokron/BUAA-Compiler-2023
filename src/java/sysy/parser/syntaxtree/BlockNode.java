@@ -13,6 +13,9 @@ public class BlockNode extends SyntaxNode {
     public int blockRLineNum = -1;
 
     public boolean isWithoutReturn() {
+        if (blockItems.isEmpty()) {
+            return true;
+        }
         var lastBlockItem = blockItems.get(blockItems.size() - 1);
 
         return !(lastBlockItem instanceof BlockItemNodeForStmt blockStmt)

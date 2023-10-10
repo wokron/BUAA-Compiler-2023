@@ -10,12 +10,14 @@ import sysy.symtable.symbol.ParamType;
 import sysy.symtable.symbol.VarSymbol;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Visitor {
     private final ErrorRecorder errorRecorder;
     private final SymbolTable table = new SymbolTable();
     private SymbolTable currTable = table;
     private int isInLoop = 0;
+    private boolean isRetExpNotNeed = false;
 
     public Visitor(ErrorRecorder errorRecorder) {
         this.errorRecorder = errorRecorder;
@@ -204,6 +206,8 @@ public class Visitor {
 
         currTable.getPreTable().insertSymbol(sym);
 
+        isRetExpNotNeed = sym.retType.equals("void");
+
         visitBlockNode(elm.block);
 
         if (!sym.retType.equals("void") && elm.block.isWithoutReturn()) {
@@ -310,17 +314,31 @@ public class Visitor {
     }
 
     public VarSymbol visitLValNode(LValNode elm) {
-        var rt = currTable.getSymbol(elm.ident);
-        if (rt == null || rt instanceof FunctionSymbol) {
+        var sym = currTable.getSymbol(elm.ident);
+        if (sym == null || sym instanceof FunctionSymbol) {
             errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, elm.identLineNum);
             return null;
         }
+        var varSym = (VarSymbol) sym;
 
+        List<Integer> dims = new ArrayList<>();
         for (var dim : elm.dimensions) {
-            visitExpNode(dim);
+            dims.add(visitExpNode(dim));
+        }
+        if (varSym.isConst) {
+            if (!varSym.isArray()) {
+                varSym.constLVal = varSym.values.get(0);
+            } else {
+                int offset = 0;
+                for (int i = 0, j = varSym.dims.size() - 1, unit = 1; i < dims.size(); i++, j--) {
+                    offset += unit * dims.get(i);
+                    unit *= varSym.dims.get(j);
+                }
+                varSym.constLVal = varSym.values.get(offset);
+            }
         }
 
-        return (VarSymbol) rt;
+        return varSym;
     }
 
     public void visitMainFuncDefNode(MainFuncDefNode elm) {
@@ -330,6 +348,8 @@ public class Visitor {
         currTable.insertSymbol(sym);
 
         currTable = currTable.createSubTable();
+
+        isRetExpNotNeed = false;
 
         visitBlockNode(elm.mainBlock);
 
@@ -377,7 +397,10 @@ public class Visitor {
     }
 
     public Integer visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
-        visitLValNode(elm.lVal);
+        var lVal = visitLValNode(elm.lVal);
+        if (lVal.isConst) {
+            return lVal.constLVal;
+        }
         return null;
     }
 
@@ -434,7 +457,9 @@ public class Visitor {
     }
 
     public void visitStmtNodeForExp(StmtNodeForExp elm) {
-        visitExpNode(elm.exp);
+        if (elm.exp != null) {
+            visitExpNode(elm.exp);
+        }
     }
 
     public void visitStmtNodeForGetInt(StmtNodeForGetInt elm) {
@@ -483,7 +508,7 @@ public class Visitor {
 
     public void visitStmtNodeForReturn(StmtNodeForReturn elm) {
         if (elm.exp != null) {
-            if (elm.isExpNotNeed()) { // todo: need to modify
+            if (isRetExpNotNeed) {
                 errorRecorder.addError(CompileErrorType.RETURN_NOT_MATCH, elm.returnLineNum);
             }
             visitExpNode(elm.exp);
@@ -540,6 +565,9 @@ public class Visitor {
 
     public Integer visitUnaryExpNodeForUnaryOp(UnaryExpNodeForUnaryOp elm) {
         var val = visitUnaryExpNode(elm.exp);
+        if (val == null) {
+            return null;
+        }
         if (elm.op.opType == LexType.MINU) {
             return -val;
         } else if (elm.op.opType == LexType.PLUS) {

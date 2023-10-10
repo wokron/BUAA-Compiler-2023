@@ -5,5 +5,5 @@ import java.util.List;
 
 public class FunctionSymbol extends Symbol {
     public String retType;
-    public List<ParamType> paramTypeList = new ArrayList<>();
+    public final List<ParamType> paramTypeList = new ArrayList<>();
 }

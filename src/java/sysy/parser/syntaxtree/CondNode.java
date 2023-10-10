@@ -11,7 +11,6 @@ public class CondNode extends SyntaxNode {
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
         lOrExp.walk(terminalConsumer, nonTerminalConsumer);
-
         nonTerminalConsumer.accept(new NonTerminalSymbol(this));
     }
 
