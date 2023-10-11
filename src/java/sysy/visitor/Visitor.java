@@ -221,6 +221,7 @@ public class Visitor {
     public ParamType visitFuncFParamNode(FuncFParamNode elm) {
         if (currTable.contains(elm.ident)) {
             errorRecorder.addError(CompileErrorType.NAME_REDEFINE, elm.identLineNum);
+            return null;
         }
 
         var varSym = new VarSymbol();
@@ -246,7 +247,10 @@ public class Visitor {
     public ArrayList<ParamType> visitFuncFParamsNode(FuncFParamsNode elm) {
         var rt = new ArrayList<ParamType>();
         for (var param : elm.params) {
-            rt.add(visitFuncFParamNode(param));
+            var paramType = visitFuncFParamNode(param);
+            if (paramType != null) {
+                rt.add(paramType);
+            }
         }
         return rt;
     }
@@ -318,7 +322,7 @@ public class Visitor {
 
     public VarSymbol visitLValNode(LValNode elm) {
         var sym = currTable.getSymbol(elm.ident);
-        if (sym == null || sym instanceof FunctionSymbol) {
+        if (sym == null) {
             errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, elm.identLineNum);
             return null;
         }
@@ -328,18 +332,7 @@ public class Visitor {
         for (var dim : elm.dimensions) {
             accessDims.add(visitExpNode(dim));
         }
-//        if (varSym.isConst) {
-//            if (!varSym.isArray()) {
-//                varSym.constLVal = varSym.values.get(0);
-//            } else {
-//                int offset = 0;
-//                for (int i = 0, j = varSym.dims.size() - 1, unit = 1; i < accessDims.size(); i++, j--) {
-//                    offset += unit * accessDims.get(i);
-//                    unit *= varSym.dims.get(j);
-//                }
-//                varSym.constLVal = varSym.values.get(offset);
-//            }
-//        }
+
         expType = new ArrayList<>();
         for (int i = accessDims.size(); i < varSym.dims.size(); i++) {
             expType.add(varSym.dims.get(i));
@@ -550,7 +543,7 @@ public class Visitor {
 
     public Integer visitUnaryExpNodeForFuncCall(UnaryExpNodeForFuncCall elm) {
         var sym = currTable.getSymbol(elm.ident);
-        if (sym == null || sym instanceof VarSymbol) {
+        if (sym == null) {
             errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, elm.identLineNum);
             return null;
         }
@@ -567,12 +560,20 @@ public class Visitor {
             for (int i = 0; i < funcSym.paramTypeList.size(); i++) {
                 if (!funcSym.paramTypeList.get(i).dims.equals(typeDims.get(i))) {
                     errorRecorder.addError(CompileErrorType.TYPE_OF_PARAM_NOT_MATCH, elm.identLineNum);
-                    return null;
                 }
+            }
+        } else {
+            if (!funcSym.paramTypeList.isEmpty()) {
+                errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_NOT_MATCH, elm.identLineNum);
+                return null;
             }
         }
 
         expType = new ArrayList<>(); // just int
+        if (funcSym.retType.equals("void")) {
+            expType.add(null);
+            expType.add(null);
+        }
 
         return null;
     }
