@@ -18,6 +18,7 @@ public class Visitor {
     private SymbolTable currTable = table;
     private int isInLoop = 0;
     private boolean isRetExpNotNeed = false;
+    private List<Integer> expType = null;
 
     public Visitor(ErrorRecorder errorRecorder) {
         this.errorRecorder = errorRecorder;
@@ -220,7 +221,6 @@ public class Visitor {
     public ParamType visitFuncFParamNode(FuncFParamNode elm) {
         if (currTable.contains(elm.ident)) {
             errorRecorder.addError(CompileErrorType.NAME_REDEFINE, elm.identLineNum);
-            return null; // this may be error
         }
 
         var varSym = new VarSymbol();
@@ -251,10 +251,13 @@ public class Visitor {
         return rt;
     }
 
-    public void visitFuncRParamsNode(FuncRParamsNode elm) {
+    public List<List<Integer>> visitFuncRParamsNode(FuncRParamsNode elm) {
+        List<List<Integer>> rtTypeDims = new ArrayList<>();
         for (var exp : elm.exps) {
             visitExpNode(exp);
+            rtTypeDims.add(expType);
         }
+        return rtTypeDims;
     }
 
     public String visitFuncTypeNode(FuncTypeNode elm) {
@@ -321,21 +324,28 @@ public class Visitor {
         }
         var varSym = (VarSymbol) sym;
 
-        List<Integer> dims = new ArrayList<>();
+        List<Integer> accessDims = new ArrayList<>();
         for (var dim : elm.dimensions) {
-            dims.add(visitExpNode(dim));
+            accessDims.add(visitExpNode(dim));
         }
-        if (varSym.isConst) {
-            if (!varSym.isArray()) {
-                varSym.constLVal = varSym.values.get(0);
-            } else {
-                int offset = 0;
-                for (int i = 0, j = varSym.dims.size() - 1, unit = 1; i < dims.size(); i++, j--) {
-                    offset += unit * dims.get(i);
-                    unit *= varSym.dims.get(j);
-                }
-                varSym.constLVal = varSym.values.get(offset);
-            }
+//        if (varSym.isConst) {
+//            if (!varSym.isArray()) {
+//                varSym.constLVal = varSym.values.get(0);
+//            } else {
+//                int offset = 0;
+//                for (int i = 0, j = varSym.dims.size() - 1, unit = 1; i < accessDims.size(); i++, j--) {
+//                    offset += unit * accessDims.get(i);
+//                    unit *= varSym.dims.get(j);
+//                }
+//                varSym.constLVal = varSym.values.get(offset);
+//            }
+//        }
+        expType = new ArrayList<>();
+        for (int i = accessDims.size(); i < varSym.dims.size(); i++) {
+            expType.add(varSym.dims.get(i));
+        }
+        if (!expType.isEmpty()) {
+            expType.set(0, null);
         }
 
         return varSym;
@@ -405,6 +415,7 @@ public class Visitor {
     }
 
     public Integer visitPrimaryExpNodeForNumber(PrimaryExpNodeForNumber elm) {
+        expType = new ArrayList<>(); // just int
         return visitNumberNode(elm.number);
     }
 
@@ -546,15 +557,22 @@ public class Visitor {
         FunctionSymbol funcSym = (FunctionSymbol) sym;
 
         if (elm.params != null) {
-            visitFuncRParamsNode(elm.params);
+            var typeDims = visitFuncRParamsNode(elm.params);
 
             if (elm.params.exps.size() != funcSym.paramTypeList.size()) {
                 errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_NOT_MATCH, elm.identLineNum);
                 return null;
             }
 
-            // todo: param type not match error check
+            for (int i = 0; i < funcSym.paramTypeList.size(); i++) {
+                if (!funcSym.paramTypeList.get(i).dims.equals(typeDims.get(i))) {
+                    errorRecorder.addError(CompileErrorType.TYPE_OF_PARAM_NOT_MATCH, elm.identLineNum);
+                    return null;
+                }
+            }
         }
+
+        expType = new ArrayList<>(); // just int
 
         return null;
     }
