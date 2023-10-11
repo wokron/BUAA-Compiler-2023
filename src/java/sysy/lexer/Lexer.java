@@ -1,5 +1,7 @@
 package sysy.lexer;
 
+import sysy.error.CompileErrorType;
+import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
 
 import java.io.IOException;
@@ -8,6 +10,7 @@ import java.util.Map;
 
 public class Lexer {
     private final Reader in;
+    private final ErrorRecorder errorRecorder;
     private int pushbackChar;
     private boolean hasPushbackChar = false;
     private Token token = null;
@@ -48,8 +51,9 @@ public class Lexer {
         return Character.isWhitespace(ch) && ch != '\n';
     }
 
-    public Lexer(Reader in) {
+    public Lexer(Reader in, ErrorRecorder errorRecorder) {
         this.in = in;
+        this.errorRecorder = errorRecorder;
     }
 
     public boolean next() throws LexerException {
@@ -85,7 +89,7 @@ public class Lexer {
             token = new Token(value, type, lineNum);
         } else if (ch == '\"') {
             ch = getChar();
-            while (ch == '%' || ch == '\\' || isNormalChar(ch)) {
+            while (ch != EOF && ch != '\"') {
                 sb.append((char) ch);
                 if (ch == '%') {
                     ch = getChar();
@@ -101,6 +105,8 @@ public class Lexer {
                     } else {
                         throw new LexerException();
                     }
+                } else if (!isNormalChar(ch)) {
+                    errorRecorder.addError(CompileErrorType.ILLEGAL_SYMBOL, lineNum);
                 }
                 ch = getChar();
             }

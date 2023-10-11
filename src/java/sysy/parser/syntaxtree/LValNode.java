@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 public class LValNode extends SyntaxNode {
     public String ident;
     public List<ExpNode> dimensions = new ArrayList<>();
+    public int identLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {

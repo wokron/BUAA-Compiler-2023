@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 public class StmtNodeForReturn extends StmtNode {
     public ExpNode exp;
+    public int returnLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {

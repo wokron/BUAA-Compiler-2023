@@ -11,6 +11,7 @@ public class FuncFParamNode extends SyntaxNode {
     public BTypeNode type;
     public String ident;
     public List<ConstExpNode> dimensions;
+    public int identLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {

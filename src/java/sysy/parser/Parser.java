@@ -1,5 +1,7 @@
 package sysy.parser;
 
+import sysy.error.CompileErrorType;
+import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
 import sysy.exception.ParserException;
 import sysy.lexer.LexType;
@@ -7,13 +9,17 @@ import sysy.lexer.Lexer;
 import sysy.lexer.Token;
 import sysy.parser.syntaxtree.*;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Queue;
 
 public class Parser {
     private final PreReadBuffer buf;
+    private final ErrorRecorder errorRecorder;
 
-    public Parser(Lexer lexer) throws LexerException {
+    public Parser(Lexer lexer, ErrorRecorder errorRecorder) throws LexerException {
         this.buf = new PreReadBuffer(lexer, 3);
+        this.errorRecorder = errorRecorder;
     }
 
     private static boolean isMatch(Token token, LexType type) {
@@ -92,6 +98,7 @@ public class Parser {
         subTree.funcType = (FuncTypeNode) result.getSubtree();
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
         if (isMatch(currToken, LexType.INTTK)) {
@@ -99,7 +106,13 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.params = (FuncFParamsNode) result.getSubtree();
         }
-        currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+
+        if (isMatch(currToken, LexType.RPARENT)) {
+            currToken = buf.readNextToken();
+        } else {
+            errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+        }
+
         result = parseBlock(currToken);
         subTree.block = (BlockNode) result.getSubtree();
 
@@ -136,18 +149,29 @@ public class Parser {
         subTree.type = (BTypeNode) result.getSubtree();
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         if (isMatch(currToken, LexType.LBRACK)) {
             subTree.dimensions = new ArrayList<>();
             currToken = buf.readNextToken();
-            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
+
+            if (isMatch(currToken, LexType.RBRACK)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RBRACK_IS_MISSING, buf.readPreToken().getLineNum());
+            }
+
             while (isMatch(currToken, LexType.LBRACK)) {
                 currToken = buf.readNextToken();
                 result = parseConstExp(currToken);
                 subTree.dimensions.add((ConstExpNode) result.getSubtree());
 
                 currToken = result.getNextToken();
-                currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
+                if (isMatch(currToken, LexType.RBRACK)) {
+                    currToken = buf.readNextToken();
+                } else {
+                    errorRecorder.addError(CompileErrorType.RBRACK_IS_MISSING, buf.readPreToken().getLineNum());
+                }
             }
         }
 
@@ -234,6 +258,7 @@ public class Parser {
         } else if (isMatch(currToken, LexType.IDENFR) && isMatch(preRead, LexType.LPARENT)) {
             var newNode = new UnaryExpNodeForFuncCall();
             newNode.ident = currToken.getValue();
+            newNode.identLineNum = currToken.getLineNum();
 
             currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
             currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
@@ -242,7 +267,12 @@ public class Parser {
                 currToken = result.getNextToken();
                 newNode.params = (FuncRParamsNode) result.getSubtree();
             }
-            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+
+            if (isMatch(currToken, LexType.RPARENT)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             subTree = newNode;
         } else if (isMatch(currToken, LexType.PLUS)
@@ -326,7 +356,12 @@ public class Parser {
             newNode.exp = (ExpNode) result.getSubtree();
             subTree = newNode;
 
-            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+            if (isMatch(currToken, LexType.RPARENT)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+            }
+
         } else if (isMatch(currToken, LexType.IDENFR)) {
             var newNode = new PrimaryExpNodeForLVal();
             result = parseLVal(currToken);
@@ -351,6 +386,7 @@ public class Parser {
         ParseResult result;
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
@@ -359,7 +395,11 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.dimensions.add((ExpNode) result.getSubtree());
 
-            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
+            if (isMatch(currToken, LexType.RBRACK)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RBRACK_IS_MISSING, buf.readPreToken().getLineNum());
+            }
         }
 
         return new ParseResult(currToken, subTree);
@@ -392,6 +432,7 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.blockItems.add((BlockItemNode) result.getSubtree());
         }
+        subTree.blockRLineNum = currToken.getLineNum();
         currToken = buf.readNextToken();
 
         return new ParseResult(currToken, subTree);
@@ -428,8 +469,7 @@ public class Parser {
 
         Token preRead = buf.readTokenByOffset(1);
         if (isMatch(currToken, LexType.IDENFR)
-                && (isMatch(preRead, LexType.LBRACK)
-                || isMatch(preRead, LexType.ASSIGN))
+                && (buf.findUntil(LexType.ASSIGN, LexType.SEMICN))
         ) {
             LValNode tmpLVal;
             result = parseLVal(currToken);
@@ -443,8 +483,18 @@ public class Parser {
 
                 currToken = buf.readNextToken();
                 currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
-                currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
-                currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+                if (isMatch(currToken, LexType.RPARENT)) {
+                    currToken = buf.readNextToken();
+                } else {
+                    errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+                }
+
+                if (isMatch(currToken, LexType.SEMICN)) {
+                    currToken = buf.readNextToken();
+                } else {
+                    errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+                }
 
                 subTree = newNode;
             } else if (isMatch(currToken, LexType.LPARENT)
@@ -459,7 +509,11 @@ public class Parser {
                 newNode.exp = (ExpNode) result.getSubtree();
                 newNode.lVal = tmpLVal;
 
-                currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+                if (isMatch(currToken, LexType.SEMICN)) {
+                    currToken = buf.readNextToken();
+                } else {
+                    errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+                }
 
                 subTree = newNode;
             } else {
@@ -476,7 +530,11 @@ public class Parser {
             currToken = result.getNextToken();
             newNode.exp = (ExpNode) result.getSubtree();
 
-            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+            if (isMatch(currToken, LexType.SEMICN)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             subTree = newNode;
         } else if (isMatch(currToken, LexType.SEMICN)) {
@@ -500,7 +558,11 @@ public class Parser {
             currToken = result.getNextToken();
             newNode.cond = (CondNode) result.getSubtree();
 
-            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+            if (isMatch(currToken, LexType.RPARENT)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             result = parseStmt(currToken);
             currToken = result.getNextToken();
@@ -525,22 +587,42 @@ public class Parser {
                 currToken = result.getNextToken();
                 newNode.forStmt1 = (ForStmtNode) result.getSubtree();
             }
-            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+            if (isMatch(currToken, LexType.SEMICN)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+            }
+
             if (isMatch(currToken, LexType.LPARENT)
                     || isMatch(currToken, LexType.IDENFR)
                     || isMatch(currToken, LexType.INTCON)
+                    || isMatch(currToken, LexType.PLUS)
+                    || isMatch(currToken, LexType.MINU)
+                    || isMatch(currToken, LexType.NOT)
             ) {
                 result = parseCond(currToken);
                 currToken = result.getNextToken();
                 newNode.cond = (CondNode) result.getSubtree();
             }
-            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+            if (isMatch(currToken, LexType.SEMICN)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+            }
+
             if (isMatch(currToken, LexType.IDENFR)) {
                 result = parseForStmt(currToken);
                 currToken = result.getNextToken();
                 newNode.forStmt2 = (ForStmtNode) result.getSubtree();
             }
-            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+
+            if (isMatch(currToken, LexType.RPARENT)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             result = parseStmt(currToken);
             currToken = result.getNextToken();
@@ -549,22 +631,35 @@ public class Parser {
             subTree = newNode;
         } else if (isMatch(currToken, LexType.BREAKTK)) {
             var newNode = new StmtNodeForContinueBreak();
+            newNode.tkLineNum = currToken.getLineNum();
             newNode.type = currToken.getType();
 
             currToken = buf.readNextToken();
-            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+            if (isMatch(currToken, LexType.SEMICN)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             subTree = newNode;
         } else if (isMatch(currToken, LexType.CONTINUETK)) {
             var newNode = new StmtNodeForContinueBreak();
+            newNode.tkLineNum = currToken.getLineNum();
             newNode.type = currToken.getType();
 
             currToken = buf.readNextToken();
-            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+            if (isMatch(currToken, LexType.SEMICN)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             subTree = newNode;
         } else if (isMatch(currToken, LexType.RETURNTK)) {
             var newNode = new StmtNodeForReturn();
+            newNode.returnLineNum = currToken.getLineNum();
 
             currToken = buf.readNextToken();
             if (isMatch(currToken, LexType.LPARENT)
@@ -577,11 +672,17 @@ public class Parser {
                 currToken = result.getNextToken();
                 newNode.exp = (ExpNode) result.getSubtree();
             }
-            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+            if (isMatch(currToken, LexType.SEMICN)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             subTree = newNode;
         } else if (isMatch(currToken, LexType.PRINTFTK)) {
             var newNode = new StmtNodeForPrintf();
+            newNode.printfLineNum = currToken.getLineNum();
 
             currToken = buf.readNextToken();
             currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
@@ -595,8 +696,18 @@ public class Parser {
                 currToken = result.getNextToken();
                 newNode.exps.add((ExpNode) result.getSubtree());
             }
-            currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
-            currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+            if (isMatch(currToken, LexType.RPARENT)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+            }
+
+            if (isMatch(currToken, LexType.SEMICN)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+            }
 
             subTree = newNode;
         } else {
@@ -791,7 +902,12 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.constDefs.add((ConstDefNode) result.getSubtree());
         }
-        currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+        if (isMatch(currToken, LexType.SEMICN)) {
+            currToken = buf.readNextToken();
+        } else {
+            errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+        }
 
         return new ParseResult(currToken, subTree);
     }
@@ -801,6 +917,7 @@ public class Parser {
         ParseResult result;
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
@@ -809,7 +926,11 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.dimensions.add((ConstExpNode) result.getSubtree());
 
-            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
+            if (isMatch(currToken, LexType.RBRACK)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RBRACK_IS_MISSING, buf.readPreToken().getLineNum());
+            }
         }
         currToken = parseToken(currToken, LexType.ASSIGN, new ParserException());
 
@@ -883,7 +1004,12 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.varDefs.add((VarDefNode) result.getSubtree());
         }
-        currToken = parseToken(currToken, LexType.SEMICN, new ParserException());
+
+        if (isMatch(currToken, LexType.SEMICN)) {
+            currToken = buf.readNextToken();
+        } else {
+            errorRecorder.addError(CompileErrorType.SEMICN_IS_MISSING, buf.readPreToken().getLineNum());
+        }
 
         return new ParseResult(currToken, subTree);
     }
@@ -893,6 +1019,7 @@ public class Parser {
         ParseResult result;
 
         subTree.ident = currToken.getValue();
+        subTree.identLineNum = currToken.getLineNum();
         currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
         while (isMatch(currToken, LexType.LBRACK)) {
             currToken = buf.readNextToken();
@@ -901,7 +1028,11 @@ public class Parser {
             currToken = result.getNextToken();
             subTree.dimensions.add((ConstExpNode) result.getSubtree());
 
-            currToken = parseToken(currToken, LexType.RBRACK, new ParserException());
+            if (isMatch(currToken, LexType.RBRACK)) {
+                currToken = buf.readNextToken();
+            } else {
+                errorRecorder.addError(CompileErrorType.RBRACK_IS_MISSING, buf.readPreToken().getLineNum());
+            }
         }
         if (isMatch(currToken, LexType.ASSIGN)) {
             currToken = buf.readNextToken();
@@ -965,7 +1096,12 @@ public class Parser {
         currToken = parseToken(currToken, LexType.INTTK, new ParserException());
         currToken = parseToken(currToken, LexType.MAINTK, new ParserException());
         currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
-        currToken = parseToken(currToken, LexType.RPARENT, new ParserException());
+
+        if (isMatch(currToken, LexType.RPARENT)) {
+            currToken = buf.readNextToken();
+        } else {
+            errorRecorder.addError(CompileErrorType.RPARENT_IS_MISSING, buf.readPreToken().getLineNum());
+        }
 
         result = parseBlock(currToken);
         currToken = result.getNextToken();
@@ -981,6 +1117,8 @@ class PreReadBuffer {
     private final int tokenBufLen;
     private final Token[] tokenBuf;
     private int currTokenPos = 0;
+    private final Queue<Token> findBuffer = new ArrayDeque<>();
+    private Token preToken = null;
 
     public PreReadBuffer(Lexer lexer, int bufLen) throws LexerException {
         assert bufLen >= 2;
@@ -999,7 +1137,10 @@ class PreReadBuffer {
     }
 
     public Token readNextToken() throws LexerException {
-        if (lexer.next()) {
+        preToken = tokenBuf[currTokenPos];
+        if (!findBuffer.isEmpty()) {
+            tokenBuf[currTokenPos] = findBuffer.poll();
+        } else if (lexer.next()) {
             tokenBuf[currTokenPos] = lexer.getToken();
         } else {
             tokenBuf[currTokenPos] = new Token("EOF", null, 0);  // token not null
@@ -1011,6 +1152,31 @@ class PreReadBuffer {
     public Token readTokenByOffset(int offset) {
         assert offset < tokenBufLen;
         return tokenBuf[(currTokenPos + offset) % tokenBufLen];
+    }
+
+    public boolean findUntil(LexType find, LexType until) throws LexerException {
+        for (int i = 0, j = currTokenPos; i < tokenBufLen; i++, j = (currTokenPos + 1) % tokenBufLen) {
+            if (tokenBuf[j].getType() == find) {
+                return true;
+            } else if (tokenBuf[j].getType() == until) {
+                return false;
+            }
+        }
+
+        while (lexer.next()) {
+            var token = lexer.getToken();
+            findBuffer.add(lexer.getToken());
+            if (token.getType() == find) {
+                return true;
+            } else if (token.getType() == until) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public Token readPreToken() {
+        return preToken;
     }
 }
 

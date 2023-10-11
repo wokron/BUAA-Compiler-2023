@@ -12,6 +12,7 @@ public class VarDefNode extends SyntaxNode {
     public String ident;
     public List<ConstExpNode> dimensions = new ArrayList<>();
     public InitValNode initVal;
+    public int identLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {

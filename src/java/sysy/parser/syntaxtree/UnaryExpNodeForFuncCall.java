@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 public class UnaryExpNodeForFuncCall extends UnaryExpNode {
     public String ident;
     public FuncRParamsNode params;
+    public int identLineNum = -1;
 
     @Override
     public void walk(Consumer<TerminalSymbol> terminalConsumer, Consumer<NonTerminalSymbol> nonTerminalConsumer) {
