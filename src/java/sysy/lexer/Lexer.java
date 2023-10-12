@@ -96,14 +96,20 @@ public class Lexer {
                     if (ch == 'd') {
                         sb.append((char) ch);
                     } else {
-                        throw new LexerException();
+                        errorRecorder.addError(CompileErrorType.ILLEGAL_SYMBOL, lineNum);
+                    }
+                    if (ch == '\"') {
+                        break;
                     }
                 } else if (ch == '\\') {
                     ch = getChar();
                     if (ch == 'n') {
                         sb.append((char) ch);
                     } else {
-                        throw new LexerException();
+                        errorRecorder.addError(CompileErrorType.ILLEGAL_SYMBOL, lineNum);
+                    }
+                    if (ch == '\"') {
+                        break;
                     }
                 } else if (!isNormalChar(ch)) {
                     errorRecorder.addError(CompileErrorType.ILLEGAL_SYMBOL, lineNum);

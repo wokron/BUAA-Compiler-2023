@@ -262,7 +262,12 @@ public class Parser {
 
             currToken = parseToken(currToken, LexType.IDENFR, new ParserException());
             currToken = parseToken(currToken, LexType.LPARENT, new ParserException());
-            if (isNotMatch(currToken, LexType.RPARENT)) {
+            if (isMatch(currToken, LexType.LPARENT)
+                    || isMatch(currToken, LexType.IDENFR)
+                    || isMatch(currToken, LexType.INTCON)
+                    || isMatch(currToken, LexType.PLUS)
+                    || isMatch(currToken, LexType.MINU)
+            ) {
                 result = parseFuncRParams(currToken);
                 currToken = result.getNextToken();
                 newNode.params = (FuncRParamsNode) result.getSubtree();

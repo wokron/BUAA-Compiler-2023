@@ -401,7 +401,7 @@ public class Visitor {
 
     public Integer visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
         var lVal = visitLValNode(elm.lVal);
-        if (lVal.isConst) {
+        if (lVal != null && lVal.isConst) {
             return lVal.constLVal;
         }
         return null;
