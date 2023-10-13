@@ -330,10 +330,13 @@ public class Visitor {
     }
 
     public VisitResult visitLValNode(LValNode elm) {
+        var rt = new VisitResult();
+
         var sym = currTable.getSymbol(elm.ident);
         if (sym == null) {
             errorRecorder.addError(CompileErrorType.UNDEFINED_NAME, elm.identLineNum);
-            return null;
+            rt.expType.type = "int";
+            return rt;
         }
         var varSym = (VarSymbol) sym;
 
@@ -354,7 +357,6 @@ public class Visitor {
         type.type = "int";
         type.dims.addAll(expType);
 
-        var rt = new VisitResult();
         rt.expType = type;
         rt.constVal = null; // todo: what if lVal is const
 
@@ -620,13 +622,15 @@ public class Visitor {
 
         assert r.expType != null;
         rt.expType = r.expType;
-        var op = visitUnaryOpNode(elm.op);
-        if (op == LexType.MINU) {
-            rt.constVal = -val;
-        } else if (op == LexType.PLUS) {
-            rt.constVal = val;
-        } else {
-            rt.constVal = val == 0 ? 0 : 1;
+        if (val != null) {
+            var op = visitUnaryOpNode(elm.op);
+            if (op == LexType.MINU) {
+                rt.constVal = -val;
+            } else if (op == LexType.PLUS) {
+                rt.constVal = val;
+            } else {
+                rt.constVal = val == 0 ? 0 : 1;
+            }
         }
         return rt;
     }
