@@ -262,13 +262,13 @@ public class Visitor {
         return rt;
     }
 
-    public List<List<Integer>> visitFuncRParamsNode(FuncRParamsNode elm) {
-        List<List<Integer>> rtTypeDims = new ArrayList<>();
+    public VisitResult visitFuncRParamsNode(FuncRParamsNode elm) {
+        var rt = new VisitResult();
         for (var exp : elm.exps) {
             var r = visitExpNode(exp);
-            rtTypeDims.add(expType);
+            rt.paramTypes.add(r.expType);
         }
-        return rtTypeDims;
+        return rt;
     }
 
     public Type visitFuncTypeNode(FuncTypeNode elm) {
@@ -589,7 +589,7 @@ public class Visitor {
             }
 
             for (int i = 0; i < funcSym.paramTypeList.size(); i++) {
-                if (!funcSym.paramTypeList.get(i).dims.equals(typeDims.get(i))) {
+                if (!funcSym.paramTypeList.get(i).equals(typeDims.paramTypes.get(i))) {
                     errorRecorder.addError(CompileErrorType.TYPE_OF_PARAM_NOT_MATCH, elm.identLineNum);
                 }
             }
