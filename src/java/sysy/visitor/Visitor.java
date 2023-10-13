@@ -6,7 +6,7 @@ import sysy.lexer.LexType;
 import sysy.parser.syntaxtree.*;
 import sysy.symtable.SymbolTable;
 import sysy.symtable.symbol.FunctionSymbol;
-import sysy.symtable.symbol.ParamType;
+import sysy.symtable.symbol.Type;
 import sysy.symtable.symbol.VarSymbol;
 
 import java.util.ArrayList;
@@ -109,8 +109,9 @@ public class Visitor {
         varSym.ident = elm.ident;
         varSym.isConst = true;
 
+        varSym.varType.type = "int";
         for (var dimension : elm.dimensions) {
-            varSym.dims.add(visitConstExpNode(dimension));
+            varSym.varType.dims.add(visitConstExpNode(dimension));
         }
 
         varSym.values.addAll(visitConstInitValNode(elm.constInitVal));
@@ -197,7 +198,7 @@ public class Visitor {
         var sym = new FunctionSymbol();
         sym.ident = elm.ident;
 
-        String retType = visitFuncTypeNode(elm.funcType);
+        var retType = visitFuncTypeNode(elm.funcType);
         sym.retType = retType;
 
         currTable = currTable.createSubTable();
@@ -207,18 +208,18 @@ public class Visitor {
 
         currTable.getPreTable().insertSymbol(sym);
 
-        isRetExpNotNeed = sym.retType.equals("void");
+        isRetExpNotNeed = sym.retType.type.equals("void");
 
         visitBlockNode(elm.block);
 
-        if (!sym.retType.equals("void") && elm.block.isWithoutReturn()) {
+        if (!sym.retType.type.equals("void") && elm.block.isWithoutReturn()) {
             errorRecorder.addError(CompileErrorType.RETURN_IS_MISSING, elm.block.blockRLineNum);
         }
 
         currTable = currTable.getPreTable();
     }
 
-    public ParamType visitFuncFParamNode(FuncFParamNode elm) {
+    public Type visitFuncFParamNode(FuncFParamNode elm) {
         if (currTable.contains(elm.ident)) {
             errorRecorder.addError(CompileErrorType.NAME_REDEFINE, elm.identLineNum);
             return null;
@@ -229,23 +230,24 @@ public class Visitor {
         varSym.isConst = false;
 
         visitBTypeNode(elm.type);
+        varSym.varType.type = "int";
         if (elm.dimensions != null) {
-            varSym.dims.add(null); // for dim 0
+            varSym.varType.dims.add(null); // for dim 0
             for (var dim : elm.dimensions) {
-                varSym.dims.add(visitConstExpNode(dim));
+                varSym.varType.dims.add(visitConstExpNode(dim));
             }
         }
 
         currTable.insertSymbol(varSym);
 
-        var rt = new ParamType();
+        var rt = new Type();
         rt.type = "int";
-        rt.dims.addAll(varSym.dims);
+        rt.dims.addAll(varSym.varType.dims);
         return rt;
     }
 
-    public ArrayList<ParamType> visitFuncFParamsNode(FuncFParamsNode elm) {
-        var rt = new ArrayList<ParamType>();
+    public ArrayList<Type> visitFuncFParamsNode(FuncFParamsNode elm) {
+        var rt = new ArrayList<Type>();
         for (var param : elm.params) {
             var paramType = visitFuncFParamNode(param);
             if (paramType != null) {
@@ -264,8 +266,10 @@ public class Visitor {
         return rtTypeDims;
     }
 
-    public String visitFuncTypeNode(FuncTypeNode elm) {
-        return elm.type.toString();
+    public Type visitFuncTypeNode(FuncTypeNode elm) {
+        var rt = new Type();
+        rt.type = elm.type.toString();
+        return rt;
     }
 
     public void visitInitValNodeForArray(InitValNodeForArray elm) {
@@ -334,8 +338,8 @@ public class Visitor {
         }
 
         expType = new ArrayList<>();
-        for (int i = accessDims.size(); i < varSym.dims.size(); i++) {
-            expType.add(varSym.dims.get(i));
+        for (int i = accessDims.size(); i < varSym.varType.dims.size(); i++) {
+            expType.add(varSym.varType.dims.get(i));
         }
         if (!expType.isEmpty()) {
             expType.set(0, null);
@@ -346,7 +350,7 @@ public class Visitor {
 
     public void visitMainFuncDefNode(MainFuncDefNode elm) {
         var sym = new FunctionSymbol();
-        sym.retType = "int";
+        sym.retType.type = "int";
         sym.ident = "main";
         currTable.insertSymbol(sym);
 
@@ -356,7 +360,7 @@ public class Visitor {
 
         visitBlockNode(elm.mainBlock);
 
-        if (!sym.retType.equals("void") && elm.mainBlock.isWithoutReturn()) {
+        if (!sym.retType.type.equals("void") && elm.mainBlock.isWithoutReturn()) {
             errorRecorder.addError(CompileErrorType.RETURN_IS_MISSING, elm.mainBlock.blockRLineNum);
         }
 
@@ -570,7 +574,7 @@ public class Visitor {
         }
 
         expType = new ArrayList<>(); // just int
-        if (funcSym.retType.equals("void")) {
+        if (funcSym.retType.type.equals("void")) {
             expType.add(null);
             expType.add(null);
         }
@@ -606,8 +610,8 @@ public class Visitor {
         }
     }
 
-    public void visitUnaryOpNode(UnaryOpNode elm) {
-
+    public LexType visitUnaryOpNode(UnaryOpNode elm) {
+        return elm.opType;
     }
 
     public void visitVarDeclNode(VarDeclNode elm) {
@@ -627,8 +631,9 @@ public class Visitor {
         varSym.isConst = false;
         varSym.ident = elm.ident;
 
+        varSym.varType.type = "int";
         for (var dim : elm.dimensions) {
-            varSym.dims.add(visitConstExpNode(dim));
+            varSym.varType.dims.add(visitConstExpNode(dim));
         }
 
         if (elm.initVal != null) {
