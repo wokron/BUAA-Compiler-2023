@@ -18,7 +18,6 @@ public class Visitor {
     private SymbolTable currTable = table;
     private int isInLoop = 0;
     private boolean isRetExpNotNeed = false;
-    private List<Integer> expType = null;
 
     public Visitor(ErrorRecorder errorRecorder) {
         this.errorRecorder = errorRecorder;
@@ -78,8 +77,8 @@ public class Visitor {
 
     }
 
-    public void visitBTypeNode(BTypeNode elm) {
-
+    public String visitBTypeNode(BTypeNode elm) {
+        return "int";
     }
 
     public void visitCompUnitNode(CompUnitNode elm) {
@@ -119,7 +118,7 @@ public class Visitor {
             varSym.varType.dims.add(visitConstExpNode(dimension).constVal);
         }
 
-        varSym.values.addAll(visitConstInitValNode(elm.constInitVal));
+        varSym.values.addAll(visitConstInitValNode(elm.constInitVal).constInitVals);
 
         currTable.insertSymbol(varSym);
     }
@@ -130,21 +129,21 @@ public class Visitor {
         return rt;
     }
 
-    public ArrayList<Integer> visitConstInitValNodeForArrayInit(ConstInitValNodeForArrayInit elm) {
-        var rt = new ArrayList<Integer>();
+    public VisitResult visitConstInitValNodeForArrayInit(ConstInitValNodeForArrayInit elm) {
+        var rt = new VisitResult();
         for (var init : elm.initValues) {
-            rt.addAll(visitConstInitValNode(init));
+            rt.constInitVals.addAll(visitConstInitValNode(init).constInitVals);
         }
         return rt;
     }
 
-    public ArrayList<Integer> visitConstInitValNodeForConstExp(ConstInitValNodeForConstExp elm) {
-        var rt = new ArrayList<Integer>();
-        rt.add(visitConstExpNode(elm.constExp).constVal);
+    public VisitResult visitConstInitValNodeForConstExp(ConstInitValNodeForConstExp elm) {
+        var rt = new VisitResult();
+        rt.constInitVals.add(visitConstExpNode(elm.constExp).constVal);
         return rt;
     }
 
-    public ArrayList<Integer> visitConstInitValNode(ConstInitValNode elm) {
+    public VisitResult visitConstInitValNode(ConstInitValNode elm) {
         if (elm instanceof ConstInitValNodeForArrayInit) {
             return visitConstInitValNodeForArrayInit((ConstInitValNodeForArrayInit) elm);
         } else {
@@ -234,8 +233,7 @@ public class Visitor {
         varSym.ident = elm.ident;
         varSym.isConst = false;
 
-        visitBTypeNode(elm.type);
-        varSym.varType.type = "int";
+        varSym.varType.type = visitBTypeNode(elm.type);
         if (elm.dimensions != null) {
             varSym.varType.dims.add(null); // for dim 0
             for (var dim : elm.dimensions) {
@@ -345,17 +343,17 @@ public class Visitor {
             accessDims.add(visitExpNode(dim).constVal);
         }
 
-        expType = new ArrayList<>();
+        List<Integer> typeDims = new ArrayList<>();
         for (int i = accessDims.size(); i < varSym.varType.dims.size(); i++) {
-            expType.add(varSym.varType.dims.get(i));
+            typeDims.add(varSym.varType.dims.get(i));
         }
-        if (!expType.isEmpty()) {
-            expType.set(0, null);
+        if (!typeDims.isEmpty()) {
+            typeDims.set(0, null);
         }
 
         Type type = new Type();
         type.type = "int";
-        type.dims.addAll(expType);
+        type.dims.addAll(typeDims);
 
         rt.expType = type;
         rt.constVal = null; // todo: what if lVal is const
@@ -434,8 +432,6 @@ public class Visitor {
     }
 
     public VisitResult visitPrimaryExpNodeForNumber(PrimaryExpNodeForNumber elm) {
-        expType = new ArrayList<>(); // just int
-
         return visitNumberNode(elm.number);
     }
 
@@ -600,12 +596,6 @@ public class Visitor {
                 errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_NOT_MATCH, elm.identLineNum);
                 return rt;
             }
-        }
-
-        expType = new ArrayList<>(); // just int
-        if (funcSym.retType.type.equals("void")) {
-            expType.add(null);
-            expType.add(null);
         }
 
         return rt;
