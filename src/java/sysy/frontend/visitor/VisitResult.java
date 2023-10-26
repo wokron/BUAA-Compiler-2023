@@ -1,5 +1,6 @@
 package sysy.frontend.visitor;
 
+import sysy.backend.ir.Value;
 import sysy.frontend.symtable.symbol.Type;
 
 import java.util.ArrayList;
@@ -10,4 +11,6 @@ public class VisitResult {
     public Integer constVal;
     public List<Integer> constInitVals = new ArrayList<>();
     public List<Type> paramTypes = new ArrayList<>();
+
+    public Value irValue;
 }

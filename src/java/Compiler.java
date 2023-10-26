@@ -14,7 +14,8 @@ public class Compiler {
     public static void main(String[] args) throws IOException, LexerException, ParserException {
 //        task1();
 //        task2();
-        task3();
+//        task3();
+        task4LLVM();
     }
 
     private static void task1() throws IOException, LexerException {
@@ -65,6 +66,22 @@ public class Compiler {
             for (var error : recorder.getErrors()) {
                 err.println(error);
             }
+        }
+    }
+
+    private static void task4LLVM() throws IOException, LexerException, ParserException {
+        try (var testFile = new FileInputStream("testfile.txt");
+             var outputFile = new FileOutputStream("output.txt")) {
+            var out = new PrintStream(outputFile);
+            var lexer = new Lexer(new InputStreamReader(testFile), recorder);
+            var parser = new Parser(lexer, recorder);
+            var result = parser.parse();
+
+            var visitor = new Visitor(recorder);
+            var module = visitor.generateIR(result);
+
+            module.dump(out);
+
         }
     }
 }

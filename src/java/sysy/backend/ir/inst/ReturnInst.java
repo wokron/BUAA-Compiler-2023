@@ -6,8 +6,8 @@ import sysy.backend.ir.Value;
 import java.io.PrintStream;
 
 public class ReturnInst extends Instruction {
-    private IRType type;
-    private Value value;
+    private final IRType type;
+    private final Value value;
 
     public ReturnInst(IRType type, Value value) {
         this.type = type;

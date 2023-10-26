@@ -1,5 +1,7 @@
 package sysy.frontend.visitor;
 
+import sysy.backend.ir.*;
+import sysy.backend.ir.Module;
 import sysy.error.CompileErrorType;
 import sysy.error.ErrorRecorder;
 import sysy.frontend.lexer.LexType;
@@ -13,6 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Visitor {
+    private final Module irModule = new Module();
+    private Function currFunction = null;
+    private BasicBlock currBasicBlock = null;
+
     private final ErrorRecorder errorRecorder;
     private final SymbolTable table = new SymbolTable();
     private SymbolTable currTable = table;
@@ -35,8 +41,10 @@ public class Visitor {
         if (val1 != null && val2 != null) {
             if (elm.op == LexType.PLUS) {
                 rt.constVal = val1 + val2;
+                rt.irValue = currBasicBlock.createAddInst(r1.irValue, r2.irValue);
             } else {
                 rt.constVal = val1 - val2;
+                rt.irValue = currBasicBlock.createSubInst(r1.irValue, r2.irValue);
             }
         }
         return rt;
@@ -79,6 +87,15 @@ public class Visitor {
 
     public String visitBTypeNode(BTypeNode elm) {
         return "int";
+    }
+
+    public Module generateIR(SyntaxNode root) {
+        if (root instanceof CompUnitNode compNode) {
+            visitCompUnitNode(compNode);
+            return irModule;
+        } else {
+            return null;
+        }
     }
 
     public void visitCompUnitNode(CompUnitNode elm) {
@@ -214,7 +231,19 @@ public class Visitor {
 
         isRetExpNotNeed = sym.retType.type.equals("void");
 
+        ArrayList<IRType> irArgTypes = new ArrayList<>(); // TODO: function with args
+        currFunction = irModule.createFunction(sym.retType.type.equals("void") ? IRType.getVoid() : IRType.getInt(), irArgTypes);
+        currFunction.setName(sym.ident);
+        currBasicBlock = currFunction.createBasicBlock();
+
         visitBlockNode(elm.block);
+
+        if (sym.retType.type.equals("void") && elm.block.isWithoutReturn()) {
+            currBasicBlock.createReturnInst(IRType.getVoid(), null);
+        }
+
+        currBasicBlock = null;
+        currFunction = null;
 
         if (!sym.retType.type.equals("void") && elm.block.isWithoutReturn()) {
             errorRecorder.addError(CompileErrorType.RETURN_IS_MISSING, elm.block.blockRLineNum);
@@ -371,11 +400,19 @@ public class Visitor {
 
         isRetExpNotNeed = false;
 
+        ArrayList<IRType> irArgTypes = new ArrayList<>();
+        currFunction = irModule.createFunction(IRType.getInt(), irArgTypes);
+        currFunction.setName("main");
+        currBasicBlock = currFunction.createBasicBlock();
+
         visitBlockNode(elm.mainBlock);
 
         if (!sym.retType.type.equals("void") && elm.mainBlock.isWithoutReturn()) {
             errorRecorder.addError(CompileErrorType.RETURN_IS_MISSING, elm.mainBlock.blockRLineNum);
         }
+
+        currBasicBlock = null;
+        currFunction = null;
 
         currTable = currTable.getPreTable();
     }
@@ -393,10 +430,13 @@ public class Visitor {
         if (val1 != null && val2 != null) {
             if (elm.op == LexType.MULT) {
                 rt.constVal = val1 * val2;
+                rt.irValue = currBasicBlock.createMulInst(r1.irValue, r2.irValue);
             } else if (elm.op == LexType.DIV) {
                 rt.constVal = val1 / val2;
+                rt.irValue = currBasicBlock.createSDivInst(r1.irValue, r2.irValue);
             } else {
                 rt.constVal = val1 % val2;
+                // TODO: mod operation (use srem)
             }
         }
 
@@ -419,6 +459,7 @@ public class Visitor {
         var rt = new VisitResult();
         rt.expType.type = "int";
         rt.constVal = Integer.parseInt(elm.intConst);
+        rt.irValue = new ImmediateValue(rt.constVal);
         return rt;
     }
 
@@ -536,12 +577,16 @@ public class Visitor {
     }
 
     public void visitStmtNodeForReturn(StmtNodeForReturn elm) {
+        Value expIr = null;
         if (elm.exp != null) {
             if (isRetExpNotNeed) {
                 errorRecorder.addError(CompileErrorType.RETURN_NOT_MATCH, elm.returnLineNum);
+                return;
             }
-            visitExpNode(elm.exp);
+            var result = visitExpNode(elm.exp);
+            expIr = result.irValue;
         }
+        currBasicBlock.createReturnInst(isRetExpNotNeed ? IRType.getVoid() : IRType.getInt(), expIr);
     }
 
     public void visitStmtNode(StmtNode elm) {
@@ -616,10 +661,12 @@ public class Visitor {
             var op = visitUnaryOpNode(elm.op);
             if (op == LexType.MINU) {
                 rt.constVal = -val;
+                rt.irValue = currBasicBlock.createSubInst(new ImmediateValue(0), r.irValue);
             } else if (op == LexType.PLUS) {
                 rt.constVal = val;
+                rt.irValue = r.irValue; // if op is +, do nothing
             } else {
-                rt.constVal = val == 0 ? 0 : 1;
+                rt.constVal = val == 0 ? 0 : 1; // TODO: need to implement logical not (use icmp)
             }
         }
         return rt;

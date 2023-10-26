@@ -35,6 +35,7 @@ public class Module {
 
         for (var func : functions) {
             func.dump(out);
+            NameAllocator.getInstance().reset();
         }
     }
 
