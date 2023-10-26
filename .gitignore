@@ -1,3 +1,6 @@
 .idea
 out
 *.zip
+testfile.txt
+output.txt
+error.txt

@@ -1,10 +1,10 @@
 import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
 import sysy.exception.ParserException;
-import sysy.lexer.Lexer;
-import sysy.parser.Parser;
-import sysy.parser.syntaxtree.CompUnitNode;
-import sysy.visitor.Visitor;
+import sysy.frontend.lexer.Lexer;
+import sysy.frontend.parser.Parser;
+import sysy.frontend.parser.syntaxtree.CompUnitNode;
+import sysy.frontend.visitor.Visitor;
 
 import java.io.*;
 
