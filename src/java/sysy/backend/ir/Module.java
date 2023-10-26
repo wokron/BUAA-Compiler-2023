@@ -68,10 +68,12 @@ public class Module {
         var i3 = b1.createMulInst(i2, global);
         i3.setName("4");
 
+        b1.createReturnInst(IRType.getInt(), i3);
 
         var b2 = func1.createBasicBlock();
         b2.setName("b2");
 
+        b2.createReturnInst(IRType.getVoid(), null);
 
         module.dump(System.out);
     }

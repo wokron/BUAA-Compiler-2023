@@ -3,6 +3,7 @@ package sysy.backend.ir;
 import sysy.backend.ir.inst.BinaryInst;
 import sysy.backend.ir.inst.BinaryInstOp;
 import sysy.backend.ir.inst.Instruction;
+import sysy.backend.ir.inst.ReturnInst;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -38,6 +39,10 @@ public class BasicBlock extends Value {
 
     public Value createOrInst(Value left, Value right) {
         return insertInstruction(new BinaryInst(BinaryInstOp.OR, left, right, IRType.getInt()));
+    }
+
+    public Value createReturnInst(IRType type, Value value) {
+        return insertInstruction(new ReturnInst(type, value));
     }
 
     public List<Instruction> getInstructions() {
