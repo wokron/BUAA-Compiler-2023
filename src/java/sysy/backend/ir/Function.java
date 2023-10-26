@@ -34,8 +34,13 @@ public class Function extends Value {
         return newBlock;
     }
 
+    @Override
+    public String getName() {
+        return "@" + super.getName();
+    }
+
     public void dump(PrintStream out) {
-        out.printf("define dso_local %s @%s(", retType.toString(), getName());
+        out.printf("define dso_local %s %s(", retType.toString(), getName());
 
         boolean isFirst = true;
         for (var arg : arguments) {

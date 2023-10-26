@@ -46,6 +46,11 @@ public class Module {
         var func1 = module.createFunction(IRType.getInt(), argTypes);
         func1.setName("func1");
 
+        var initVal = new ArrayList<Integer>();
+        initVal.add(1);
+        var global = module.createGlobalValue(IRType.getInt(), initVal, new ArrayList<>());
+        global.setName("g1");
+
         int i = 0;
         for (var arg : func1.getArguments()) {
             arg.setName("" + i);
@@ -54,14 +59,19 @@ public class Module {
 
         var b1 = func1.createBasicBlock();
         b1.setName("b1");
+
+        var i1 = b1.createAddInst(new ImmediateValue(1), new ImmediateValue(10));
+        i1.setName("2");
+        var i2 = b1.createMulInst(i1, new ImmediateValue(20));
+        i2.setName("3");
+
+        var i3 = b1.createMulInst(i2, global);
+        i3.setName("4");
+
+
         var b2 = func1.createBasicBlock();
         b2.setName("b2");
 
-
-        var initVal = new ArrayList<Integer>();
-        initVal.add(1);
-        var global = module.createGlobalValue(IRType.getInt(), initVal, new ArrayList<>());
-        global.setName("g1");
 
         module.dump(System.out);
     }

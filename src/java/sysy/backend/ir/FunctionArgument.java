@@ -13,7 +13,12 @@ public class FunctionArgument extends Value {
         return type;
     }
 
+    @Override
+    public String getName() {
+        return "%" + super.getName();
+    }
+
     public void dump(PrintStream out) {
-        out.printf("%s %%%s", type.toString(), getName());
+        out.printf("%s %s", type.toString(), getName());
     }
 }

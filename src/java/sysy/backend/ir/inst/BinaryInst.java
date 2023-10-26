@@ -19,7 +19,7 @@ public class BinaryInst extends Instruction {
 
     @Override
     public void dump(PrintStream out) {
-        out.printf("  %%%s = %s %s %%%s, %%%s\n",
+        out.printf("  %s = %s %s %s, %s\n",
                 getName(),
                 op.name().toLowerCase(),
                 type.toString(),

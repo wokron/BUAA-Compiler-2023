@@ -27,9 +27,14 @@ public class GlobalValue extends Value {
         return dims;
     }
 
+    @Override
+    public String getName() {
+        return "@" + super.getName();
+    }
+
     public void dump(PrintStream out) {
         if (dims.isEmpty()) {
-            out.printf("@%s = dso_local global %s %d\n", getName(), type.toString(), !initVals.isEmpty() ? initVals.get(0) : 0);
+            out.printf("%s = dso_local global %s %d\n", getName(), type.toString(), !initVals.isEmpty() ? initVals.get(0) : 0);
         } else {
             // TODO: array global var
         }
