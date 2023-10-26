@@ -1,4 +1,6 @@
-package sysy.backend.ir;
+package sysy.backend.ir.inst;
+
+import sysy.backend.ir.Value;
 
 import java.io.PrintStream;
 
