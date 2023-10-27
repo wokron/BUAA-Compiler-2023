@@ -7,4 +7,5 @@ public enum BinaryInstOp {
     SDIV,
     AND,
     OR,
+    SREM,
 }

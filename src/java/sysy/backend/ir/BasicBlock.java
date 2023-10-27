@@ -38,6 +38,10 @@ public class BasicBlock extends Value {
         return insertInstruction(new BinaryInst(BinaryInstOp.OR, left, right, IRType.getInt()));
     }
 
+    public Value createSRemInst(Value left, Value right) {
+        return insertInstruction(new BinaryInst(BinaryInstOp.SREM, left, right, IRType.getInt()));
+    }
+
     public Value createReturnInst(IRType type, Value value) {
         return insertInstruction(new ReturnInst(type, value));
     }

@@ -495,7 +495,7 @@ public class Visitor {
             } else if (elm.op == LexType.DIV) {
                 rt.irValue = currBasicBlock.createSDivInst(r1.irValue, r2.irValue);
             } else {
-                // TODO: mod operation (use srem)
+                rt.irValue = currBasicBlock.createSRemInst(r1.irValue, r2.irValue);
             }
         }
 
