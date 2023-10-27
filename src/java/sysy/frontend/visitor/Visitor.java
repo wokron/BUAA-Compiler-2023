@@ -252,11 +252,24 @@ public class Visitor {
 
         isRetExpNotNeed = sym.retType.type.equals("void");
 
-        ArrayList<IRType> irArgTypes = new ArrayList<>(); // TODO: function with args
+        ArrayList<IRType> irArgTypes = new ArrayList<>();
+        for (var type : sym.paramTypeList) {
+            irArgTypes.add(IRType.getInt().ptr(type.dims.size()));
+        }
         currFunction = irModule.createFunction(sym.retType.type.equals("void") ? IRType.getVoid() : IRType.getInt(), irArgTypes);
         currFunction.setName(sym.ident);
         sym.targetValue = currFunction;
         currBasicBlock = currFunction.createBasicBlock();
+
+        if (elm.params != null) {
+            for (int i = 0; i < currFunction.getArguments().size(); i++) {
+                var currArgVal = currFunction.getArguments().get(i);
+                var currParamSym = currTable.getSymbol(elm.params.params.get(i).ident);
+                var currArgPtr = currBasicBlock.createAllocaInst(currArgVal.getType());
+                currBasicBlock.createStoreInst(currArgVal.getType(), currArgVal, currArgPtr);
+                currParamSym.targetValue = currArgPtr;
+            }
+        }
 
         visitBlockNode(elm.block);
 
@@ -316,6 +329,7 @@ public class Visitor {
         for (var exp : elm.exps) {
             var r = visitExpNode(exp);
             rt.paramTypes.add(r.expType);
+            rt.irValues.add(r.irValue);
         }
         return rt;
     }
@@ -575,11 +589,13 @@ public class Visitor {
     }
 
     public void visitStmtNodeForGetInt(StmtNodeForGetInt elm) {
-        visitLValNode(elm.lVal);
+        var r = visitLValNode(elm.lVal);
         var lValSym = currTable.getSymbol(elm.lVal.ident);
         if (lValSym instanceof VarSymbol lValVarSym && lValVarSym.isConst) {
             errorRecorder.addError(CompileErrorType.TRY_TO_CHANGE_VAL_OF_CONST, elm.lVal.identLineNum);
         }
+        var getIntVal = currBasicBlock.createCallInst(Function.BUILD_IN_GETINT, List.of());
+        currBasicBlock.createStoreInst(IRType.getInt(), getIntVal, r.irValue);
     }
 
     public void visitStmtNodeForIfElse(StmtNodeForIfElse elm) {
@@ -609,13 +625,24 @@ public class Visitor {
     }
 
     public void visitStmtNodeForPrintf(StmtNodeForPrintf elm) {
+        List<Value> expValues = new ArrayList<>();
         for (var exp : elm.exps) {
-            visitExpNode(exp);
+           expValues.add(visitExpNode(exp).irValue);
         }
 
         var fCharNum = (elm.formatString.length() - String.join("", elm.formatString.split("%d")).length()) / 2;
         if (fCharNum != elm.exps.size()) {
             errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_IN_PRINTF_NOT_MATCH, elm.printfLineNum);
+        }
+
+        for (int i = 1, j = 0; i < elm.formatString.length() - 1; i++) {
+            char ch = elm.formatString.charAt(i);
+            if (ch != '%') {
+                currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue(ch)));
+            } else {
+                currBasicBlock.createCallInst(Function.BUILD_IN_PUTINT, List.of(expValues.get(j++)));
+                i++;
+            }
         }
     }
 
@@ -667,7 +694,7 @@ public class Visitor {
         rt.expType = funcSym.retType;
 
         if (elm.params != null) {
-            var typeDims = visitFuncRParamsNode(elm.params);
+            var r = visitFuncRParamsNode(elm.params);
 
             if (elm.params.exps.size() != funcSym.paramTypeList.size()) {
                 errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_NOT_MATCH, elm.identLineNum);
@@ -675,15 +702,19 @@ public class Visitor {
             }
 
             for (int i = 0; i < funcSym.paramTypeList.size(); i++) {
-                if (!funcSym.paramTypeList.get(i).equals(typeDims.paramTypes.get(i))) {
+                if (!funcSym.paramTypeList.get(i).equals(r.paramTypes.get(i))) {
                     errorRecorder.addError(CompileErrorType.TYPE_OF_PARAM_NOT_MATCH, elm.identLineNum);
                 }
             }
+
+            rt.irValue = currBasicBlock.createCallInst((Function) funcSym.targetValue, r.irValues);
         } else {
             if (!funcSym.paramTypeList.isEmpty()) {
                 errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_NOT_MATCH, elm.identLineNum);
                 return rt;
             }
+
+            rt.irValue = currBasicBlock.createCallInst((Function) funcSym.targetValue, List.of());
         }
 
         return rt;
