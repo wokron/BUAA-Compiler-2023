@@ -46,10 +46,12 @@ public class Visitor {
                 rt.constVal = val1 - val2;
             }
         }
-        if (elm.op == LexType.PLUS) {
-            rt.irValue = currBasicBlock.createAddInst(r1.irValue, r2.irValue);
-        } else {
-            rt.irValue = currBasicBlock.createSubInst(r1.irValue, r2.irValue);
+        if (currBasicBlock != null) {
+            if (elm.op == LexType.PLUS) {
+                rt.irValue = currBasicBlock.createAddInst(r1.irValue, r2.irValue);
+            } else {
+                rt.irValue = currBasicBlock.createSubInst(r1.irValue, r2.irValue);
+            }
         }
         return rt;
     }
@@ -487,12 +489,14 @@ public class Visitor {
                 rt.constVal = val1 % val2;
             }
         }
-        if (elm.op == LexType.MULT) {
-            rt.irValue = currBasicBlock.createMulInst(r1.irValue, r2.irValue);
-        } else if (elm.op == LexType.DIV) {
-            rt.irValue = currBasicBlock.createSDivInst(r1.irValue, r2.irValue);
-        } else {
-            // TODO: mod operation (use srem)
+        if (currBasicBlock != null) {
+            if (elm.op == LexType.MULT) {
+                rt.irValue = currBasicBlock.createMulInst(r1.irValue, r2.irValue);
+            } else if (elm.op == LexType.DIV) {
+                rt.irValue = currBasicBlock.createSDivInst(r1.irValue, r2.irValue);
+            } else {
+                // TODO: mod operation (use srem)
+            }
         }
 
         return rt;
@@ -524,7 +528,9 @@ public class Visitor {
 
     public VisitResult visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
         var r = visitLValNode(elm.lVal);
-        r.irValue = currBasicBlock.createLoadInst(IRType.getInt(), r.irValue);
+        if (currBasicBlock != null) {
+            r.irValue = currBasicBlock.createLoadInst(IRType.getInt(), r.irValue);
+        }
         return r;
     }
 
@@ -637,11 +643,14 @@ public class Visitor {
 
         for (int i = 1, j = 0; i < elm.formatString.length() - 1; i++) {
             char ch = elm.formatString.charAt(i);
-            if (ch != '%') {
-                currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue(ch)));
-            } else {
+            if (ch == '%') {
                 currBasicBlock.createCallInst(Function.BUILD_IN_PUTINT, List.of(expValues.get(j++)));
                 i++;
+            } else if (ch == '\\') {
+                currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue('\n')));
+                i++;
+            } else {
+                currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue(ch)));
             }
         }
     }
@@ -735,12 +744,20 @@ public class Visitor {
             var op = visitUnaryOpNode(elm.op);
             if (op == LexType.MINU) {
                 rt.constVal = -val;
-                rt.irValue = currBasicBlock.createSubInst(new ImmediateValue(0), r.irValue);
             } else if (op == LexType.PLUS) {
                 rt.constVal = val;
+            } else {
+                rt.constVal = val == 0 ? 0 : 1;
+            }
+        }
+        if (currBasicBlock != null) {
+            var op = visitUnaryOpNode(elm.op);
+            if (op == LexType.MINU) {
+                rt.irValue = currBasicBlock.createSubInst(new ImmediateValue(0), r.irValue);
+            } else if (op == LexType.PLUS) {
                 rt.irValue = r.irValue; // if op is +, do nothing
             } else {
-                rt.constVal = val == 0 ? 0 : 1; // TODO: need to implement logical not (use icmp)
+                // TODO: need to implement logical not (use icmp)
             }
         }
         return rt;
