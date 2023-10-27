@@ -69,10 +69,17 @@ public class Module {
         var i3 = b1.createMulInst(i2, global);
         i3.setName("4");
 
+        var i4 = b1.createAllocaInst(IRType.getInt());
+
         b1.createReturnInst(IRType.getInt(), i3);
 
         var b2 = func1.createBasicBlock();
         b2.setName("b2");
+
+        b2.createStoreInst(IRType.getInt(), new ImmediateValue(10), i4);
+
+        var load = b2.createLoadInst(IRType.getInt(), global);
+        load.setName("5");
 
         b2.createReturnInst(IRType.getVoid(), null);
 

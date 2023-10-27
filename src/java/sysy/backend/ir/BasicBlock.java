@@ -1,9 +1,6 @@
 package sysy.backend.ir;
 
-import sysy.backend.ir.inst.BinaryInst;
-import sysy.backend.ir.inst.BinaryInstOp;
-import sysy.backend.ir.inst.Instruction;
-import sysy.backend.ir.inst.ReturnInst;
+import sysy.backend.ir.inst.*;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -43,6 +40,18 @@ public class BasicBlock extends Value {
 
     public Value createReturnInst(IRType type, Value value) {
         return insertInstruction(new ReturnInst(type, value));
+    }
+
+    public Value createLoadInst(IRType type, Value ptr) {
+        return insertInstruction(new LoadInst(type, ptr));
+    }
+
+    public Value createStoreInst(IRType type, Value value, Value ptr) {
+        return insertInstruction(new StoreInst(type, value, ptr));
+    }
+
+    public Value createAllocaInst(IRType type) {
+        return insertInstruction(new AllocaInst(type));
     }
 
     public List<Instruction> getInstructions() {
