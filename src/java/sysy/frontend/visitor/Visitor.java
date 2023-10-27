@@ -24,6 +24,7 @@ public class Visitor {
     private SymbolTable currTable = table;
     private int isInLoop = 0;
     private boolean isRetExpNotNeed = false;
+    private boolean isGlobalVar = true;
 
     public Visitor(ErrorRecorder errorRecorder) {
         this.errorRecorder = errorRecorder;
@@ -99,9 +100,11 @@ public class Visitor {
     }
 
     public void visitCompUnitNode(CompUnitNode elm) {
+        isGlobalVar = true;
         for (var declare : elm.declares) {
             visitDeclNode(declare);
         }
+        isGlobalVar = false;
 
         for (var func : elm.funcs) {
             visitFuncDefNode(func);
@@ -136,6 +139,14 @@ public class Visitor {
         }
 
         varSym.values.addAll(visitConstInitValNode(elm.constInitVal).constInitVals);
+
+        if (isGlobalVar) {
+            var globalVar = irModule.createGlobalValue(IRType.getInt(), varSym.values, varSym.varType.dims);
+            globalVar.setName(varSym.ident);
+            varSym.targetValue = globalVar;
+        } else {
+            // TODO: generate local var ir
+        }
 
         currTable.insertSymbol(varSym);
     }
@@ -234,6 +245,7 @@ public class Visitor {
         ArrayList<IRType> irArgTypes = new ArrayList<>(); // TODO: function with args
         currFunction = irModule.createFunction(sym.retType.type.equals("void") ? IRType.getVoid() : IRType.getInt(), irArgTypes);
         currFunction.setName(sym.ident);
+        sym.targetValue = currFunction;
         currBasicBlock = currFunction.createBasicBlock();
 
         visitBlockNode(elm.block);
@@ -304,21 +316,25 @@ public class Visitor {
         return rt;
     }
 
-    public void visitInitValNodeForArray(InitValNodeForArray elm) {
+    public VisitResult visitInitValNodeForArray(InitValNodeForArray elm) {
+        var rt = new VisitResult();
         for (var init : elm.initVals) {
-            visitInitValNode(init);
+            rt.constInitVals.addAll(visitInitValNode(init).constInitVals);
         }
+        return rt;
     }
 
-    public void visitInitValNodeForExp(InitValNodeForExp elm) {
-        visitExpNode(elm.exp);
+    public VisitResult visitInitValNodeForExp(InitValNodeForExp elm) {
+        var rt = new VisitResult();
+        rt.constInitVals.add(visitExpNode(elm.exp).constVal);
+        return rt;
     }
 
-    public void visitInitValNode(InitValNode elm) {
+    public VisitResult visitInitValNode(InitValNode elm) {
         if (elm instanceof InitValNodeForArray) {
-            visitInitValNodeForArray((InitValNodeForArray) elm);
+            return visitInitValNodeForArray((InitValNodeForArray) elm);
         } else {
-            visitInitValNodeForExp((InitValNodeForExp) elm);
+            return visitInitValNodeForExp((InitValNodeForExp) elm);
         }
     }
 
@@ -385,7 +401,7 @@ public class Visitor {
         type.dims.addAll(typeDims);
 
         rt.expType = type;
-        rt.constVal = null; // todo: what if lVal is const
+        rt.constVal = null; // TODO: what if lVal is const (important for global var ir)
 
         return rt;
     }
@@ -403,6 +419,7 @@ public class Visitor {
         ArrayList<IRType> irArgTypes = new ArrayList<>();
         currFunction = irModule.createFunction(IRType.getInt(), irArgTypes);
         currFunction.setName("main");
+        sym.targetValue = currFunction;
         currBasicBlock = currFunction.createBasicBlock();
 
         visitBlockNode(elm.mainBlock);
@@ -709,7 +726,15 @@ public class Visitor {
         }
 
         if (elm.initVal != null) {
-            visitInitValNode(elm.initVal);
+            varSym.values.addAll(visitInitValNode(elm.initVal).constInitVals);
+        }
+
+        if (isGlobalVar) {
+            var globalVar = irModule.createGlobalValue(IRType.getInt(), varSym.values, varSym.varType.dims);
+            globalVar.setName(varSym.ident);
+            varSym.targetValue = globalVar;
+        } else {
+            // TODO: generate local var ir
         }
 
         currTable.insertSymbol(varSym);
