@@ -13,4 +13,5 @@ public class VisitResult {
     public List<Type> paramTypes = new ArrayList<>();
 
     public Value irValue;
+    public List<Value> irValues = new ArrayList<>();
 }

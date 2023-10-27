@@ -42,11 +42,14 @@ public class Visitor {
         if (val1 != null && val2 != null) {
             if (elm.op == LexType.PLUS) {
                 rt.constVal = val1 + val2;
-                rt.irValue = currBasicBlock.createAddInst(r1.irValue, r2.irValue);
             } else {
                 rt.constVal = val1 - val2;
-                rt.irValue = currBasicBlock.createSubInst(r1.irValue, r2.irValue);
             }
+        }
+        if (elm.op == LexType.PLUS) {
+            rt.irValue = currBasicBlock.createAddInst(r1.irValue, r2.irValue);
+        } else {
+            rt.irValue = currBasicBlock.createSubInst(r1.irValue, r2.irValue);
         }
         return rt;
     }
@@ -145,7 +148,14 @@ public class Visitor {
             globalVar.setName(varSym.ident);
             varSym.targetValue = globalVar;
         } else {
-            // TODO: generate local var ir
+            // TODO: alloca should only in the first basic block
+            var localVar = currBasicBlock.createAllocaInst(IRType.getInt());
+            varSym.targetValue = localVar;
+            if (!varSym.isArray()) {
+                currBasicBlock.createStoreInst(IRType.getInt(), new ImmediateValue(varSym.values.get(0)), varSym.targetValue);
+            } else {
+                // TODO: array with init values
+            }
         }
 
         currTable.insertSymbol(varSym);
@@ -319,14 +329,18 @@ public class Visitor {
     public VisitResult visitInitValNodeForArray(InitValNodeForArray elm) {
         var rt = new VisitResult();
         for (var init : elm.initVals) {
-            rt.constInitVals.addAll(visitInitValNode(init).constInitVals);
+            var r = visitInitValNode(init);
+            rt.constInitVals.addAll(r.constInitVals);
+            rt.irValues.addAll(r.irValues);
         }
         return rt;
     }
 
     public VisitResult visitInitValNodeForExp(InitValNodeForExp elm) {
         var rt = new VisitResult();
-        rt.constInitVals.add(visitExpNode(elm.exp).constVal);
+        var r = visitExpNode(elm.exp);
+        rt.constInitVals.add(r.constVal);
+        rt.irValues.add(r.irValue);
         return rt;
     }
 
@@ -403,6 +417,12 @@ public class Visitor {
         rt.expType = type;
         rt.constVal = null; // TODO: what if lVal is const (important for global var ir)
 
+        if (varSym.isArray()) {
+            // TODO: if ident is array
+        } else {
+            rt.irValue = varSym.targetValue;
+        }
+
         return rt;
     }
 
@@ -447,14 +467,18 @@ public class Visitor {
         if (val1 != null && val2 != null) {
             if (elm.op == LexType.MULT) {
                 rt.constVal = val1 * val2;
-                rt.irValue = currBasicBlock.createMulInst(r1.irValue, r2.irValue);
             } else if (elm.op == LexType.DIV) {
                 rt.constVal = val1 / val2;
-                rt.irValue = currBasicBlock.createSDivInst(r1.irValue, r2.irValue);
             } else {
                 rt.constVal = val1 % val2;
-                // TODO: mod operation (use srem)
             }
+        }
+        if (elm.op == LexType.MULT) {
+            rt.irValue = currBasicBlock.createMulInst(r1.irValue, r2.irValue);
+        } else if (elm.op == LexType.DIV) {
+            rt.irValue = currBasicBlock.createSDivInst(r1.irValue, r2.irValue);
+        } else {
+            // TODO: mod operation (use srem)
         }
 
         return rt;
@@ -486,6 +510,7 @@ public class Visitor {
 
     public VisitResult visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
         var r = visitLValNode(elm.lVal);
+        r.irValue = currBasicBlock.createLoadInst(IRType.getInt(), r.irValue);
         return r;
     }
 
@@ -527,7 +552,8 @@ public class Visitor {
             errorRecorder.addError(CompileErrorType.TRY_TO_CHANGE_VAL_OF_CONST, elm.lVal.identLineNum);
         }
 
-        visitExpNode(elm.exp);
+        var r = visitExpNode(elm.exp);
+        currBasicBlock.createStoreInst(IRType.getInt(), r.irValue, lValSym.targetValue);
     }
 
     public void visitStmtNodeForBlock(StmtNodeForBlock elm) {
@@ -725,16 +751,26 @@ public class Visitor {
             varSym.varType.dims.add(visitConstExpNode(dim).constVal);
         }
 
-        if (elm.initVal != null) {
-            varSym.values.addAll(visitInitValNode(elm.initVal).constInitVals);
-        }
-
         if (isGlobalVar) {
+            if (elm.initVal != null) {
+                var r = visitInitValNode(elm.initVal);
+                varSym.values.addAll(r.constInitVals);
+            }
             var globalVar = irModule.createGlobalValue(IRType.getInt(), varSym.values, varSym.varType.dims);
             globalVar.setName(varSym.ident);
             varSym.targetValue = globalVar;
         } else {
-            // TODO: generate local var ir
+            // TODO: alloca should only in the first basic block
+            var localVar = currBasicBlock.createAllocaInst(IRType.getInt());
+            varSym.targetValue = localVar;
+            if (elm.initVal != null) {
+                var r = visitInitValNode(elm.initVal);
+                if (!varSym.isArray()) {
+                    currBasicBlock.createStoreInst(IRType.getInt(), r.irValues.get(0), varSym.targetValue);
+                } else {
+                    // TODO: array with init values
+                }
+            }
         }
 
         currTable.insertSymbol(varSym);
