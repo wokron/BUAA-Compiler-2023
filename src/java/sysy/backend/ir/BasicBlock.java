@@ -50,6 +50,10 @@ public class BasicBlock extends Value {
         return insertInstruction(new StoreInst(type, value, ptr));
     }
 
+    public Value createCallInst(Function func, List<Value> params) {
+        return insertInstruction(new CallInst(func, params));
+    }
+
     public Value createAllocaInst(IRType type) {
         return insertInstruction(new AllocaInst(type));
     }

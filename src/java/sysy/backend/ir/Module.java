@@ -81,6 +81,8 @@ public class Module {
         var load = b2.createLoadInst(IRType.getInt(), global);
         load.setName("5");
 
+        var call = b2.createCallInst(Function.BUILD_IN_PUTSTR, List.of(load));
+
         b2.createReturnInst(IRType.getVoid(), null);
 
         module.dump(System.out);

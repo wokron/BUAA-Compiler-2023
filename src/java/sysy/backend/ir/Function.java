@@ -9,6 +9,18 @@ public class Function extends Value {
     private final List<FunctionArgument> arguments = new ArrayList<>();
     private final List<BasicBlock> basicBlocks = new ArrayList<>();
 
+    public static Function BUILD_IN_GETINT = new Function(IRType.getInt(), List.of());
+    public static Function BUILD_IN_PUTINT = new Function(IRType.getVoid(), List.of(IRType.getInt()));
+    public static Function BUILD_IN_PUTCH = new Function(IRType.getVoid(), List.of(IRType.getInt()));
+    public static Function BUILD_IN_PUTSTR = new Function(IRType.getVoid(), List.of(IRType.getChar().ptr(1)));
+
+    static {
+        BUILD_IN_GETINT.setName("getint");
+        BUILD_IN_PUTINT.setName("putint");
+        BUILD_IN_PUTCH.setName("putch");
+        BUILD_IN_PUTSTR.setName("putstr");
+    }
+
     public Function(IRType retType, List<IRType> argTypes) {
         this.retType = retType;
         for (var argType : argTypes) {

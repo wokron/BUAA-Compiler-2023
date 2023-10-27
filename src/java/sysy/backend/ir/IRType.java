@@ -19,12 +19,20 @@ public class IRType {
         return this;
     }
 
+    public IRTypeEnum getType() {
+        return type;
+    }
+
     public static IRType getInt() {
         return new IRType(IRTypeEnum.INT);
     }
 
     public static IRType getVoid() {
         return new IRType(IRTypeEnum.VOID);
+    }
+
+    public static IRType getChar() {
+        return new IRType(IRTypeEnum.CHAR);
     }
 
     @Override
