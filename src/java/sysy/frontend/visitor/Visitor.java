@@ -16,11 +16,16 @@ import sysy.frontend.symtable.symbol.VarSymbol;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class Visitor {
     private final Module irModule = new Module();
     private Function currFunction = null;
     private BasicBlock currBasicBlock = null;
+
+    // for break and continue
+    private final Stack<List<BrInst>> continueBrInsts = new Stack<>();
+    private final Stack<List<BrInst>> breakBrInsts = new Stack<>();
 
     private final ErrorRecorder errorRecorder;
     private final SymbolTable table = new SymbolTable();
@@ -649,6 +654,16 @@ public class Visitor {
         if (isInLoop == 0) {
             errorRecorder.addError(CompileErrorType.BREAK_OR_CONTINUE_NOT_IN_LOOP, elm.tkLineNum);
         }
+
+        if (elm.type == LexType.CONTINUETK) {
+            continueBrInsts.peek().add((BrInst) currBasicBlock.createBrInstWithoutCond(null));
+            currBasicBlock = currFunction.createBasicBlock();
+        } else if (elm.type == LexType.BREAKTK) {
+            breakBrInsts.peek().add((BrInst) currBasicBlock.createBrInstWithoutCond(null));
+            currBasicBlock = currFunction.createBasicBlock();
+        } else {
+            assert false; // impossible
+        }
     }
 
     public void visitStmtNodeForExp(StmtNodeForExp elm) {
@@ -697,6 +712,9 @@ public class Visitor {
     }
 
     public void visitStmtNodeForLoop(StmtNodeForLoop elm) {
+        breakBrInsts.push(new ArrayList<>());
+        continueBrInsts.push(new ArrayList<>());
+
         var forStmt1Block = currBasicBlock;
         if (elm.forStmt1 != null) {
             visitForStmtNode(elm.forStmt1);
@@ -740,6 +758,13 @@ public class Visitor {
             brInst.setFalseBranch(loopExitBlock);
         }
 
+        for (var continueBrInst : continueBrInsts.pop()) {
+            continueBrInst.setDest(forStmt2Block);
+        }
+
+        for (var breakBrInst : breakBrInsts.pop()) {
+            breakBrInst.setDest(loopExitBlock);
+        }
     }
 
     public void visitStmtNodeForPrintf(StmtNodeForPrintf elm) {

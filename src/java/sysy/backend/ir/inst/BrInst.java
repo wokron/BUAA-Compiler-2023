@@ -9,7 +9,7 @@ public class BrInst extends Instruction {
     private final Value cond;
     private BasicBlock trueBranch;
     private BasicBlock falseBranch;
-    private final BasicBlock dest;
+    private BasicBlock dest;
 
     public BrInst(Value cond, BasicBlock ifTrue, BasicBlock ifFalse) {
         this.cond = cond;
@@ -31,6 +31,10 @@ public class BrInst extends Instruction {
 
     public void setFalseBranch(BasicBlock falseBranch) {
         this.falseBranch = falseBranch;
+    }
+
+    public void setDest(BasicBlock dest) {
+        this.dest = dest;
     }
 
     @Override
