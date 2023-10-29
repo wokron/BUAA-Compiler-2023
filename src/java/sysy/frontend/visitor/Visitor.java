@@ -634,14 +634,14 @@ public class Visitor {
     }
 
     public void visitStmtNodeForAssign(StmtNodeForAssign elm) {
-        visitLValNode(elm.lVal);
+        var rtLVal = visitLValNode(elm.lVal);
         var lValSym = currTable.getSymbol(elm.lVal.ident);
         if (lValSym instanceof VarSymbol lValVarSym && lValVarSym.isConst) {
             errorRecorder.addError(CompileErrorType.TRY_TO_CHANGE_VAL_OF_CONST, elm.lVal.identLineNum);
         }
 
-        var r = visitExpNode(elm.exp);
-        currBasicBlock.createStoreInst(IRType.getInt(), r.irValue, lValSym.targetValue);
+        var rtExp = visitExpNode(elm.exp);
+        currBasicBlock.createStoreInst(IRType.getInt(), rtExp.irValue, rtLVal.irValue);
     }
 
     public void visitStmtNodeForBlock(StmtNodeForBlock elm) {
