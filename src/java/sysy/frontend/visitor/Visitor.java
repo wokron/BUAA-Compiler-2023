@@ -2,6 +2,9 @@ package sysy.frontend.visitor;
 
 import sysy.backend.ir.*;
 import sysy.backend.ir.Module;
+import sysy.backend.ir.inst.BrInst;
+import sysy.backend.ir.inst.ICmpInst;
+import sysy.backend.ir.inst.ICmpInstCond;
 import sysy.error.CompileErrorType;
 import sysy.error.ErrorRecorder;
 import sysy.frontend.lexer.LexType;
@@ -118,8 +121,8 @@ public class Visitor {
         visitMainFuncDefNode(elm.mainFunc);
     }
 
-    public void visitCondNode(CondNode elm) {
-        visitLOrExpNode(elm.lOrExp);
+    public VisitResult visitCondNode(CondNode elm) {
+        return visitLOrExpNode(elm.lOrExp);
     }
 
     public void visitConstDeclNode(ConstDeclNode elm) {
@@ -207,20 +210,24 @@ public class Visitor {
         }
     }
 
-    public void visitEqExpNodeForDouble(EqExpNodeForDouble elm) {
-        visitEqExpNode(elm.eqExp);
-        visitRelExpNode(elm.relExp);
+    public VisitResult visitEqExpNodeForDouble(EqExpNodeForDouble elm) {
+        var rt = new VisitResult();
+        var r1 = visitEqExpNode(elm.eqExp);
+        var r2 = visitRelExpNode(elm.relExp);
+        ICmpInstCond cond = elm.op == LexType.EQL ? ICmpInstCond.EQ : ICmpInstCond.NE;
+        rt.irValue = currBasicBlock.createICmpInst(cond, r1.irValue, r2.irValue);
+        return rt;
     }
 
-    public void visitEqExpNodeForSingle(EqExpNodeForSingle elm) {
-        visitRelExpNode(elm.relExp);
+    public VisitResult visitEqExpNodeForSingle(EqExpNodeForSingle elm) {
+        return visitRelExpNode(elm.relExp);
     }
 
-    public void visitEqExpNode(EqExpNode elm) {
+    public VisitResult visitEqExpNode(EqExpNode elm) {
         if (elm instanceof EqExpNodeForDouble) {
-            visitEqExpNodeForDouble((EqExpNodeForDouble) elm);
+            return visitEqExpNodeForDouble((EqExpNodeForDouble) elm);
         } else {
-            visitEqExpNodeForSingle((EqExpNodeForSingle) elm);
+            return visitEqExpNodeForSingle((EqExpNodeForSingle) elm);
         }
     }
 
@@ -368,37 +375,81 @@ public class Visitor {
         }
     }
 
-    public void visitLAndExpNodeForDouble(LAndExpNodeForDouble elm) {
-        visitLAndExpNode(elm.lAndExp);
-        visitEqExpNode(elm.eqExp);
+    public VisitResult visitLAndExpNodeForDouble(LAndExpNodeForDouble elm) {
+        var rt = new VisitResult();
+
+        var r1 = visitLAndExpNode(elm.lAndExp);
+        var lastAndBlock = r1.andBlocks.get(r1.andBlocks.size()-1);
+        var brInLastAndBlock = (BrInst)lastAndBlock.getInstructions().get(lastAndBlock.getInstructions().size()-1);
+        brInLastAndBlock.setTrueBranch(currBasicBlock);
+        rt.andBlocks.addAll(r1.andBlocks);
+
+        var r2 = visitEqExpNode(elm.eqExp);
+        if (!(r2.irValue instanceof ICmpInst)) {
+            r2.irValue = currBasicBlock.createICmpInst(ICmpInstCond.NE, new ImmediateValue(0), r2.irValue);
+        }
+        currBasicBlock.createBrInstWithCond(r2.irValue, null, null);
+        rt.andBlocks.add(currBasicBlock);
+        currBasicBlock = currFunction.createBasicBlock();
+        return rt;
     }
 
-    public void visitLAndExpNodeForSingle(LAndExpNodeForSingle elm) {
-        visitEqExpNode(elm.eqExp);
+    public VisitResult visitLAndExpNodeForSingle(LAndExpNodeForSingle elm) {
+        var rt = new VisitResult();
+
+        var r = visitEqExpNode(elm.eqExp);
+        if (!(r.irValue instanceof ICmpInst)) {
+            r.irValue = currBasicBlock.createICmpInst(ICmpInstCond.NE, new ImmediateValue(0), r.irValue);
+        }
+        currBasicBlock.createBrInstWithCond(r.irValue, null, null);
+        rt.andBlocks.add(currBasicBlock);
+        currBasicBlock = currFunction.createBasicBlock();
+        return rt;
     }
 
-    public void visitLAndExpNode(LAndExpNode elm) {
+    public VisitResult visitLAndExpNode(LAndExpNode elm) {
         if (elm instanceof  LAndExpNodeForDouble) {
-            visitLAndExpNodeForDouble((LAndExpNodeForDouble) elm);
+            return visitLAndExpNodeForDouble((LAndExpNodeForDouble) elm);
         } else {
-            visitLAndExpNodeForSingle((LAndExpNodeForSingle) elm);
+            return visitLAndExpNodeForSingle((LAndExpNodeForSingle) elm);
         }
     }
 
-    public void visitLOrExpNodeForDouble(LOrExpNodeForDouble elm) {
-        visitLOrExpNode(elm.lOrExp);
-        visitLAndExpNode(elm.lAndExp);
+    public VisitResult visitLOrExpNodeForDouble(LOrExpNodeForDouble elm) {
+        var rt = new VisitResult();
+
+        var r1 = visitLOrExpNode(elm.lOrExp);
+        rt.blocksToTrue.addAll(r1.blocksToTrue);
+
+        var r2 = visitLAndExpNode(elm.lAndExp);
+        rt.blocksToTrue.add(r2.andBlocks.get(r2.andBlocks.size()-1));
+        var firstAndBlock = r2.andBlocks.get(0);
+        for (var nearAndBlock : r1.nearAndBlocks) {
+            var brInst = (BrInst)nearAndBlock.getInstructions().get(nearAndBlock.getInstructions().size()-1);
+            brInst.setFalseBranch(firstAndBlock);
+        }
+        rt.nearAndBlocks.addAll(r2.andBlocks);
+        rt.blocksToFalse.addAll(rt.nearAndBlocks);
+
+        return rt;
     }
 
-    public void visitLOrExpNodeForSingle(LOrExpNodeForSingle elm) {
-        visitLAndExpNode(elm.lAndExp);
+    public VisitResult visitLOrExpNodeForSingle(LOrExpNodeForSingle elm) {
+        var rt = new VisitResult();
+
+        var r = visitLAndExpNode(elm.lAndExp);
+        rt.blocksToTrue.add(r.andBlocks.get(r.andBlocks.size()-1));
+        rt.nearAndBlocks.addAll(r.andBlocks);
+        rt.blocksToFalse.addAll(rt.nearAndBlocks);
+
+        return rt;
     }
 
-    public void visitLOrExpNode(LOrExpNode elm) {
+    public VisitResult visitLOrExpNode(LOrExpNode elm) {
         if (elm instanceof LOrExpNodeForDouble) {
-            visitLOrExpNodeForDouble((LOrExpNodeForDouble) elm);
+            return visitLOrExpNodeForDouble((LOrExpNodeForDouble) elm);
         } else {
-            visitLOrExpNodeForSingle((LOrExpNodeForSingle) elm);
+            return visitLOrExpNodeForSingle((LOrExpNodeForSingle) elm);
         }
     }
 
@@ -548,20 +599,31 @@ public class Visitor {
         }
     }
 
-    public void visitRelExpNodeForDouble(RelExpNodeForDouble elm) {
-        visitRelExpNode(elm.relExp);
-        visitAddExpNode(elm.addExp);
+    public VisitResult visitRelExpNodeForDouble(RelExpNodeForDouble elm) {
+        var rt = new VisitResult();
+        var r1 = visitRelExpNode(elm.relExp);
+        var r2 = visitAddExpNode(elm.addExp);
+        ICmpInstCond cond = switch (elm.op) {
+            case LSS -> ICmpInstCond.SLT;
+            case GRE -> ICmpInstCond.SGT;
+            case LEQ -> ICmpInstCond.SLE;
+            case GEQ -> ICmpInstCond.SGE;
+            default -> null; // impossible
+        };
+
+        rt.irValue = currBasicBlock.createICmpInst(cond, r1.irValue, r2.irValue);
+        return rt;
     }
 
-    public void visitRelExpNodeForSingle(RelExpNodeForSingle elm) {
-        visitAddExpNode(elm.addExp);
+    public VisitResult visitRelExpNodeForSingle(RelExpNodeForSingle elm) {
+        return visitAddExpNode(elm.addExp);
     }
 
-    public void visitRelExpNode(RelExpNode elm) {
+    public VisitResult visitRelExpNode(RelExpNode elm) {
         if (elm instanceof RelExpNodeForDouble) {
-            visitRelExpNodeForDouble((RelExpNodeForDouble) elm);
+            return visitRelExpNodeForDouble((RelExpNodeForDouble) elm);
         } else {
-            visitRelExpNodeForSingle((RelExpNodeForSingle) elm);
+            return visitRelExpNodeForSingle((RelExpNodeForSingle) elm);
         }
     }
 
@@ -605,10 +667,33 @@ public class Visitor {
     }
 
     public void visitStmtNodeForIfElse(StmtNodeForIfElse elm) {
-        visitCondNode(elm.cond);
+        var r = visitCondNode(elm.cond);
+
+        var trueBlock = currBasicBlock;
         visitStmtNode(elm.ifStmt);
+
+        var lastBlockInTrue = currBasicBlock;
+        if (!currBasicBlock.getInstructions().isEmpty()) {
+            currBasicBlock = currFunction.createBasicBlock();
+        }
+        var falseBlock = currBasicBlock;
+
         if (elm.elseStmt != null) {
             visitStmtNode(elm.elseStmt);
+            if (!currBasicBlock.getInstructions().isEmpty()) {
+                currBasicBlock = currFunction.createBasicBlock();
+            }
+            lastBlockInTrue.createBrInstWithoutCond(currBasicBlock);
+        }
+
+        for (var blockToTrue : r.blocksToTrue) {
+            var brInst = (BrInst)blockToTrue.getInstructions().get(blockToTrue.getInstructions().size()-1);
+            brInst.setTrueBranch(trueBlock);
+        }
+
+        for (var blockToFalse : r.blocksToFalse) {
+            var brInst = (BrInst)blockToFalse.getInstructions().get(blockToFalse.getInstructions().size()-1);
+            brInst.setFalseBranch(falseBlock);
         }
     }
 
