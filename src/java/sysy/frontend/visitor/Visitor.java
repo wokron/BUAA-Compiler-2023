@@ -236,8 +236,9 @@ public class Visitor {
     }
 
     public void visitForStmtNode(ForStmtNode elm) {
-        visitLValNode(elm.lVal);
-        visitExpNode(elm.exp);
+        var r1 = visitLValNode(elm.lVal);
+        var r2 = visitExpNode(elm.exp);
+        currBasicBlock.createStoreInst(IRType.getInt(), r2.irValue, r1.irValue);
     }
 
     public void visitFuncDefNode(FuncDefNode elm) {
@@ -696,21 +697,49 @@ public class Visitor {
     }
 
     public void visitStmtNodeForLoop(StmtNodeForLoop elm) {
+        var forStmt1Block = currBasicBlock;
         if (elm.forStmt1 != null) {
             visitForStmtNode(elm.forStmt1);
         }
 
-        if (elm.cond != null) {
-            visitCondNode(elm.cond);
-        }
+        currBasicBlock = currFunction.createBasicBlock();
+        forStmt1Block.createBrInstWithoutCond(currBasicBlock);
+        var loopEntryBlock = currBasicBlock;
 
-        if (elm.forStmt2 != null) {
-            visitForStmtNode(elm.forStmt2);
+        var condRt = new VisitResult();
+        if (elm.cond != null) {
+            condRt = visitCondNode(elm.cond);
         }
+        var stmtBlock = currBasicBlock;
 
         isInLoop++;
         visitStmtNode(elm.stmt);
         isInLoop--;
+
+        var lastBlockInStmt = currBasicBlock;
+        currBasicBlock = currFunction.createBasicBlock();
+
+        lastBlockInStmt.createBrInstWithoutCond(currBasicBlock);
+        var forStmt2Block = currBasicBlock;
+
+        if (elm.forStmt2 != null) {
+            visitForStmtNode(elm.forStmt2);
+        }
+        forStmt2Block.createBrInstWithoutCond(loopEntryBlock);
+
+        currBasicBlock = currFunction.createBasicBlock();
+        var loopExitBlock = currBasicBlock;
+
+        for (var blockToTrue : condRt.blocksToTrue) {
+            var brInst = (BrInst)blockToTrue.getInstructions().get(blockToTrue.getInstructions().size()-1);
+            brInst.setTrueBranch(stmtBlock);
+        }
+
+        for (var blockToFalse : condRt.blocksToFalse) {
+            var brInst = (BrInst)blockToFalse.getInstructions().get(blockToFalse.getInstructions().size()-1);
+            brInst.setFalseBranch(loopExitBlock);
+        }
+
     }
 
     public void visitStmtNodeForPrintf(StmtNodeForPrintf elm) {
