@@ -62,6 +62,18 @@ public class BasicBlock extends Value {
         return insertInstruction(new AllocaInst(type));
     }
 
+    public Value createICmpInst(ICmpInstCond cond, Value left, Value right) {
+        return insertInstruction(new ICmpInst(cond, left, right, IRType.getInt()));
+    }
+
+    public Value createBrInstWithCond(Value cond, BasicBlock ifTrue, BasicBlock ifFalse) {
+        return insertInstruction(new BrInst(cond, ifTrue, ifFalse));
+    }
+
+    public Value createBrInstWithoutCond(BasicBlock dest) {
+        return insertInstruction(new BrInst(dest));
+    }
+
     public List<Instruction> getInstructions() {
         return instructions;
     }
