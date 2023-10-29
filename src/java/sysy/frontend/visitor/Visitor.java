@@ -673,18 +673,16 @@ public class Visitor {
         visitStmtNode(elm.ifStmt);
 
         var lastBlockInTrue = currBasicBlock;
-        if (!currBasicBlock.getInstructions().isEmpty()) {
-            currBasicBlock = currFunction.createBasicBlock();
-        }
+        currBasicBlock = currFunction.createBasicBlock();
         var falseBlock = currBasicBlock;
 
         if (elm.elseStmt != null) {
             visitStmtNode(elm.elseStmt);
-            if (!currBasicBlock.getInstructions().isEmpty()) {
-                currBasicBlock = currFunction.createBasicBlock();
-            }
-            lastBlockInTrue.createBrInstWithoutCond(currBasicBlock);
+            var lastBlockInFalse = currBasicBlock;
+            currBasicBlock = currFunction.createBasicBlock();
+            lastBlockInFalse.createBrInstWithoutCond(currBasicBlock);
         }
+        lastBlockInTrue.createBrInstWithoutCond(currBasicBlock);
 
         for (var blockToTrue : r.blocksToTrue) {
             var brInst = (BrInst)blockToTrue.getInstructions().get(blockToTrue.getInstructions().size()-1);
@@ -842,7 +840,7 @@ public class Visitor {
             } else if (op == LexType.PLUS) {
                 rt.irValue = r.irValue; // if op is +, do nothing
             } else {
-                // TODO: need to implement logical not (use icmp)
+                rt.irValue = currBasicBlock.createICmpInst(ICmpInstCond.EQ, new ImmediateValue(0), r.irValue);
             }
         }
         return rt;
