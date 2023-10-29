@@ -19,7 +19,7 @@ public class ICmpInst extends Instruction {
 
     @Override
     public void dump(PrintStream out) {
-        out.printf("  %s = %s %s %s, %s\n",
+        out.printf("  %s = icmp %s %s %s, %s\n",
                 getName(),
                 cond.name().toLowerCase(),
                 type.toString(),
