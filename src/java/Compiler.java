@@ -1,10 +1,10 @@
 import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
 import sysy.exception.ParserException;
-import sysy.lexer.Lexer;
-import sysy.parser.Parser;
-import sysy.parser.syntaxtree.CompUnitNode;
-import sysy.visitor.Visitor;
+import sysy.frontend.lexer.Lexer;
+import sysy.frontend.parser.Parser;
+import sysy.frontend.parser.syntaxtree.CompUnitNode;
+import sysy.frontend.visitor.Visitor;
 
 import java.io.*;
 
@@ -14,7 +14,8 @@ public class Compiler {
     public static void main(String[] args) throws IOException, LexerException, ParserException {
 //        task1();
 //        task2();
-        task3();
+//        task3();
+        task4LLVM();
     }
 
     private static void task1() throws IOException, LexerException {
@@ -65,6 +66,28 @@ public class Compiler {
             for (var error : recorder.getErrors()) {
                 err.println(error);
             }
+        }
+    }
+
+    private static void task4LLVM() throws IOException, LexerException, ParserException {
+        try (var testFile = new FileInputStream("testfile.txt");
+             var outputFile = new FileOutputStream("llvm_ir.txt")) {
+            var out = new PrintStream(outputFile);
+            var lexer = new Lexer(new InputStreamReader(testFile), recorder);
+            var parser = new Parser(lexer, recorder);
+            var result = parser.parse();
+
+            var visitor = new Visitor(recorder);
+            var module = visitor.generateIR(result);
+
+            out.print("""
+                    declare i32 @getint()
+                    declare void @putint(i32)
+                    declare void @putch(i32)
+                    declare void @putstr(i8*)
+                    
+                    """);
+            module.dump(out);
         }
     }
 }
