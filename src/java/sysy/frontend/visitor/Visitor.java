@@ -161,8 +161,25 @@ public class Visitor {
             varSym.targetValue = localVar;
             if (!varSym.isArray()) {
                 currBasicBlock.createStoreInst(IRType.getInt(), new ImmediateValue(varSym.values.get(0)), varSym.targetValue);
-            } else {
-                // TODO: array with init values
+            } else { // array with init values
+                for (int i = 0; i < varSym.values.size(); i++) {
+                    int[] idxs = new int[varSym.varType.dims.size()];
+                    var pos = i;
+                    for (int j = idxs.length - 1; j >= 0; j--) {
+                        idxs[j] = pos % varSym.varType.dims.get(j);
+                        pos /= varSym.varType.dims.get(j);
+                    }
+
+                    var initVal = varSym.values.get(i);
+                    var symDims = varSym.varType.dims;
+                    var arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims), varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
+                    for (int j = 0; j < idxs.length; j++) {
+                        var visitIdx = idxs[j];
+                        List<Value> offsets = j == idxs.length - 1 ? List.of(new ImmediateValue(visitIdx)) : List.of(new ImmediateValue(visitIdx), new ImmediateValue(0));
+                        arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims.subList(j+1, symDims.size())), arrayPtr, offsets);
+                    }
+                    currBasicBlock.createStoreInst(IRType.getInt(), new ImmediateValue(initVal), arrayPtr);
+                }
             }
         }
 
@@ -497,7 +514,7 @@ public class Visitor {
         type.dims.addAll(typeDims);
 
         rt.expType = type;
-        if (varSym.isConst) {
+        if (isGlobalVar && varSym.isConst) {
             if (!varSym.isArray()) {
                 rt.constVal = varSym.values.get(0);
             } else {
@@ -1008,8 +1025,25 @@ public class Visitor {
                 var r = visitInitValNode(elm.initVal);
                 if (!varSym.isArray()) {
                     currBasicBlock.createStoreInst(IRType.getInt(), r.irValues.get(0), varSym.targetValue);
-                } else {
-                    // TODO: array with init values
+                } else { // array with init values
+                    for (int i = 0; i < varSym.values.size(); i++) {
+                        int[] idxs = new int[varSym.varType.dims.size()];
+                        var pos = i;
+                        for (int j = idxs.length - 1; j >= 0; j--) {
+                            idxs[j] = pos % varSym.varType.dims.get(j);
+                            pos /= varSym.varType.dims.get(j);
+                        }
+
+                        var initVal = varSym.values.get(i);
+                        var symDims = varSym.varType.dims;
+                        var arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims), varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
+                        for (int j = 0; j < idxs.length; j++) {
+                            var visitIdx = idxs[j];
+                            List<Value> offsets = j == idxs.length - 1 ? List.of(new ImmediateValue(visitIdx)) : List.of(new ImmediateValue(visitIdx), new ImmediateValue(0));
+                            arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims.subList(j+1, symDims.size())), arrayPtr, offsets);
+                        }
+                        currBasicBlock.createStoreInst(IRType.getInt(), new ImmediateValue(initVal), arrayPtr);
+                    }
                 }
             }
         }
