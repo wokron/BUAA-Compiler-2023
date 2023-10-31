@@ -651,6 +651,9 @@ public class Visitor {
             if (r.irValue instanceof GetElementPtrInst irGEPVal && !irGEPVal.getType().getArrayDims().isEmpty()) {
                 return r;
             }
+            if (r.irValue instanceof LoadInst irLoadVal && !irLoadVal.getType().getArrayDims().isEmpty()) {
+                return r;
+            }
             r.irValue = currBasicBlock.createLoadInst(IRType.getInt(), r.irValue);
         }
         return r;

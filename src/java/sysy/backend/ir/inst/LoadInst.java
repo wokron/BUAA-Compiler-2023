@@ -14,6 +14,10 @@ public class LoadInst extends Instruction {
         this.ptr = ptr;
     }
 
+    public IRType getType() {
+        return type;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.printf("  %s = load %s, %s* %s\n", getName(), type.toString(), type.toString(), ptr.getName());
