@@ -159,7 +159,7 @@ public class Visitor {
             varSym.targetValue = globalVar;
         } else {
             // TODO: alloca should only in the first basic block
-            var localVar = currBasicBlock.createAllocaInst(IRType.getInt());
+            var localVar = currBasicBlock.createAllocaInst(IRType.getInt().dims(varSym.varType.dims));
             varSym.targetValue = localVar;
             if (!varSym.isArray()) {
                 currBasicBlock.createStoreInst(IRType.getInt(), new ImmediateValue(varSym.values.get(0)), varSym.targetValue);
@@ -269,7 +269,7 @@ public class Visitor {
 
         ArrayList<IRType> irArgTypes = new ArrayList<>();
         for (var type : sym.paramTypeList) {
-            irArgTypes.add(IRType.getInt().ptr(type.dims.size()));
+            irArgTypes.add(IRType.getInt().dims(type.dims));
         }
         currFunction = irModule.createFunction(sym.retType.type.equals("void") ? IRType.getVoid() : IRType.getInt(), irArgTypes);
         currFunction.setName(sym.ident);
@@ -946,7 +946,7 @@ public class Visitor {
             varSym.targetValue = globalVar;
         } else {
             // TODO: alloca should only in the first basic block
-            var localVar = currBasicBlock.createAllocaInst(IRType.getInt());
+            var localVar = currBasicBlock.createAllocaInst(IRType.getInt().dims(varSym.varType.dims));
             varSym.targetValue = localVar;
             if (elm.initVal != null) {
                 var r = visitInitValNode(elm.initVal);
