@@ -45,8 +45,23 @@ public class Module {
     public static void main(String[] args) {
 //        testBasic();
 //        testIfElse();
-        testShortCircuit();
+//        testShortCircuit();
+        testType();
+    }
 
+    private static void testType() {
+        System.out.println(IRType.getInt().dims(List.of(6)));
+
+        System.out.println(IRType.getInt().dims(List.of(3, 3)));
+
+        List<Integer> dims = new ArrayList<>();
+        dims.add(null);
+        System.out.println(IRType.getInt().dims(dims));
+
+        dims = new ArrayList<>();
+        dims.add(null);
+        dims.add(3);
+        System.out.println(IRType.getInt().dims(dims));
     }
 
     private static void testBasic() {
