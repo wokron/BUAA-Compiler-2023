@@ -489,33 +489,48 @@ public class Visitor {
         type.dims.addAll(typeDims);
 
         rt.expType = type;
-        rt.constVal = null; // TODO: what if lVal is const (important for global var ir)
+        if (varSym.isConst) {
+            if (!varSym.isArray()) {
+                rt.constVal = varSym.values.get(0);
+            } else {
+                int accessIdx = 0;
+                int stride = 1;
+                for (int i = accessDims.size() - 1, j = varSym.varType.dims.size()-1; i >= 0; i--, j--) {
+                    accessIdx += accessDims.get(i) * stride;
+                    stride *= varSym.varType.dims.get(j);
+                }
+                rt.constVal = varSym.values.get(accessIdx);
+            }
+        }
 
-        if (varSym.isArray()) {
-            var dims = varSym.varType.dims;
-;
-            Value arrayPtr;
-            Value symValue = varSym.targetValue;
-            if (symValue instanceof AllocaInst allocaSymVal && !allocaSymVal.getType().getArrayDims().isEmpty()) {
-                var allocaSymValDims = allocaSymVal.getType().getArrayDims();
-                if (!allocaSymValDims.isEmpty() && allocaSymValDims.get(0) == null) { // like int a[] or int a[][2]
-                    arrayPtr = currBasicBlock.createLoadInst(allocaSymVal.getType(), symValue);
+        if (currBasicBlock != null) {
+
+            if (varSym.isArray()) {
+                var dims = varSym.varType.dims;
+
+                Value arrayPtr;
+                Value symValue = varSym.targetValue;
+                if (symValue instanceof AllocaInst allocaSymVal && !allocaSymVal.getType().getArrayDims().isEmpty()) {
+                    var allocaSymValDims = allocaSymVal.getType().getArrayDims();
+                    if (!allocaSymValDims.isEmpty() && allocaSymValDims.get(0) == null) { // like int a[] or int a[][2]
+                        arrayPtr = currBasicBlock.createLoadInst(allocaSymVal.getType(), symValue);
+                    } else {
+                        arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
+                    }
                 } else {
                     arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                 }
+
+                for (int i = 0; i < irVisitDims.size(); i++) {
+                    var visitDim = irVisitDims.get(i);
+                    var offsets = (i == dims.size() - 1) ? List.of(visitDim) : List.of(visitDim, new ImmediateValue(0));
+                    arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims.subList(i+1, dims.size())), arrayPtr, offsets);
+                }
+
+                rt.irValue = arrayPtr;
             } else {
-                arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
+                rt.irValue = varSym.targetValue;
             }
-
-            for (int i = 0; i < irVisitDims.size(); i++) {
-                var visitDim = irVisitDims.get(i);
-                var offsets = (i == dims.size() - 1) ? List.of(visitDim) : List.of(visitDim, new ImmediateValue(0));
-                arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims.subList(i+1, dims.size())), arrayPtr, offsets);
-            }
-
-            rt.irValue = arrayPtr;
-        } else {
-            rt.irValue = varSym.targetValue;
         }
 
         return rt;
