@@ -74,6 +74,10 @@ public class BasicBlock extends Value {
         return insertInstruction(new BrInst(dest));
     }
 
+    public Value createGetElementPtrInst(IRType type, Value elementBase, Value offset) {
+        return insertInstruction(new GetElementPtrInst(type, elementBase, offset));
+    }
+
     public List<Instruction> getInstructions() {
         return instructions;
     }

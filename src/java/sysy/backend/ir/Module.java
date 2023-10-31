@@ -46,7 +46,8 @@ public class Module {
 //        testBasic();
 //        testIfElse();
 //        testShortCircuit();
-        testType();
+//        testType();
+        testGetElementPtr();
     }
 
     private static void testType() {
@@ -274,6 +275,19 @@ public class Module {
         lastBlockInTrue.createBrInstWithoutCond(currBlock);
 
         System.out.print("\n\ntest short circuit:\n");
+        module.dump(System.out);
+    }
+
+    private static void testGetElementPtr() {
+        var module = new Module();
+        var func1 = module.createFunction(IRType.getVoid(), List.of());
+
+        var b1 = func1.createBasicBlock();
+
+        var arr1 = b1.createAllocaInst(IRType.getInt().dims(List.of(2, 3)));
+        var tmp1 = b1.createGetElementPtrInst(IRType.getInt().dims(List.of(2, 3)), arr1, new ImmediateValue(0));
+        b1.createGetElementPtrInst(IRType.getInt().dims(List.of(3)), tmp1, new ImmediateValue(1));
+
         module.dump(System.out);
     }
 }
