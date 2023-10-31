@@ -11,6 +11,10 @@ public class AllocaInst extends Instruction {
         this.type = type;
     }
 
+    public IRType getType() {
+        return type;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.printf("  %s = alloca %s\n", getName(), type.toString());

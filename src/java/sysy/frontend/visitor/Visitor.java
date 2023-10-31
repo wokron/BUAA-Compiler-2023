@@ -2,6 +2,7 @@ package sysy.frontend.visitor;
 
 import sysy.backend.ir.*;
 import sysy.backend.ir.Module;
+import sysy.backend.ir.inst.AllocaInst;
 import sysy.backend.ir.inst.BrInst;
 import sysy.backend.ir.inst.ICmpInst;
 import sysy.backend.ir.inst.ICmpInstCond;
@@ -471,8 +472,11 @@ public class Visitor {
         var varSym = (VarSymbol) sym;
 
         List<Integer> accessDims = new ArrayList<>();
+        List<Value> irVisitDims = new ArrayList<>();
         for (var dim : elm.dimensions) {
-            accessDims.add(visitExpNode(dim).constVal);
+            var rtExp = visitExpNode(dim);
+            accessDims.add(rtExp.constVal);
+            irVisitDims.add(rtExp.irValue);
         }
 
         List<Integer> typeDims = new ArrayList<>();
@@ -491,7 +495,19 @@ public class Visitor {
         rt.constVal = null; // TODO: what if lVal is const (important for global var ir)
 
         if (varSym.isArray()) {
-            // TODO: if ident is array
+            var arrayBase = varSym.targetValue;
+            if (arrayBase instanceof AllocaInst allocaArrayBase) {
+                var arrayDims = allocaArrayBase.getType().getArrayDims();
+                if (!arrayDims.isEmpty() && arrayDims.get(0) == null) { // is array pointer
+                    arrayBase = currBasicBlock.createLoadInst(allocaArrayBase.getType(), arrayBase);
+                }
+            }
+
+            var dims = varSym.varType.dims;
+            for (int i = 0; i < irVisitDims.size(); i++) {
+                arrayBase = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims.subList(i, dims.size() - i)), arrayBase, irVisitDims.get(i));
+            }
+            rt.irValue = arrayBase;
         } else {
             rt.irValue = varSym.targetValue;
         }

@@ -33,6 +33,10 @@ public class IRType {
         return this;
     }
 
+    public List<Integer> getArrayDims() {
+        return arrayDims;
+    }
+
     public IRTypeEnum getType() {
         return type;
     }
