@@ -18,6 +18,14 @@ public class GetElementPtrInst extends Instruction {
         this.offsets.addAll(offsets);
     }
 
+    public List<Value> getOffsets() {
+        return offsets;
+    }
+
+    public IRType getType() {
+        return type;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.printf("  %s = getelementptr %s, %s* %s",
