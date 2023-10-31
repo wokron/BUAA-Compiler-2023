@@ -19,8 +19,8 @@ public class Module {
         return functions;
     }
 
-    public GlobalValue createGlobalValue(IRType type, List<Integer> initVals, List<Integer> dims) {
-        var newGlobalValue = new GlobalValue(type, initVals, dims);
+    public GlobalValue createGlobalValue(IRType type, List<Integer> initVals) {
+        var newGlobalValue = new GlobalValue(type, initVals);
         globalValues.add(newGlobalValue);
         return newGlobalValue;
     }
@@ -62,6 +62,15 @@ public class Module {
         dims.add(null);
         dims.add(3);
         System.out.println(IRType.getInt().dims(dims));
+
+        var arr1 = IRType.getInt().dims(List.of(6));
+        System.out.println(arr1.initValsToString(List.of(1, 2, 3, 4, 5, 6)));
+
+        var arr2 = IRType.getInt().dims(List.of(3, 3));
+        System.out.println(arr2.initValsToString(List.of(0, 0, 0, 0, 5, 6, 0, 0, 0)));
+
+        var justVar = IRType.getInt();
+        System.out.println(justVar.initValsToString(List.of(0)));
     }
 
     private static void testBasic() {
@@ -74,7 +83,7 @@ public class Module {
 
         var initVal = new ArrayList<Integer>();
         initVal.add(1);
-        var global = module.createGlobalValue(IRType.getInt(), initVal, new ArrayList<>());
+        var global = module.createGlobalValue(IRType.getInt(), initVal);
         global.setName("g1");
 
         int i = 0;

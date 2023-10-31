@@ -154,7 +154,7 @@ public class Visitor {
         varSym.values.addAll(visitConstInitValNode(elm.constInitVal).constInitVals);
 
         if (isGlobalVar) {
-            var globalVar = irModule.createGlobalValue(IRType.getInt(), varSym.values, varSym.varType.dims);
+            var globalVar = irModule.createGlobalValue(IRType.getInt().dims(varSym.varType.dims), varSym.values);
             globalVar.setName(varSym.ident);
             varSym.targetValue = globalVar;
         } else {
@@ -941,7 +941,7 @@ public class Visitor {
                 var r = visitInitValNode(elm.initVal);
                 varSym.values.addAll(r.constInitVals);
             }
-            var globalVar = irModule.createGlobalValue(IRType.getInt(), varSym.values, varSym.varType.dims);
+            var globalVar = irModule.createGlobalValue(IRType.getInt().dims(varSym.varType.dims), varSym.values);
             globalVar.setName(varSym.ident);
             varSym.targetValue = globalVar;
         } else {
