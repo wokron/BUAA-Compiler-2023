@@ -217,6 +217,14 @@ public class Visitor {
         var rt = new VisitResult();
         var r1 = visitEqExpNode(elm.eqExp);
         var r2 = visitRelExpNode(elm.relExp);
+
+        if (r1.irValue instanceof ICmpInst) {
+            r1.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r1.irValue);
+        }
+        if (r2.irValue instanceof ICmpInst) {
+            r2.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r2.irValue);
+        }
+
         ICmpInstCond cond = elm.op == LexType.EQL ? ICmpInstCond.EQ : ICmpInstCond.NE;
         rt.irValue = currBasicBlock.createICmpInst(cond, r1.irValue, r2.irValue);
         return rt;
@@ -649,6 +657,14 @@ public class Visitor {
         var rt = new VisitResult();
         var r1 = visitRelExpNode(elm.relExp);
         var r2 = visitAddExpNode(elm.addExp);
+
+        if (r1.irValue instanceof ICmpInst) {
+            r1.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r1.irValue);
+        }
+        if (r2.irValue instanceof ICmpInst) {
+            r2.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r2.irValue);
+        }
+
         ICmpInstCond cond = switch (elm.op) {
             case LSS -> ICmpInstCond.SLT;
             case GRE -> ICmpInstCond.SGT;

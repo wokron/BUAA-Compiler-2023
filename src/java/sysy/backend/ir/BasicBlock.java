@@ -78,6 +78,10 @@ public class BasicBlock extends Value {
         return insertInstruction(new GetElementPtrInst(type, elementBase, offsets));
     }
 
+    public Value createZExtInst(IRType dstType, IRType srcType, Value value) {
+        return insertInstruction(new ZExtInst(dstType, srcType, value));
+    }
+
     public List<Instruction> getInstructions() {
         return instructions;
     }

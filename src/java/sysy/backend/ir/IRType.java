@@ -52,6 +52,9 @@ public class IRType {
     public static IRType getChar() {
         return new IRType(IRTypeEnum.CHAR);
     }
+    public static IRType getBool() {
+        return new IRType(IRTypeEnum.BOOL);
+    }
 
     public String initValsToString(List<Integer> initVals) {
         return initValsToString(this.arrayDims, initVals);

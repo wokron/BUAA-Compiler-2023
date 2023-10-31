@@ -3,7 +3,8 @@ package sysy.backend.ir;
 public enum IRTypeEnum {
     INT("i32"),
     VOID("void"),
-    CHAR("i8");
+    CHAR("i8"),
+    BOOL("i1");
 
     private final String value;
 
