@@ -495,17 +495,20 @@ public class Visitor {
         rt.constVal = null; // TODO: what if lVal is const (important for global var ir)
 
         if (varSym.isArray()) {
+            var dims = varSym.varType.dims;
             var arrayBase = varSym.targetValue;
             if (arrayBase instanceof AllocaInst allocaArrayBase) {
                 var arrayDims = allocaArrayBase.getType().getArrayDims();
                 if (!arrayDims.isEmpty() && arrayDims.get(0) == null) { // is array pointer
                     arrayBase = currBasicBlock.createLoadInst(allocaArrayBase.getType(), arrayBase);
+                    arrayBase = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(arrayDims.subList(1, arrayDims.size())), arrayBase, List.of(irVisitDims.get(0)));
+                    irVisitDims = irVisitDims.subList(1, irVisitDims.size());
+                    dims = dims.subList(1, dims.size());
                 }
             }
 
-            var dims = varSym.varType.dims;
             for (int i = 0; i < irVisitDims.size(); i++) {
-                arrayBase = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims.subList(i, dims.size() - i)), arrayBase, irVisitDims.get(i));
+                arrayBase = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims.subList(i, dims.size() - i)), arrayBase, List.of(new ImmediateValue(0), irVisitDims.get(i)));
             }
             rt.irValue = arrayBase;
         } else {

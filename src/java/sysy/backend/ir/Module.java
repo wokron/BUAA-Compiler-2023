@@ -285,8 +285,8 @@ public class Module {
         var b1 = func1.createBasicBlock();
 
         var arr1 = b1.createAllocaInst(IRType.getInt().dims(List.of(2, 3)));
-        var tmp1 = b1.createGetElementPtrInst(IRType.getInt().dims(List.of(2, 3)), arr1, new ImmediateValue(0));
-        b1.createGetElementPtrInst(IRType.getInt().dims(List.of(3)), tmp1, new ImmediateValue(1));
+        var tmp1 = b1.createGetElementPtrInst(IRType.getInt().dims(List.of(2, 3)), arr1, List.of(new ImmediateValue(0)));
+        b1.createGetElementPtrInst(IRType.getInt().dims(List.of(3)), tmp1, List.of(new ImmediateValue(0)));
 
         module.dump(System.out);
     }
