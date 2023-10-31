@@ -7,7 +7,7 @@ import java.io.PrintStream;
 public abstract class Instruction extends Value {
     @Override
     public String getName() {
-        return "%" + super.getName();
+        return "%t" + super.getName();
     }
 
     public void dump(PrintStream out) {

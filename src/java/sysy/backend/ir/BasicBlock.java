@@ -88,11 +88,11 @@ public class BasicBlock extends Value {
 
     @Override
     public String getName() {
-        return "%" + super.getName();
+        return "%b" + super.getName();
     }
 
     public void dump(PrintStream out) {
-        out.printf("%s:\n", super.getName());
+        out.printf("b%s:\n", super.getName());
 
         for (var inst : instructions) {
             inst.dump(out);
