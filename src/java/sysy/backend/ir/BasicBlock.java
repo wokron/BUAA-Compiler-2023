@@ -62,6 +62,14 @@ public class BasicBlock extends Value {
         return insertInstruction(new AllocaInst(type));
     }
 
+    public Value createAllocaInstAndInsertToFront(IRType type) {
+        var allocaInst = new AllocaInst(type);
+        int insertPos;
+        for (insertPos = 0; insertPos < instructions.size() && instructions.get(insertPos) instanceof AllocaInst; insertPos++);
+        instructions.add(insertPos, allocaInst);
+        return allocaInst;
+    }
+
     public Value createICmpInst(ICmpInstCond cond, Value left, Value right) {
         return insertInstruction(new ICmpInst(cond, left, right, IRType.getInt()));
     }

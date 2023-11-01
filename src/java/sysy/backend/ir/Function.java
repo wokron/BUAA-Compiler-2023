@@ -28,6 +28,14 @@ public class Function extends Value {
         }
     }
 
+    public BasicBlock getFirstBasicBlock() {
+        if (basicBlocks.isEmpty()) {
+            return null;
+        } else {
+            return basicBlocks.get(0);
+        }
+    }
+
     public IRType getRetType() {
         return retType;
     }

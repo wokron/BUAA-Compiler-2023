@@ -158,8 +158,7 @@ public class Visitor {
             globalVar.setName(varSym.ident);
             varSym.targetValue = globalVar;
         } else {
-            // TODO: alloca should only in the first basic block
-            var localVar = currBasicBlock.createAllocaInst(IRType.getInt().dims(varSym.varType.dims));
+            var localVar = currFunction.getFirstBasicBlock().createAllocaInstAndInsertToFront(IRType.getInt().dims(varSym.varType.dims));
             varSym.targetValue = localVar;
             if (!varSym.isArray()) {
                 currBasicBlock.createStoreInst(IRType.getInt(), initValues.get(0), varSym.targetValue);
@@ -309,7 +308,7 @@ public class Visitor {
             for (int i = 0; i < currFunction.getArguments().size(); i++) {
                 var currArgVal = currFunction.getArguments().get(i);
                 var currParamSym = currTable.getSymbol(elm.params.params.get(i).ident);
-                var currArgPtr = currBasicBlock.createAllocaInst(currArgVal.getType());
+                var currArgPtr = currFunction.getFirstBasicBlock().createAllocaInstAndInsertToFront(currArgVal.getType());
                 currBasicBlock.createStoreInst(currArgVal.getType(), currArgVal, currArgPtr);
                 currParamSym.targetValue = currArgPtr;
             }
@@ -1027,8 +1026,7 @@ public class Visitor {
             globalVar.setName(varSym.ident);
             varSym.targetValue = globalVar;
         } else {
-            // TODO: alloca should only in the first basic block
-            var localVar = currBasicBlock.createAllocaInst(IRType.getInt().dims(varSym.varType.dims));
+            var localVar = currFunction.getFirstBasicBlock().createAllocaInstAndInsertToFront(IRType.getInt().dims(varSym.varType.dims));
             varSym.targetValue = localVar;
             if (elm.initVal != null) {
                 var r = visitInitValNode(elm.initVal);
