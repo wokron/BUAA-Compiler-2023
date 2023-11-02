@@ -1,6 +1,7 @@
 package sysy.backend.ir.inst;
 
 import sysy.backend.ir.BasicBlock;
+import sysy.backend.ir.IRType;
 import sysy.backend.ir.Value;
 
 import java.io.PrintStream;
@@ -12,6 +13,7 @@ public class BrInst extends Instruction {
     private BasicBlock dest;
 
     public BrInst(Value cond, BasicBlock ifTrue, BasicBlock ifFalse) {
+        super(IRType.getVoid());
         this.cond = cond;
         this.trueBranch = ifTrue;
         this.falseBranch = ifFalse;
@@ -19,6 +21,7 @@ public class BrInst extends Instruction {
     }
 
     public BrInst(BasicBlock dest) {
+        super(IRType.getVoid());
         this.dest = dest;
         this.cond = null;
         this.trueBranch = null;
@@ -40,12 +43,12 @@ public class BrInst extends Instruction {
     @Override
     public void dump(PrintStream out) {
         if (cond != null) {
-            out.printf("  br i1 %s, label %s, label %s\n",
-                    cond.getName(),
-                    trueBranch.getName(),
-                    falseBranch.getName());
+            out.printf("  br %s, %s, %s\n",
+                    cond,
+                    trueBranch.toString(),
+                    falseBranch.toString());
         } else {
-            out.printf("  br label %s\n", dest.getName());
+            out.printf("  br %s\n", dest.toString());
         }
     }
 }

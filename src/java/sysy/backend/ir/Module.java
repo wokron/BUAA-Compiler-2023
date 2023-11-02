@@ -43,11 +43,16 @@ public class Module {
     }
 
     public static void main(String[] args) {
+        testValue();
 //        testBasic();
 //        testIfElse();
 //        testShortCircuit();
 //        testType();
         testGetElementPtr();
+    }
+
+    private static void testValue() {
+
     }
 
     private static void testType() {
@@ -72,6 +77,17 @@ public class Module {
 
         var justVar = IRType.getInt();
         System.out.println(justVar.initValsToString(List.of(0)));
+
+        // ir type after refactor
+        System.out.println(IRType.getInt().ptr(1).dims(List.of(1, 2)).ptr(1));
+
+        System.out.println(IRType.getInt().dims(List.of(2, 2)).initValsToString(List.of(1, 2, 3, 4)));
+        System.out.println(IRType.getInt().dims(List.of(2, 2)).initValsToString(List.of(0, 0, 3, 4)));
+        System.out.println(IRType.getInt().dims(List.of(2, 2)).initValsToString(List.of()));
+
+        System.out.println(IRType.getInt().initValsToString(List.of(10)));
+        System.out.println(IRType.getInt().initValsToString(List.of(0)));
+        System.out.println(IRType.getInt().initValsToString(List.of()));
     }
 
     private static void testBasic() {
@@ -106,19 +122,19 @@ public class Module {
 
         var i4 = b1.createAllocaInst(IRType.getInt());
 
-        b1.createReturnInst(IRType.getInt(), i3);
+        b1.createReturnInst(i3);
 
         var b2 = func1.createBasicBlock();
         b2.setName("b2");
 
-        b2.createStoreInst(IRType.getInt(), new ImmediateValue(10), i4);
+        b2.createStoreInst(new ImmediateValue(10), i4);
 
-        var load = b2.createLoadInst(IRType.getInt(), global);
+        var load = b2.createLoadInst(global);
         load.setName("5");
 
         var call = b2.createCallInst(Function.BUILD_IN_PUTSTR, List.of(load));
 
-        b2.createReturnInst(IRType.getVoid(), null);
+        b2.createReturnInst(null);
 
         // if (1 < 1) { putint(1); }
         var cond = b2.createICmpInst(ICmpInstCond.EQ, new ImmediateValue(1), new ImmediateValue(1));
@@ -285,8 +301,8 @@ public class Module {
         var b1 = func1.createBasicBlock();
 
         var arr1 = b1.createAllocaInst(IRType.getInt().dims(List.of(2, 3)));
-        var tmp1 = b1.createGetElementPtrInst(IRType.getInt().dims(List.of(2, 3)), arr1, List.of(new ImmediateValue(0)));
-        b1.createGetElementPtrInst(IRType.getInt().dims(List.of(3)), tmp1, List.of(new ImmediateValue(0)));
+        var tmp1 = b1.createGetElementPtrInst(arr1, List.of(new ImmediateValue(0)));
+        b1.createGetElementPtrInst(tmp1, List.of(new ImmediateValue(0)));
 
         module.dump(System.out);
     }

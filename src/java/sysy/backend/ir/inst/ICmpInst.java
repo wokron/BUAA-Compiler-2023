@@ -8,17 +8,18 @@ import java.io.PrintStream;
 public class ICmpInst extends Instruction {
     private final ICmpInstCond cond;
     private final Value left, right;
-    private final IRType type;
 
-    public ICmpInst(ICmpInstCond cond, Value left, Value right, IRType type) {
+    public ICmpInst(ICmpInstCond cond, Value left, Value right) {
+        super(IRType.getBool());
         this.cond = cond;
         this.left = left;
         this.right = right;
-        this.type = type;
+        assert left.getType().equals(right.getType());
     }
 
     @Override
     public void dump(PrintStream out) {
+        var type = left.getType();
         out.printf("  %s = icmp %s %s %s, %s\n",
                 getName(),
                 cond.name().toLowerCase(),

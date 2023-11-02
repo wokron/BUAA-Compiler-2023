@@ -5,18 +5,19 @@ import sysy.backend.ir.IRType;
 import java.io.PrintStream;
 
 public class AllocaInst extends Instruction {
-    IRType type;
 
-    public AllocaInst(IRType type) {
-        this.type = type;
+    public AllocaInst(IRType dataType) {
+        super(dataType.clone().ptr(dataType.getPtrNum()+1)); // the type of alloca var is actually the address of the data
     }
 
-    public IRType getType() {
-        return type;
+    public IRType getDataType() {
+        var dataType = getType().clone().ptr(getType().getPtrNum()-1); // remove pointer
+        return dataType;
     }
 
     @Override
     public void dump(PrintStream out) {
-        out.printf("  %s = alloca %s\n", getName(), type.toString());
+        var dataType = getType().clone().ptr(getType().getPtrNum()-1); // remove pointer
+        out.printf("  %s = alloca %s\n", getName(), dataType);
     }
 }

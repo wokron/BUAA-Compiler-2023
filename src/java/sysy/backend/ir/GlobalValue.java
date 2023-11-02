@@ -5,16 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GlobalValue extends Value {
-    private final IRType type;
+    private final IRType dataType;
     private final List<Integer> initVals = new ArrayList<>();
 
-    public GlobalValue(IRType type, List<Integer> initVals) {
-        this.type = type;
+    public GlobalValue(IRType dataType, List<Integer> initVals) {
+        super(dataType.clone().ptr(dataType.getPtrNum()+1)); // the type of global var is actually the address of the data
+        this.dataType = dataType;
         this.initVals.addAll(initVals);
-    }
-
-    public IRType getType() {
-        return type;
     }
 
     public List<Integer> getInitVals() {
@@ -27,6 +24,6 @@ public class GlobalValue extends Value {
     }
 
     public void dump(PrintStream out) {
-        out.printf("%s = dso_local global %s\n", getName(), type.initValsToString(initVals));
+        out.printf("%s = dso_local global %s\n", getName(), dataType.initValsToString(initVals));
     }
 }

@@ -9,49 +9,53 @@ import java.util.List;
 public class BasicBlock extends Value {
     private final List<Instruction> instructions = new ArrayList<>();
 
+    public BasicBlock() {
+        super(new BasicIRType(IRTypeEnum.LABEL));
+    }
+
     private Value insertInstruction(Instruction inst) {
         instructions.add(inst);
         return inst;
     }
 
     public Value createAddInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.ADD, left, right, IRType.getInt()));
+        return insertInstruction(new BinaryInst(BinaryInstOp.ADD, left, right));
     }
 
     public Value createSubInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.SUB, left, right, IRType.getInt()));
+        return insertInstruction(new BinaryInst(BinaryInstOp.SUB, left, right));
     }
 
     public Value createMulInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.MUL, left, right, IRType.getInt()));
+        return insertInstruction(new BinaryInst(BinaryInstOp.MUL, left, right));
     }
 
     public Value createSDivInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.SDIV, left, right, IRType.getInt()));
+        return insertInstruction(new BinaryInst(BinaryInstOp.SDIV, left, right));
     }
 
     public Value createAndInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.AND, left, right, IRType.getInt()));
+        return insertInstruction(new BinaryInst(BinaryInstOp.AND, left, right));
     }
 
     public Value createOrInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.OR, left, right, IRType.getInt()));
+        return insertInstruction(new BinaryInst(BinaryInstOp.OR, left, right));
     }
 
     public Value createSRemInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.SREM, left, right, IRType.getInt()));
+        return insertInstruction(new BinaryInst(BinaryInstOp.SREM, left, right));
     }
 
-    public Value createReturnInst(IRType type, Value value) {
-        return insertInstruction(new ReturnInst(type, value));
+    public Value createReturnInst(Value value) {
+        return insertInstruction(new ReturnInst(value));
     }
 
-    public Value createLoadInst(IRType type, Value ptr) {
-        return insertInstruction(new LoadInst(type, ptr));
+    public Value createLoadInst(Value ptr) {
+        return insertInstruction(new LoadInst(ptr));
     }
 
-    public Value createStoreInst(IRType type, Value value, Value ptr) {
-        return insertInstruction(new StoreInst(type, value, ptr));
+    public Value createStoreInst(Value value, Value ptr) {
+        return insertInstruction(new StoreInst(value, ptr));
     }
 
     public Value createCallInst(Function func, List<Value> params) {
@@ -62,8 +66,16 @@ public class BasicBlock extends Value {
         return insertInstruction(new AllocaInst(type));
     }
 
+    public Value createAllocaInstAndInsertToFront(IRType type) {
+        var allocaInst = new AllocaInst(type);
+        int insertPos;
+        for (insertPos = 0; insertPos < instructions.size() && instructions.get(insertPos) instanceof AllocaInst; insertPos++);
+        instructions.add(insertPos, allocaInst);
+        return allocaInst;
+    }
+
     public Value createICmpInst(ICmpInstCond cond, Value left, Value right) {
-        return insertInstruction(new ICmpInst(cond, left, right, IRType.getInt()));
+        return insertInstruction(new ICmpInst(cond, left, right));
     }
 
     public Value createBrInstWithCond(Value cond, BasicBlock ifTrue, BasicBlock ifFalse) {
@@ -74,12 +86,12 @@ public class BasicBlock extends Value {
         return insertInstruction(new BrInst(dest));
     }
 
-    public Value createGetElementPtrInst(IRType type, Value elementBase, List<Value> offsets) {
-        return insertInstruction(new GetElementPtrInst(type, elementBase, offsets));
+    public Value createGetElementPtrInst(Value elementBase, List<Value> offsets) {
+        return insertInstruction(new GetElementPtrInst(elementBase, offsets));
     }
 
-    public Value createZExtInst(IRType dstType, IRType srcType, Value value) {
-        return insertInstruction(new ZExtInst(dstType, srcType, value));
+    public Value createZExtInst(IRType dstType, Value value) {
+        return insertInstruction(new ZExtInst(dstType, value));
     }
 
     public List<Instruction> getInstructions() {

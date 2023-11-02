@@ -13,6 +13,7 @@ public class CallInst extends Instruction {
     private final List<Value> params = new ArrayList<>();
 
     public CallInst(Function func, List<Value> params) {
+        super(func.getRetType().clone());
         this.func = func;
         this.params.addAll(params);
     }
@@ -23,16 +24,15 @@ public class CallInst extends Instruction {
         if (func.getRetType().getType() != IRTypeEnum.VOID) {
             out.printf("%s = ", getName());
         }
-        out.printf("call %s %s(", func.getRetType().toString(), func.getName());
+        out.printf("call %s(", func);
 
         assert params.size() == func.getArguments().size();
         for (int i = 0; i < params.size(); i++) {
             if (i != 0) {
                 out.print(", ");
             }
-            var currArg = func.getArguments().get(i);
             var currParam = params.get(i);
-            out.printf("%s %s", currArg.getType().toString(), currParam.getName());
+            out.printf("%s", currParam.toString());
         }
 
         out.print(")\n");
