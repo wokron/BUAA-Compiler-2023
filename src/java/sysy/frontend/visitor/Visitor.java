@@ -540,17 +540,13 @@ public class Visitor {
         if (currBasicBlock != null) {
 
             if (varSym.isArray()) {
+                int accessTime = 0;
                 var dims = varSym.varType.dims;
 
                 Value arrayPtr;
                 Value symValue = varSym.targetValue;
-                if (symValue instanceof AllocaInst allocaSymVal && !(allocaSymVal.getDataType() instanceof BasicIRType)) {
-                    var allocaSymValDims = allocaSymVal.getDataType().getArrayDims();
-                    if (allocaSymVal.getDataType().getPtrNum() != 0) { // like int a[] or int a[][2]
-                        arrayPtr = currBasicBlock.createLoadInst(allocaSymVal.getDataType(), symValue);
-                    } else {
-                        arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
-                    }
+                if (symValue instanceof AllocaInst allcaSymVal && allcaSymVal.getDataType().getPtrNum() != 0) {
+                    arrayPtr = currBasicBlock.createLoadInst(allcaSymVal.getDataType(), symValue);
                 } else {
                     arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                 }
@@ -562,6 +558,7 @@ public class Visitor {
                 }
 
                 rt.irValue = arrayPtr;
+                rt.lvalLoadNotNeed = dims.size() != irVisitDims.size();
             } else {
                 rt.irValue = varSym.targetValue;
             }
@@ -657,10 +654,7 @@ public class Visitor {
     public VisitResult visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
         var r = visitLValNode(elm.lVal);
         if (currBasicBlock != null) {
-            if (r.irValue instanceof GetElementPtrInst irGEPVal && !irGEPVal.getDataType().getArrayDims().isEmpty()) {
-                return r;
-            }
-            if (r.irValue instanceof LoadInst irLoadVal && !irLoadVal.getDataType().getArrayDims().isEmpty()) {
+            if (r.lvalLoadNotNeed) {
                 return r;
             }
             r.irValue = currBasicBlock.createLoadInst(IRType.getInt(), r.irValue);

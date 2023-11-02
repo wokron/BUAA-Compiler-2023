@@ -20,4 +20,6 @@ public class VisitResult {
     public List<BasicBlock> nearAndBlocks = new ArrayList<>();
     public List<BasicBlock> blocksToTrue = new ArrayList<>();
     public List<BasicBlock> blocksToFalse = new ArrayList<>();
+
+    public boolean lvalLoadNotNeed = false;
 }
