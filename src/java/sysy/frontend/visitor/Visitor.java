@@ -297,7 +297,11 @@ public class Visitor {
 
         ArrayList<IRType> irArgTypes = new ArrayList<>();
         for (var type : sym.paramTypeList) {
-            irArgTypes.add(IRType.getInt().dims(type.dims));
+            if (type.dims.isEmpty()) {
+                irArgTypes.add(IRType.getInt());
+            } else {
+                irArgTypes.add(IRType.getInt().dims(type.dims.subList(1, type.dims.size())).ptr(1));
+            }
         }
         currFunction = irModule.createFunction(sym.retType.type.equals("void") ? IRType.getVoid() : IRType.getInt(), irArgTypes);
         currFunction.setName(sym.ident);
@@ -540,9 +544,9 @@ public class Visitor {
 
                 Value arrayPtr;
                 Value symValue = varSym.targetValue;
-                if (symValue instanceof AllocaInst allocaSymVal && !allocaSymVal.getDataType().getArrayDims().isEmpty()) {
+                if (symValue instanceof AllocaInst allocaSymVal && !(allocaSymVal.getDataType() instanceof BasicIRType)) {
                     var allocaSymValDims = allocaSymVal.getDataType().getArrayDims();
-                    if (!allocaSymValDims.isEmpty() && allocaSymValDims.get(0) == null) { // like int a[] or int a[][2]
+                    if (allocaSymVal.getDataType().getPtrNum() != 0) { // like int a[] or int a[][2]
                         arrayPtr = currBasicBlock.createLoadInst(allocaSymVal.getDataType(), symValue);
                     } else {
                         arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));

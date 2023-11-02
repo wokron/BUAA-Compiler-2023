@@ -42,4 +42,13 @@ public class BasicIRType extends IRType {
         obj.ptr(this.getPtrNum());
         return obj;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof BasicIRType other) {
+            return this.type.equals(other.type) && this.getPtrNum() == other.getPtrNum();
+        } else {
+            return false;
+        }
+    }
 }

@@ -9,12 +9,18 @@ public class ReturnInst extends Instruction {
     private final Value value;
 
     public ReturnInst(IRType type, Value value) {
-        super(type);
+        super(value == null ? IRType.getVoid() : value.getType());
         this.value = value;
     }
 
     @Override
     public void dump(PrintStream out) {
-        out.printf("  ret %s%s\n", getType().toString(), value == null ? "" : " " + value.getName());
+        out.print("  ret ");
+        if (value == null) {
+            out.print("void");
+        } else {
+            out.printf("%s", value.toString());
+        }
+        out.print("\n");
     }
 }

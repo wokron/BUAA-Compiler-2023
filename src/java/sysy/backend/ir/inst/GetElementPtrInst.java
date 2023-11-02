@@ -10,13 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GetElementPtrInst extends Instruction {
-    private final IRType dataType;
     private final Value elementBase;
     private final List<Value> offsets = new ArrayList<>();
 
     public GetElementPtrInst(IRType dataType, Value elementBase, List<Value> offsets) {
-        super(getGEPInstType(dataType.clone().ptr(dataType.getPtrNum()+1), offsets.size()));
-        this.dataType = dataType;
+        super(getGEPInstType(elementBase.getType(), offsets.size()));
         this.elementBase = elementBase;
         this.offsets.addAll(offsets);
     }
@@ -28,11 +26,11 @@ public class GetElementPtrInst extends Instruction {
             if (rtDims.isEmpty()) {
                 return new BasicIRType(arrayIRType.getElmType().getType()).ptr(1);
             } else {
-                return new ArrayIRType(arrayIRType.getElmType(), rtDims);
+                return new ArrayIRType(arrayIRType.getElmType(), rtDims).ptr(1);
             }
         } else {
-            assert false;
-            return null; // impossible
+            assert offsetCount == 1;
+            return elementBaseType.clone();
         }
     }
 
@@ -41,19 +39,20 @@ public class GetElementPtrInst extends Instruction {
     }
 
     public IRType getDataType() {
+        var dataType = elementBase.getType().clone().ptr(elementBase.getType().getPtrNum()-1);
         return dataType;
     }
 
     @Override
     public void dump(PrintStream out) {
-        out.printf("  %s = getelementptr %s, %s* %s",
+        var dataType = elementBase.getType().clone().ptr(elementBase.getType().getPtrNum()-1);
+        out.printf("  %s = getelementptr %s, %s",
                 getName(),
                 dataType,
-                dataType,
-                elementBase.getName());
+                elementBase.toString());
 
         for (Value offset : offsets) {
-            out.printf(", i32 %s", offset.getName());
+            out.printf(", %s", offset.toString());
         }
         out.print("\n");
     }

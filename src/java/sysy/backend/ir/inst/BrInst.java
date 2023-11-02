@@ -43,12 +43,12 @@ public class BrInst extends Instruction {
     @Override
     public void dump(PrintStream out) {
         if (cond != null) {
-            out.printf("  br i1 %s, label %s, label %s\n",
-                    cond.getName(),
-                    trueBranch.getName(),
-                    falseBranch.getName());
+            out.printf("  br %s, %s, %s\n",
+                    cond.toString(),
+                    trueBranch.toString(),
+                    falseBranch.toString());
         } else {
-            out.printf("  br label %s\n", dest.getName());
+            out.printf("  br %s\n", dest.toString());
         }
     }
 }

@@ -89,19 +89,16 @@ public class ArrayIRType extends IRType {
     private String typeToString() {
         StringBuilder sb = new StringBuilder();
         for (var dim : arrayDims) {
-            if (dim == null) {
-                continue;
-            }
             sb.append(String.format("[%d x ", dim));
         }
         sb.append(elmType.toString());
 
-        if (!arrayDims.isEmpty() && arrayDims.get(0) == null) { // TODO: need to remove
-            sb.append("]".repeat(arrayDims.size()-1));
-            sb.append("*");
-        } else {
+//        if (!arrayDims.isEmpty() && arrayDims.get(0) == null) { // TODO: need to remove
+//            sb.append("]".repeat(arrayDims.size()-1));
+//            sb.append("*");
+//        } else {
             sb.append("]".repeat(arrayDims.size()));
-        }
+//        }
         sb.append("*".repeat(getPtrNum()));
         return sb.toString();
     }
@@ -121,5 +118,14 @@ public class ArrayIRType extends IRType {
         var obj = new ArrayIRType(this.elmType, this.arrayDims);
         obj.ptr(obj.getPtrNum());
         return obj;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ArrayIRType other) {
+            return this.elmType.equals(other.elmType) && this.arrayDims.equals(other.arrayDims) && this.getPtrNum() == other.getPtrNum();
+        } else {
+            return false;
+        }
     }
 }
