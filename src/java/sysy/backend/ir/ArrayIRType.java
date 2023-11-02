@@ -93,12 +93,8 @@ public class ArrayIRType extends IRType {
         }
         sb.append(elmType.toString());
 
-//        if (!arrayDims.isEmpty() && arrayDims.get(0) == null) { // TODO: need to remove
-//            sb.append("]".repeat(arrayDims.size()-1));
-//            sb.append("*");
-//        } else {
-            sb.append("]".repeat(arrayDims.size()));
-//        }
+        sb.append("]".repeat(arrayDims.size()));
+
         sb.append("*".repeat(getPtrNum()));
         return sb.toString();
     }

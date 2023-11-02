@@ -161,7 +161,7 @@ public class Visitor {
             var localVar = currFunction.getFirstBasicBlock().createAllocaInstAndInsertToFront(IRType.getInt().dims(varSym.varType.dims));
             varSym.targetValue = localVar;
             if (!varSym.isArray()) {
-                currBasicBlock.createStoreInst(IRType.getInt(), initValues.get(0), varSym.targetValue);
+                currBasicBlock.createStoreInst(initValues.get(0), varSym.targetValue);
             } else { // array with init values
                 for (int i = 0; i < initValues.size(); i++) {
                     int[] idxs = new int[varSym.varType.dims.size()];
@@ -173,13 +173,13 @@ public class Visitor {
 
                     var initVal = initValues.get(i);
                     var symDims = varSym.varType.dims;
-                    var arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims), varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
+                    var arrayPtr = currBasicBlock.createGetElementPtrInst(varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                     for (int j = 0; j < idxs.length; j++) {
                         var visitIdx = idxs[j];
                         List<Value> offsets = j == idxs.length - 1 ? List.of(new ImmediateValue(visitIdx)) : List.of(new ImmediateValue(visitIdx), new ImmediateValue(0));
-                        arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims.subList(j+1, symDims.size())), arrayPtr, offsets);
+                        arrayPtr = currBasicBlock.createGetElementPtrInst(arrayPtr, offsets);
                     }
-                    currBasicBlock.createStoreInst(IRType.getInt(), initVal, arrayPtr);
+                    currBasicBlock.createStoreInst(initVal, arrayPtr);
                 }
             }
         }
@@ -241,10 +241,10 @@ public class Visitor {
         var r2 = visitRelExpNode(elm.relExp);
 
         if (r1.irValue instanceof ICmpInst) {
-            r1.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r1.irValue);
+            r1.irValue = currBasicBlock.createZExtInst(IRType.getInt(), r1.irValue);
         }
         if (r2.irValue instanceof ICmpInst) {
-            r2.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r2.irValue);
+            r2.irValue = currBasicBlock.createZExtInst(IRType.getInt(), r2.irValue);
         }
 
         ICmpInstCond cond = elm.op == LexType.EQL ? ICmpInstCond.EQ : ICmpInstCond.NE;
@@ -271,7 +271,7 @@ public class Visitor {
     public void visitForStmtNode(ForStmtNode elm) {
         var r1 = visitLValNode(elm.lVal);
         var r2 = visitExpNode(elm.exp);
-        currBasicBlock.createStoreInst(IRType.getInt(), r2.irValue, r1.irValue);
+        currBasicBlock.createStoreInst(r2.irValue, r1.irValue);
     }
 
     public void visitFuncDefNode(FuncDefNode elm) {
@@ -313,7 +313,7 @@ public class Visitor {
                 var currArgVal = currFunction.getArguments().get(i);
                 var currParamSym = currTable.getSymbol(elm.params.params.get(i).ident);
                 var currArgPtr = currFunction.getFirstBasicBlock().createAllocaInstAndInsertToFront(currArgVal.getType());
-                currBasicBlock.createStoreInst(currArgVal.getType(), currArgVal, currArgPtr);
+                currBasicBlock.createStoreInst(currArgVal, currArgPtr);
                 currParamSym.targetValue = currArgPtr;
             }
         }
@@ -321,7 +321,7 @@ public class Visitor {
         visitBlockNode(elm.block);
 
         if (sym.retType.type.equals("void") && elm.block.isWithoutReturn()) {
-            currBasicBlock.createReturnInst(IRType.getVoid(), null);
+            currBasicBlock.createReturnInst(null);
         }
 
         currBasicBlock = null;
@@ -546,15 +546,15 @@ public class Visitor {
                 Value arrayPtr;
                 Value symValue = varSym.targetValue;
                 if (symValue instanceof AllocaInst allcaSymVal && allcaSymVal.getDataType().getPtrNum() != 0) {
-                    arrayPtr = currBasicBlock.createLoadInst(allcaSymVal.getDataType(), symValue);
+                    arrayPtr = currBasicBlock.createLoadInst(symValue);
                 } else {
-                    arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
+                    arrayPtr = currBasicBlock.createGetElementPtrInst(symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                 }
 
                 for (int i = 0; i < irVisitDims.size(); i++) {
                     var visitDim = irVisitDims.get(i);
                     var offsets = (i == dims.size() - 1) ? List.of(visitDim) : List.of(visitDim, new ImmediateValue(0));
-                    arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims.subList(i+1, dims.size())), arrayPtr, offsets);
+                    arrayPtr = currBasicBlock.createGetElementPtrInst(arrayPtr, offsets);
                 }
 
                 rt.irValue = arrayPtr;
@@ -657,7 +657,7 @@ public class Visitor {
             if (r.lvalLoadNotNeed) {
                 return r;
             }
-            r.irValue = currBasicBlock.createLoadInst(IRType.getInt(), r.irValue);
+            r.irValue = currBasicBlock.createLoadInst(r.irValue);
         }
         return r;
     }
@@ -682,10 +682,10 @@ public class Visitor {
         var r2 = visitAddExpNode(elm.addExp);
 
         if (r1.irValue instanceof ICmpInst) {
-            r1.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r1.irValue);
+            r1.irValue = currBasicBlock.createZExtInst(IRType.getInt(), r1.irValue);
         }
         if (r2.irValue instanceof ICmpInst) {
-            r2.irValue = currBasicBlock.createZExtInst(IRType.getInt(), IRType.getBool(), r2.irValue);
+            r2.irValue = currBasicBlock.createZExtInst(IRType.getInt(), r2.irValue);
         }
 
         ICmpInstCond cond = switch (elm.op) {
@@ -720,7 +720,7 @@ public class Visitor {
         }
 
         var rtExp = visitExpNode(elm.exp);
-        currBasicBlock.createStoreInst(IRType.getInt(), rtExp.irValue, rtLVal.irValue);
+        currBasicBlock.createStoreInst(rtExp.irValue, rtLVal.irValue);
     }
 
     public void visitStmtNodeForBlock(StmtNodeForBlock elm) {
@@ -758,7 +758,7 @@ public class Visitor {
             errorRecorder.addError(CompileErrorType.TRY_TO_CHANGE_VAL_OF_CONST, elm.lVal.identLineNum);
         }
         var getIntVal = currBasicBlock.createCallInst(Function.BUILD_IN_GETINT, List.of());
-        currBasicBlock.createStoreInst(IRType.getInt(), getIntVal, r.irValue);
+        currBasicBlock.createStoreInst(getIntVal, r.irValue);
     }
 
     public void visitStmtNodeForIfElse(StmtNodeForIfElse elm) {
@@ -881,7 +881,7 @@ public class Visitor {
             var result = visitExpNode(elm.exp);
             expIr = result.irValue;
         }
-        currBasicBlock.createReturnInst(isRetExpNotNeed ? IRType.getVoid() : IRType.getInt(), expIr);
+        currBasicBlock.createReturnInst(expIr);
     }
 
     public void visitStmtNode(StmtNode elm) {
@@ -1030,7 +1030,7 @@ public class Visitor {
                 var r = visitInitValNode(elm.initVal);
                 var initValues = r.irValues;
                 if (!varSym.isArray()) {
-                    currBasicBlock.createStoreInst(IRType.getInt(), r.irValues.get(0), varSym.targetValue);
+                    currBasicBlock.createStoreInst(r.irValues.get(0), varSym.targetValue);
                 } else { // array with init values
                     for (int i = 0; i < initValues.size(); i++) {
                         int[] idxs = new int[varSym.varType.dims.size()];
@@ -1042,13 +1042,13 @@ public class Visitor {
 
                         var initVal = initValues.get(i);
                         var symDims = varSym.varType.dims;
-                        var arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims), varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
+                        var arrayPtr = currBasicBlock.createGetElementPtrInst(varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                         for (int j = 0; j < idxs.length; j++) {
                             var visitIdx = idxs[j];
                             List<Value> offsets = j == idxs.length - 1 ? List.of(new ImmediateValue(visitIdx)) : List.of(new ImmediateValue(visitIdx), new ImmediateValue(0));
-                            arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(symDims.subList(j+1, symDims.size())), arrayPtr, offsets);
+                            arrayPtr = currBasicBlock.createGetElementPtrInst(arrayPtr, offsets);
                         }
-                        currBasicBlock.createStoreInst(IRType.getInt(), initVal, arrayPtr);
+                        currBasicBlock.createStoreInst(initVal, arrayPtr);
                     }
                 }
             }

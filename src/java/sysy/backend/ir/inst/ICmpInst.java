@@ -9,7 +9,7 @@ public class ICmpInst extends Instruction {
     private final ICmpInstCond cond;
     private final Value left, right;
 
-    public ICmpInst(ICmpInstCond cond, Value left, Value right, IRType type) {
+    public ICmpInst(ICmpInstCond cond, Value left, Value right) {
         super(IRType.getBool());
         this.cond = cond;
         this.left = left;

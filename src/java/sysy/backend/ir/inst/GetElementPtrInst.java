@@ -13,7 +13,7 @@ public class GetElementPtrInst extends Instruction {
     private final Value elementBase;
     private final List<Value> offsets = new ArrayList<>();
 
-    public GetElementPtrInst(IRType dataType, Value elementBase, List<Value> offsets) {
+    public GetElementPtrInst(Value elementBase, List<Value> offsets) {
         super(getGEPInstType(elementBase.getType(), offsets.size()));
         this.elementBase = elementBase;
         this.offsets.addAll(offsets);

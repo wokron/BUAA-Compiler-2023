@@ -8,7 +8,7 @@ import java.io.PrintStream;
 public class LoadInst extends Instruction {
     Value ptr;
 
-    public LoadInst(IRType dataType, Value ptr) {
+    public LoadInst(Value ptr) {
         super(ptr.getType().clone().ptr(ptr.getType().getPtrNum()-1));
         this.ptr = ptr;
     }

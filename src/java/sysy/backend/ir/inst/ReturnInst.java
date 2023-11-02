@@ -8,7 +8,7 @@ import java.io.PrintStream;
 public class ReturnInst extends Instruction {
     private final Value value;
 
-    public ReturnInst(IRType type, Value value) {
+    public ReturnInst(Value value) {
         super(value == null ? IRType.getVoid() : value.getType());
         this.value = value;
     }

@@ -9,7 +9,7 @@ public class BinaryInst extends Instruction {
     private final BinaryInstOp op;
     private final Value left, right;
 
-    public BinaryInst(BinaryInstOp op, Value left, Value right, IRType type) {
+    public BinaryInst(BinaryInstOp op, Value left, Value right) {
         super(left.getType());
         assert left.getType().equals(right.getType());
 
