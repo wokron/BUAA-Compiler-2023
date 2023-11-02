@@ -6,16 +6,15 @@ import sysy.backend.ir.Value;
 import java.io.PrintStream;
 
 public class ReturnInst extends Instruction {
-    private final IRType type;
     private final Value value;
 
     public ReturnInst(IRType type, Value value) {
-        this.type = type;
+        super(type);
         this.value = value;
     }
 
     @Override
     public void dump(PrintStream out) {
-        out.printf("  ret %s%s\n", type.toString(), value == null ? "" : " " + value.getName());
+        out.printf("  ret %s%s\n", getType().toString(), value == null ? "" : " " + value.getName());
     }
 }

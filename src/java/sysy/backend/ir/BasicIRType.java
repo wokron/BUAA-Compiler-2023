@@ -31,9 +31,15 @@ public class BasicIRType extends IRType {
         return sb;
     }
 
-
     @Override
     public String toString() {
         return type.toString() + "*".repeat(getPtrNum());
+    }
+
+    @Override
+    public BasicIRType clone() {
+        var obj = new BasicIRType(this.type);
+        obj.ptr(this.getPtrNum());
+        return obj;
     }
 }

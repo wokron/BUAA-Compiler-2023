@@ -6,20 +6,21 @@ import sysy.backend.ir.Value;
 import java.io.PrintStream;
 
 public class LoadInst extends Instruction {
-    IRType type;
+    IRType dataType;
     Value ptr;
 
-    public LoadInst(IRType type, Value ptr) {
-        this.type = type;
+    public LoadInst(IRType dataType, Value ptr) {
+        super(dataType.clone());
+        this.dataType = dataType;
         this.ptr = ptr;
     }
 
-    public IRType getType() {
-        return type;
+    public IRType getDataType() {
+        return dataType;
     }
 
     @Override
     public void dump(PrintStream out) {
-        out.printf("  %s = load %s, %s* %s\n", getName(), type.toString(), type.toString(), ptr.getName());
+        out.printf("  %s = load %s, %s* %s\n", getName(), dataType.toString(), dataType.toString(), ptr.getName());
     }
 }

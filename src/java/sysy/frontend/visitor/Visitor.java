@@ -540,10 +540,10 @@ public class Visitor {
 
                 Value arrayPtr;
                 Value symValue = varSym.targetValue;
-                if (symValue instanceof AllocaInst allocaSymVal && !allocaSymVal.getType().getArrayDims().isEmpty()) {
-                    var allocaSymValDims = allocaSymVal.getType().getArrayDims();
+                if (symValue instanceof AllocaInst allocaSymVal && !allocaSymVal.getDataType().getArrayDims().isEmpty()) {
+                    var allocaSymValDims = allocaSymVal.getDataType().getArrayDims();
                     if (!allocaSymValDims.isEmpty() && allocaSymValDims.get(0) == null) { // like int a[] or int a[][2]
-                        arrayPtr = currBasicBlock.createLoadInst(allocaSymVal.getType(), symValue);
+                        arrayPtr = currBasicBlock.createLoadInst(allocaSymVal.getDataType(), symValue);
                     } else {
                         arrayPtr = currBasicBlock.createGetElementPtrInst(IRType.getInt().dims(dims), symValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                     }
@@ -653,10 +653,10 @@ public class Visitor {
     public VisitResult visitPrimaryExpNodeForLVal(PrimaryExpNodeForLVal elm) {
         var r = visitLValNode(elm.lVal);
         if (currBasicBlock != null) {
-            if (r.irValue instanceof GetElementPtrInst irGEPVal && !irGEPVal.getType().getArrayDims().isEmpty()) {
+            if (r.irValue instanceof GetElementPtrInst irGEPVal && !irGEPVal.getDataType().getArrayDims().isEmpty()) {
                 return r;
             }
-            if (r.irValue instanceof LoadInst irLoadVal && !irLoadVal.getType().getArrayDims().isEmpty()) {
+            if (r.irValue instanceof LoadInst irLoadVal && !irLoadVal.getDataType().getArrayDims().isEmpty()) {
                 return r;
             }
             r.irValue = currBasicBlock.createLoadInst(IRType.getInt(), r.irValue);

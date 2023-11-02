@@ -22,6 +22,7 @@ public class Function extends Value {
     }
 
     public Function(IRType retType, List<IRType> argTypes) {
+        super(retType);
         this.retType = retType;
         for (var argType : argTypes) {
             arguments.add(new FunctionArgument(argType));

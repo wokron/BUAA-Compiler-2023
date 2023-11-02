@@ -1,10 +1,16 @@
 package sysy.backend.ir.inst;
 
+import sysy.backend.ir.IRType;
 import sysy.backend.ir.Value;
 
 import java.io.PrintStream;
 
 public abstract class Instruction extends Value {
+
+    public Instruction(IRType type) {
+        super(type);
+    }
+
     @Override
     public String getName() {
         return "%t" + super.getName();

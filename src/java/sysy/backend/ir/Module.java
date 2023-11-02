@@ -43,11 +43,16 @@ public class Module {
     }
 
     public static void main(String[] args) {
+        testValue();
 //        testBasic();
 //        testIfElse();
 //        testShortCircuit();
 //        testType();
         testGetElementPtr();
+    }
+
+    private static void testValue() {
+
     }
 
     private static void testType() {

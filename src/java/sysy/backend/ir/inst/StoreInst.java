@@ -11,6 +11,7 @@ public class StoreInst extends Instruction {
     Value ptr;
 
     public StoreInst(IRType type, Value value, Value ptr) {
+        super(IRType.getVoid());
         this.type = type;
         this.value = value;
         this.ptr = ptr;

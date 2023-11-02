@@ -115,4 +115,11 @@ public class ArrayIRType extends IRType {
     public String toString() {
         return typeToString();
     }
+
+    @Override
+    public ArrayIRType clone() {
+        var obj = new ArrayIRType(this.elmType, this.arrayDims);
+        obj.ptr(obj.getPtrNum());
+        return obj;
+    }
 }

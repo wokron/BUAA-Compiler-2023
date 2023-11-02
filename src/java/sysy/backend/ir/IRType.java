@@ -3,7 +3,7 @@ package sysy.backend.ir;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class IRType {
+public abstract class IRType implements Cloneable {
     private int ptrNum = 0;
 
     public IRType ptr(int num) {
@@ -38,4 +38,7 @@ public abstract class IRType {
     public abstract String initValsToString(List<Integer> initVals);
 
     public abstract IRTypeEnum getType();
+
+    @Override
+    public abstract IRType clone();
 }

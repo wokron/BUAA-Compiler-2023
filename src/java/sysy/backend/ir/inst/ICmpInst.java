@@ -11,6 +11,7 @@ public class ICmpInst extends Instruction {
     private final IRType type;
 
     public ICmpInst(ICmpInstCond cond, Value left, Value right, IRType type) {
+        super(IRType.getBool());
         this.cond = cond;
         this.left = left;
         this.right = right;

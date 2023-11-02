@@ -9,6 +9,10 @@ import java.util.List;
 public class BasicBlock extends Value {
     private final List<Instruction> instructions = new ArrayList<>();
 
+    public BasicBlock() {
+        super(new BasicIRType(IRTypeEnum.LABEL));
+    }
+
     private Value insertInstruction(Instruction inst) {
         instructions.add(inst);
         return inst;
