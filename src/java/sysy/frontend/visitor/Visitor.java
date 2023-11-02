@@ -172,7 +172,6 @@ public class Visitor {
                     }
 
                     var initVal = initValues.get(i);
-                    var symDims = varSym.varType.dims;
                     var arrayPtr = currBasicBlock.createGetElementPtrInst(varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                     for (int j = 0; j < idxs.length; j++) {
                         var visitIdx = idxs[j];
@@ -540,7 +539,6 @@ public class Visitor {
         if (currBasicBlock != null) {
 
             if (varSym.isArray()) {
-                int accessTime = 0;
                 var dims = varSym.varType.dims;
 
                 Value arrayPtr;
@@ -1041,7 +1039,6 @@ public class Visitor {
                         }
 
                         var initVal = initValues.get(i);
-                        var symDims = varSym.varType.dims;
                         var arrayPtr = currBasicBlock.createGetElementPtrInst(varSym.targetValue, List.of(new ImmediateValue(0), new ImmediateValue(0)));
                         for (int j = 0; j < idxs.length; j++) {
                             var visitIdx = idxs[j];

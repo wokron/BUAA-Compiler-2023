@@ -44,7 +44,7 @@ public class BrInst extends Instruction {
     public void dump(PrintStream out) {
         if (cond != null) {
             out.printf("  br %s, %s, %s\n",
-                    cond.toString(),
+                    cond,
                     trueBranch.toString(),
                     falseBranch.toString());
         } else {

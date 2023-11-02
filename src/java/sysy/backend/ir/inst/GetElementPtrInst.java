@@ -38,18 +38,13 @@ public class GetElementPtrInst extends Instruction {
         return offsets;
     }
 
-    public IRType getDataType() {
-        var dataType = elementBase.getType().clone().ptr(elementBase.getType().getPtrNum()-1);
-        return dataType;
-    }
-
     @Override
     public void dump(PrintStream out) {
         var dataType = elementBase.getType().clone().ptr(elementBase.getType().getPtrNum()-1);
         out.printf("  %s = getelementptr %s, %s",
                 getName(),
                 dataType,
-                elementBase.toString());
+                elementBase);
 
         for (Value offset : offsets) {
             out.printf(", %s", offset.toString());

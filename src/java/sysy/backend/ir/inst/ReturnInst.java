@@ -19,7 +19,7 @@ public class ReturnInst extends Instruction {
         if (value == null) {
             out.print("void");
         } else {
-            out.printf("%s", value.toString());
+            out.printf("%s", value);
         }
         out.print("\n");
     }

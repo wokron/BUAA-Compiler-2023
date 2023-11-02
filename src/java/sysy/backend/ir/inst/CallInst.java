@@ -24,7 +24,7 @@ public class CallInst extends Instruction {
         if (func.getRetType().getType() != IRTypeEnum.VOID) {
             out.printf("%s = ", getName());
         }
-        out.printf("call %s(", func.toString());
+        out.printf("call %s(", func);
 
         assert params.size() == func.getArguments().size();
         for (int i = 0; i < params.size(); i++) {

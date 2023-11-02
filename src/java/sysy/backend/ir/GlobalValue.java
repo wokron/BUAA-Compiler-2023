@@ -14,10 +14,6 @@ public class GlobalValue extends Value {
         this.initVals.addAll(initVals);
     }
 
-    public IRType getDataType() {
-        return dataType;
-    }
-
     public List<Integer> getInitVals() {
         return initVals;
     }
