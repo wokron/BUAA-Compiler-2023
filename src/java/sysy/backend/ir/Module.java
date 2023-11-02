@@ -72,6 +72,17 @@ public class Module {
 
         var justVar = IRType.getInt();
         System.out.println(justVar.initValsToString(List.of(0)));
+
+        // ir type after refactor
+        System.out.println(IRType.getInt().ptr(1).dims(List.of(1, 2)).ptr(1));
+
+        System.out.println(IRType.getInt().dims(List.of(2, 2)).initValsToString(List.of(1, 2, 3, 4)));
+        System.out.println(IRType.getInt().dims(List.of(2, 2)).initValsToString(List.of(0, 0, 3, 4)));
+        System.out.println(IRType.getInt().dims(List.of(2, 2)).initValsToString(List.of()));
+
+        System.out.println(IRType.getInt().initValsToString(List.of(10)));
+        System.out.println(IRType.getInt().initValsToString(List.of(0)));
+        System.out.println(IRType.getInt().initValsToString(List.of()));
     }
 
     private static void testBasic() {
