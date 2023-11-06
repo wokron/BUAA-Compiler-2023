@@ -50,7 +50,7 @@ public class Function extends Value {
     }
 
     public BasicBlock createBasicBlock() {
-        var newBlock = new BasicBlock();
+        var newBlock = new BasicBlock(this);
         basicBlocks.add(newBlock);
         return newBlock;
     }

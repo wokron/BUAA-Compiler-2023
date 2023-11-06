@@ -17,11 +17,8 @@ public class Data {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(label).append(": .").append(type).append(" ");
-        for (var val : values) {
-            sb.append(val).append(", ");
-        }
-        return sb.toString();
+        String sb = label + ": ." + type + " " +
+                String.join(", ", values.stream().map(Object::toString).toList());
+        return sb;
     }
 }

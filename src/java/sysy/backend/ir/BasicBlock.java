@@ -8,9 +8,15 @@ import java.util.List;
 
 public class BasicBlock extends Value {
     private final List<Instruction> instructions = new ArrayList<>();
+    private final Function function;
 
-    public BasicBlock() {
+    public BasicBlock(Function belongFunc) {
         super(new BasicIRType(IRTypeEnum.LABEL));
+        this.function = belongFunc;
+    }
+
+    public Function getFunction() {
+        return function;
     }
 
     private Value insertInstruction(Instruction inst) {
