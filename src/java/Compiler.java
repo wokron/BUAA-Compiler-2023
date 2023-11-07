@@ -16,7 +16,7 @@ public class Compiler {
 //        task1();
 //        task2();
 //        task3();
-//        task4LLVM();
+        task4LLVM();
         task4MIPS();
     }
 

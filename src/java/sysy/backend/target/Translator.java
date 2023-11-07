@@ -77,6 +77,7 @@ public class Translator {
         } else if (inst instanceof ReturnInst) {
 
         }
+        Register.freeAllTempRegisters();
     }
 
     private void translateBinaryInst(BinaryInst inst) {
@@ -87,21 +88,12 @@ public class Translator {
         var registerLeft = convertToRegister(left);
         var registerRight = convertToRegister(right);
 
-//        if (isAddress(left)) {
-//            asmTarget.addText(new TextInst("lw", Register.REGS.get("t0"), left));
-//            left = Register.REGS.get("t0");
-//        }
-//
-//        if (isAddress(right)) {
-//            asmTarget.addText(new TextInst("lw", Register.REGS.get("t1"), right));
-//            right = Register.REGS.get("t1");
-//        }
-
         TextInst targetInst = null;
         Register registerTarget = null;
         if (isAddress(target)) {
-            targetInst = new TextInst("sw", Register.REGS.get("t2"), target);
-            registerTarget = Register.REGS.get("t2");
+            var newReg = Register.allocateTempRegister();
+            targetInst = new TextInst("sw", newReg, target);
+            registerTarget = newReg;
         } else if (target instanceof Register regTarget) {
             registerTarget = regTarget;
         }
@@ -111,12 +103,15 @@ public class Translator {
             case SUB:
             case MUL:
                 asmTarget.addText(new TextInst(inst.getOp().name().toLowerCase(), registerTarget, registerLeft, registerRight));
+                break;
             case SDIV:
                 asmTarget.addText(new TextInst("div", registerLeft, registerRight));
                 asmTarget.addText(new TextInst("mflo", registerTarget));
+                break;
             case SREM:
                 asmTarget.addText(new TextInst("div", registerLeft, registerRight));
                 asmTarget.addText(new TextInst("mfhi", registerTarget));
+                break;
         }
 
         if (targetInst != null) {
@@ -125,13 +120,14 @@ public class Translator {
     }
 
     private Register convertToRegister(TargetValue targetValue) {
-        // TODO: need to modify dynamically allocate temp registers
         if (isAddress(targetValue)) {
-            asmTarget.addText(new TextInst("lw", Register.REGS.get("t0"), targetValue));
-            return Register.REGS.get("t0");
+            var newReg = Register.allocateTempRegister();
+            asmTarget.addText(new TextInst("lw", newReg, targetValue));
+            return newReg;
         } else if (isImmediate(targetValue)) {
-            asmTarget.addText(new TextInst("li", Register.REGS.get("t0"), targetValue));
-            return Register.REGS.get("t0");
+            var newReg = Register.allocateTempRegister();
+            asmTarget.addText(new TextInst("li", newReg, targetValue));
+            return newReg;
         } else if (targetValue instanceof Register register) {
             return register;
         } else {
