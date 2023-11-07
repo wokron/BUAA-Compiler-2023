@@ -10,6 +10,7 @@ import java.util.Collections;
 
 public class Translator {
     private final Target asmTarget = new Target();
+    private final ValueManager valueManager = new ValueManager();
 
     public Target getAsmTarget() {
         return asmTarget;
@@ -35,15 +36,20 @@ public class Translator {
                 initVals.add(0);
             }
         }
-        asmTarget.addData(new Data(irGlobalValue.getName().substring(1), "word", Arrays.asList(initVals.toArray())));
+        var newDataEntry = new Data(irGlobalValue.getName().substring(1), "word", Arrays.asList(initVals.toArray()));
+        asmTarget.addData(newDataEntry);
+        valueManager.putGlobal(irGlobalValue, newDataEntry.getLabel());
     }
 
     private void translateFunction(Function irFunction) {
         asmTarget.addText(new TextLabel(irFunction.getName().substring(1)));
+        valueManager.putLocals(irFunction);
 
         for (var block : irFunction.getBasicBlocks()) {
             translateBasicBlock(block);
         }
+
+        valueManager.clearLocals();
     }
 
     private void translateBasicBlock(BasicBlock irBlock) {

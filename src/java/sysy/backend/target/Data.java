@@ -15,6 +15,10 @@ public class Data {
         this.values.addAll(values);
     }
 
+    public Label getLabel() {
+        return label;
+    }
+
     @Override
     public String toString() {
         String sb = label + ": ." + type + " " +
