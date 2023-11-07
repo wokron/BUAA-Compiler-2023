@@ -8,6 +8,10 @@ public class ImmediateValue extends Value {
         this.value = value;
     }
 
+    public int getValue() {
+        return value;
+    }
+
     @Override
     public String getName() {
         return Integer.toString(value);

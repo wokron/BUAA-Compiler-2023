@@ -5,10 +5,7 @@ import sysy.backend.ir.inst.BrInst;
 import sysy.backend.ir.inst.CallInst;
 import sysy.backend.ir.inst.ReturnInst;
 import sysy.backend.ir.inst.StoreInst;
-import sysy.backend.target.value.Label;
-import sysy.backend.target.value.Offset;
-import sysy.backend.target.value.Register;
-import sysy.backend.target.value.TargetValue;
+import sysy.backend.target.value.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +15,9 @@ public class ValueManager {
     private final Map<Value, TargetValue> localValueMap = new HashMap<>();
 
     public TargetValue getTargetValue(Value value) {
+        if (value instanceof ImmediateValue immediateValue) {
+            return new Immediate(immediateValue.getValue());
+        }
         return globalValueMap.getOrDefault(value, localValueMap.getOrDefault(value, null));
     }
 
@@ -41,7 +41,8 @@ public class ValueManager {
             for (var inst : block.getInstructions()) {
                 if ((inst instanceof StoreInst)
                         || (inst instanceof BrInst)
-                        || (inst instanceof ReturnInst)) {
+                        || (inst instanceof ReturnInst)
+                        || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
                     continue;
                 }
                 var type = inst.getType();
