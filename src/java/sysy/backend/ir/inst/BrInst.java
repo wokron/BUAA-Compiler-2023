@@ -40,6 +40,22 @@ public class BrInst extends Instruction {
         this.dest = dest;
     }
 
+    public Value getCond() {
+        return cond;
+    }
+
+    public BasicBlock getTrueBranch() {
+        return trueBranch;
+    }
+
+    public BasicBlock getFalseBranch() {
+        return falseBranch;
+    }
+
+    public BasicBlock getDest() {
+        return dest;
+    }
+
     @Override
     public void dump(PrintStream out) {
         if (cond != null) {

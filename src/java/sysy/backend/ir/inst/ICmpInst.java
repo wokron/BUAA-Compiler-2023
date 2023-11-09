@@ -17,6 +17,18 @@ public class ICmpInst extends Instruction {
         assert left.getType().equals(right.getType());
     }
 
+    public ICmpInstCond getCond() {
+        return cond;
+    }
+
+    public Value getLeft() {
+        return left;
+    }
+
+    public Value getRight() {
+        return right;
+    }
+
     @Override
     public void dump(PrintStream out) {
         var type = left.getType();
