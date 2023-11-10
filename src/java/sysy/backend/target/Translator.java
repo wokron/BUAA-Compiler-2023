@@ -249,12 +249,10 @@ public class Translator {
         } else { // common func
             int paramByteSize = func.calcParamSpace();
             var sp = Register.REGS.get("sp");
-            asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(4)));
-            asmTarget.addText(new TextInst("sw", Register.REGS.get("ra"), new Offset(sp, 0)));
+            asmTarget.addText(new TextInst("sw", Register.REGS.get("ra"), new Offset(sp, -4)));
 
             if (paramByteSize > 0) {
-                asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(paramByteSize)));
-                int base = 0;
+                int base = -paramByteSize-4;
                 for (var param : inst.getParams()) {
                     var registerParam = convertToRegister(valueManager.getTargetValue(param));
                     asmTarget.addText(new TextInst("sw", registerParam, new Offset(sp, base)));
@@ -262,7 +260,10 @@ public class Translator {
                     Register.freeAllTempRegisters(); // TODO: maybe wrong
                     base += 4;
                 }
+                asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(paramByteSize)));
             }
+
+            asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(4)));
 
             asmTarget.addText(new TextInst("jal", new Label(func.getName().substring(1))));
 
@@ -272,6 +273,16 @@ public class Translator {
 
             asmTarget.addText(new TextInst("lw", Register.REGS.get("ra"), new Offset(sp, 0)));
             asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(4)));
+
+            if (func.getRetType().getType() != IRTypeEnum.VOID) {
+                var target = valueManager.getTargetValue(inst);
+
+                if (isAddress(target)) {
+                    asmTarget.addText(new TextInst("sw", Register.REGS.get("v0"), target));
+                } else {
+                    asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
+                }
+            }
         }
     }
 
