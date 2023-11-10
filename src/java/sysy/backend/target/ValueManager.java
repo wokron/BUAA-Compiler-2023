@@ -36,7 +36,6 @@ public class ValueManager {
     }
 
     private int simpleManage(Function func) {
-        // TODO: need to modify the order of alloca for arguments in llvm ir, or the code is wrong
         int baseOffset = 0;
         for (var block : func.getBasicBlocks()) {
             for (var inst : block.getInstructions()) {

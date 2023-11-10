@@ -308,7 +308,7 @@ public class Visitor {
         currBasicBlock = currFunction.createBasicBlock();
 
         if (elm.params != null) {
-            for (int i = 0; i < currFunction.getArguments().size(); i++) {
+            for (int i = currFunction.getArguments().size()-1; i >= 0; i--) { // the order of alloca for args is reversed to fit mips
                 var currArgVal = currFunction.getArguments().get(i);
                 var currParamSym = currTable.getSymbol(elm.params.params.get(i).ident);
                 var currArgPtr = currFunction.getFirstBasicBlock().createAllocaInstAndInsertToFront(currArgVal.getType());
