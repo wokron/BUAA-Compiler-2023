@@ -81,4 +81,8 @@ public class Function extends Value {
 
         out.print("}\n");
     }
+
+    public int calcParamSpace() {
+        return arguments.size() * 4;
+    }
 }

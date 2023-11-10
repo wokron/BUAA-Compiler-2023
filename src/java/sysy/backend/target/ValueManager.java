@@ -25,9 +25,9 @@ public class ValueManager {
         globalValueMap.put(value, label);
     }
 
-    public void putLocals(Function func) {
+    public int putLocals(Function func) {
         // TODO: need dataflow analysis
-        simpleManage(func);
+        return simpleManage(func);
 
     }
 
@@ -35,7 +35,7 @@ public class ValueManager {
         localValueMap.clear();
     }
 
-    private void simpleManage(Function func) {
+    private int simpleManage(Function func) {
         // TODO: need to modify the order of alloca for arguments in llvm ir, or the code is wrong
         int baseOffset = 0;
         for (var block : func.getBasicBlocks()) {
@@ -55,6 +55,8 @@ public class ValueManager {
             }
         }
 
+        int memorySize = baseOffset;
+
         for (var block : func.getBasicBlocks()) {
             for (var inst : block.getInstructions()) {
                 if ((inst instanceof StoreInst)
@@ -72,5 +74,7 @@ public class ValueManager {
                 localValueMap.put(inst, new Offset(Register.REGS.get("sp"), baseOffset));
             }
         }
+
+        return memorySize;
     }
 }

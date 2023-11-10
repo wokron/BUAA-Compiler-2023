@@ -12,6 +12,7 @@ import java.util.*;
 public class Translator {
     private final Target asmTarget = new Target();
     private final ValueManager valueManager = new ValueManager();
+    private int memorySizeForLocal = 0;
 
     public Target getAsmTarget() {
         return asmTarget;
@@ -44,7 +45,13 @@ public class Translator {
 
     private void translateFunction(Function irFunction) {
         asmTarget.addText(new TextLabel(irFunction.getName().substring(1)));
-        valueManager.putLocals(irFunction);
+        var totalMemorySize = valueManager.putLocals(irFunction);
+        memorySizeForLocal = totalMemorySize - irFunction.calcParamSpace();
+
+        if (memorySizeForLocal > 0) {
+            var sp = Register.REGS.get("sp");
+            asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(memorySizeForLocal)));
+        }
 
         for (var block : irFunction.getBasicBlocks()) {
             translateBasicBlock(block);
@@ -67,8 +74,8 @@ public class Translator {
             translateBinaryInst(i);
         } else if (inst instanceof BrInst i) {
             translateBrInst(i);
-        } else if (inst instanceof CallInst) {
-
+        } else if (inst instanceof CallInst i) {
+            translateCallInst(i);
         } else if (inst instanceof ICmpInst i) {
             translateICmpInst(i);
         } else if (inst instanceof LoadInst i) {
@@ -126,6 +133,13 @@ public class Translator {
             var registerValue = convertToRegister(value);
             asmTarget.addText(new TextInst("move", Register.REGS.get("v0"), registerValue));
         }
+
+
+        if (memorySizeForLocal > 0) {
+            var sp = Register.REGS.get("sp");
+            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(memorySizeForLocal)));
+        }
+
         asmTarget.addText(new TextInst("jr", Register.REGS.get("ra")));
     }
 
@@ -136,14 +150,17 @@ public class Translator {
 
         TextInst targetInst = null;
         if (isAddress(target)) {
-            var newReg = Register.allocateTempRegister();
-            targetInst = new TextInst("sw", newReg, target);
+            targetInst = new TextInst("sw", registerPtr, target);
         }
 
         asmTarget.addText(targetInst);
     }
 
     private void translateStoreInst(StoreInst inst) {
+        if (inst.getValue() instanceof FunctionArgument) {
+            return;
+        }
+
         var ptr = valueManager.getTargetValue(inst.getPtr());
         var value = valueManager.getTargetValue(inst.getValue());
 
@@ -189,13 +206,14 @@ public class Translator {
     private void translateBrInst(BrInst inst) {
         if (inst.getCond() != null) {
             var cond = valueManager.getTargetValue(inst.getCond());
+            var registerCond = convertToRegister(cond);
             var falseBranch = inst.getFalseBranch();
             var falseBranchName = buildBlockLabelName(falseBranch);
             var trueBranch = inst.getTrueBranch();
             var trueBranchName = buildBlockLabelName(trueBranch);
 
-            asmTarget.addText(new TextInst("beqz", cond, new Label(falseBranchName)));
-            asmTarget.addText(new TextInst("bnez", cond, new Label(trueBranchName)));
+            asmTarget.addText(new TextInst("beqz", registerCond, new Label(falseBranchName)));
+            asmTarget.addText(new TextInst("bnez", registerCond, new Label(trueBranchName)));
         } else {
             var destBranch = inst.getDest();
             var destBranchName = buildBlockLabelName(destBranch);
@@ -203,8 +221,62 @@ public class Translator {
         }
     }
 
+    private void translateCallInst(CallInst inst) {
+        var func = inst.getFunc();
+        if (func == Function.BUILD_IN_PUTINT || func == Function.BUILD_IN_PUTCH) {
+            var inputVal = inst.getParams().get(0);
+            var inputTargetValue = valueManager.getTargetValue(inputVal);
+            var registerInputVal = convertToRegister(inputTargetValue);
+            asmTarget.addText(new TextInst("li", Register.REGS.get("v0"), new Immediate(func == Function.BUILD_IN_PUTINT ? 1 : 11)));
+            asmTarget.addText(new TextInst("move", Register.REGS.get("a0"), registerInputVal));
+            asmTarget.addText(new TextInst("syscall"));
+        } else if (func == Function.BUILD_IN_GETINT) {
+            var target = valueManager.getTargetValue(inst);
+            TextInst targetInst = null;
+            Register registerTarget = null;
+            if (isAddress(target)) {
+                var newReg = Register.allocateTempRegister();
+                targetInst = new TextInst("sw", newReg, target);
+                registerTarget = newReg;
+            } else if (target instanceof Register regTarget) {
+                registerTarget = regTarget;
+            }
+
+            asmTarget.addText(new TextInst("li", Register.REGS.get("v0"), new Immediate(5)));
+            asmTarget.addText(new TextInst("syscall"));
+            asmTarget.addText(new TextInst("move", registerTarget, Register.REGS.get("v0")));
+            asmTarget.addText(targetInst);
+        } else { // common func
+            int paramByteSize = func.calcParamSpace();
+            var sp = Register.REGS.get("sp");
+            asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(4)));
+            asmTarget.addText(new TextInst("sw", Register.REGS.get("ra"), new Offset(sp, 0)));
+
+            if (paramByteSize > 0) {
+                asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(paramByteSize)));
+                int base = 0;
+                for (var param : inst.getParams()) {
+                    var registerParam = convertToRegister(valueManager.getTargetValue(param));
+                    asmTarget.addText(new TextInst("sw", registerParam, new Offset(sp, base)));
+
+                    Register.freeAllTempRegisters(); // TODO: maybe wrong
+                    base += 4;
+                }
+            }
+
+            asmTarget.addText(new TextInst("jal", new Label(func.getName().substring(1))));
+
+            if (paramByteSize > 0) {
+                asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(paramByteSize)));
+            }
+
+            asmTarget.addText(new TextInst("lw", Register.REGS.get("ra"), new Offset(sp, 0)));
+            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(4)));
+        }
+    }
+
     private static String buildBlockLabelName(BasicBlock block) {
-        return block.getFunction().getName().substring(1) + "_" + block.getName().substring(1);
+        return block.getFunction().getName().substring(1) + "." + block.getName().substring(1);
     }
 
     private Register convertToRegister(TargetValue targetValue) {

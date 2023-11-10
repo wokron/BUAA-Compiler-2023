@@ -31,12 +31,15 @@ public class Target {
         out.println();
 
         out.print(".text\n");
+        out.print("\tjal main\n");
+        out.print("\tj end\n");
         for (var text : textList) {
             if (text instanceof TextInst)
                 out.print("\t");
             out.print(text);
             out.print("\n");
         }
+        out.print("end:");
     }
 
     public static void main(String[] args) {
