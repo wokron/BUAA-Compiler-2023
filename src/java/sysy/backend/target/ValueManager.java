@@ -46,7 +46,7 @@ public class ValueManager {
                     continue;
                 }
                 var type = inst.getType();
-                if (type.getPtrNum() == 0 && type instanceof ArrayIRType arrayIRType) {
+                if (type.getPtrNum() == 1 && type instanceof ArrayIRType arrayIRType) {
                     baseOffset += 4 * arrayIRType.getTotalSize();
                 } else {
                     baseOffset += 4;
