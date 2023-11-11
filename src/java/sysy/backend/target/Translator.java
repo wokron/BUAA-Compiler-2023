@@ -86,6 +86,8 @@ public class Translator {
             translateReturnInst(i);
         } else if (inst instanceof GetElementPtrInst i) {
             translateGetElementPtrInst(i);
+        } else if (inst instanceof ZExtInst i) {
+            translateZExtInst(i);
         }
         Register.freeAllTempRegisters();
     }
@@ -348,6 +350,19 @@ public class Translator {
             asmTarget.addText(new TextInst("move", target, registerBase));
         } else {
             asmTarget.addText(new TextInst("sw", registerBase, target));
+        }
+    }
+
+    private void translateZExtInst(ZExtInst inst) {
+        var value = valueManager.getTargetValue(inst.getValue());
+        var target = valueManager.getTargetValue(inst);
+
+        var registerValue = convertToRegister(value);
+
+        if (isAddress(target)) {
+            asmTarget.addText(new TextInst("sw", registerValue, target));
+        } else if (target instanceof Register) {
+            asmTarget.addText(new TextInst("move", target, registerValue));
         }
     }
 

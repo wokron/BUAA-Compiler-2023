@@ -16,6 +16,10 @@ public class ZExtInst extends Instruction {
         this.value = value;
     }
 
+    public Value getValue() {
+        return value;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.printf("  %s = zext %s to %s\n", getName(), value.toString(), dstType);
