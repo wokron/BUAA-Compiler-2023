@@ -3,6 +3,7 @@ package sysy.backend.target;
 import sysy.backend.ir.*;
 import sysy.backend.ir.Module;
 import sysy.backend.ir.inst.*;
+import sysy.backend.target.inst.TextComment;
 import sysy.backend.target.inst.TextInst;
 import sysy.backend.target.inst.TextLabel;
 import sysy.backend.target.value.*;
@@ -70,6 +71,7 @@ public class Translator {
     }
 
     private void translateInstruction(Instruction inst) {
+        asmTarget.addText(new TextComment(inst));
         if (inst instanceof BinaryInst i) {
             translateBinaryInst(i);
         } else if (inst instanceof BrInst i) {
@@ -88,11 +90,14 @@ public class Translator {
             translateGetElementPtrInst(i);
         } else if (inst instanceof ZExtInst i) {
             translateZExtInst(i);
+        } else if (inst instanceof AllocaInst i) {
+            translateAllocaInst(i);
         }
         Register.freeAllTempRegisters();
     }
 
     private void translateBinaryInst(BinaryInst inst) {
+
         var left = valueManager.getTargetValue(inst.getLeft());
         var right = valueManager.getTargetValue(inst.getRight());
         var target = valueManager.getTargetValue(inst);
@@ -364,6 +369,11 @@ public class Translator {
         } else if (target instanceof Register) {
             asmTarget.addText(new TextInst("move", target, registerValue));
         }
+    }
+
+    private void translateAllocaInst(AllocaInst inst) {
+        var targetValue = valueManager.getTargetValue(inst);
+        asmTarget.addText(new TextComment(inst.getName() + ": " + targetValue));
     }
 
     private static String buildBlockLabelName(BasicBlock block) {

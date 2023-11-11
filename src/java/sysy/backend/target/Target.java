@@ -1,5 +1,6 @@
 package sysy.backend.target;
 
+import sysy.backend.target.inst.TextComment;
 import sysy.backend.target.inst.TextEntry;
 import sysy.backend.target.inst.TextInst;
 import sysy.backend.target.inst.TextLabel;
@@ -34,7 +35,7 @@ public class Target {
         out.print("\tjal main\n");
         out.print("\tj end\n");
         for (var text : textList) {
-            if (text instanceof TextInst)
+            if (text instanceof TextInst || text instanceof TextComment)
                 out.print("\t");
             out.print(text);
             out.print("\n");
