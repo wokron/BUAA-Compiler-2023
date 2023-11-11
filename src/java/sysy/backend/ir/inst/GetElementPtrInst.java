@@ -34,6 +34,10 @@ public class GetElementPtrInst extends Instruction {
         }
     }
 
+    public Value getElementBase() {
+        return elementBase;
+    }
+
     public List<Value> getOffsets() {
         return offsets;
     }

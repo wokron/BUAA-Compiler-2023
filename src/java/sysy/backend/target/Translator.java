@@ -84,6 +84,8 @@ public class Translator {
             translateStoreInst(i);
         } else if (inst instanceof ReturnInst i) {
             translateReturnInst(i);
+        } else if (inst instanceof GetElementPtrInst i) {
+            translateGetElementPtrInst(i);
         }
         Register.freeAllTempRegisters();
     }
@@ -144,16 +146,27 @@ public class Translator {
     }
 
     private void translateLoadInst(LoadInst inst) {
-        var ptr = valueManager.getTargetValue(inst.getPtr());
-        var registerPtr = convertToRegister(ptr);
-        var target = valueManager.getTargetValue(inst);
+        if (inst.getPtr() instanceof GetElementPtrInst) {
+            var ptr = valueManager.getTargetValue(inst.getPtr());
+            var registerPtr = convertToRegister(ptr);
+            var target = valueManager.getTargetValue(inst);
 
-        TextInst targetInst = null;
-        if (isAddress(target)) {
-            targetInst = new TextInst("sw", registerPtr, target);
+            var registerTemp = Register.allocateTempRegister();
+            asmTarget.addText(new TextInst("lw", registerTemp, new Offset(registerPtr, 0)));
+            asmTarget.addText(new TextInst("sw", registerTemp, target));
+
+        } else {
+            var ptr = valueManager.getTargetValue(inst.getPtr());
+            var registerPtr = convertToRegister(ptr);
+            var target = valueManager.getTargetValue(inst);
+
+            TextInst targetInst = null;
+            if (isAddress(target)) {
+                targetInst = new TextInst("sw", registerPtr, target);
+            }
+
+            asmTarget.addText(targetInst);
         }
-
-        asmTarget.addText(targetInst);
     }
 
     private void translateStoreInst(StoreInst inst) {
@@ -161,12 +174,24 @@ public class Translator {
             return;
         }
 
-        var ptr = valueManager.getTargetValue(inst.getPtr());
-        var value = valueManager.getTargetValue(inst.getValue());
+        if (inst.getPtr() instanceof GetElementPtrInst) {
+            var ptr = valueManager.getTargetValue(inst.getPtr());
+            var value = valueManager.getTargetValue(inst.getValue());
 
-        var registerValue = convertToRegister(value);
+            var registerValue = convertToRegister(value);
 
-        asmTarget.addText(new TextInst("sw", registerValue, ptr));
+            var registerTemp = Register.allocateTempRegister();
+            asmTarget.addText(new TextInst("lw", registerTemp, ptr)); // get addr
+            asmTarget.addText(new TextInst("sw", registerValue, new Offset(registerTemp, 0)));
+        } else {
+            var ptr = valueManager.getTargetValue(inst.getPtr());
+            var value = valueManager.getTargetValue(inst.getValue());
+
+            var registerValue = convertToRegister(value);
+
+            asmTarget.addText(new TextInst("sw", registerValue, ptr));
+        }
+
     }
 
     private void translateICmpInst(ICmpInst inst) {
@@ -283,6 +308,46 @@ public class Translator {
                     asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
                 }
             }
+        }
+    }
+
+    private void translateGetElementPtrInst(GetElementPtrInst inst) {
+        var base = inst.getElementBase();
+        var offsets = inst.getOffsets();
+        var dims = base.getType().getArrayDims();
+
+        Register registerBase = Register.allocateTempRegister();
+
+        if (base instanceof LoadInst || base instanceof GetElementPtrInst) { // if is pointer
+            asmTarget.addText(new TextInst("lw", registerBase, valueManager.getTargetValue(base)));
+        } else { // if is address
+            asmTarget.addText(new TextInst("la", registerBase, valueManager.getTargetValue(base)));
+        }
+
+        var registerTemp = Register.allocateTempRegister();
+        int currDim = 0;
+        for (var offset : offsets) {
+            if (offset instanceof ImmediateValue immediate && immediate.getValue() == 0) {
+                currDim++;
+                continue;
+            }
+            int memSize = 4;
+            for (int i = currDim; i < dims.size(); i++) {
+                memSize *= dims.get(i);
+            }
+            var registerOffset = convertToRegister(valueManager.getTargetValue(offset));
+            asmTarget.addText(new TextInst("move", registerTemp, registerOffset));
+            asmTarget.addText(new TextInst("mul", registerTemp, registerTemp, new Immediate(memSize)));
+            asmTarget.addText(new TextInst("addu", registerBase, registerBase, registerTemp));
+            currDim++;
+        }
+
+        var target = valueManager.getTargetValue(inst);
+
+        if (target instanceof Register) {
+            asmTarget.addText(new TextInst("move", target, registerBase));
+        } else {
+            asmTarget.addText(new TextInst("sw", registerBase, target));
         }
     }
 
