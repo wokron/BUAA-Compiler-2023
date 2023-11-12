@@ -16,8 +16,9 @@ public class Compiler {
 //        task1();
 //        task2();
 //        task3();
-        task4LLVM();
-        task4MIPS();
+//        task4LLVM();
+//        task4MIPS();
+        runCompleteCompilerLLVM();
     }
 
     private static void task1() throws IOException, LexerException {
@@ -107,6 +108,38 @@ public class Compiler {
             var translator = new Translator();
             translator.translate(module);
             translator.getAsmTarget().dump(out);
+        }
+    }
+
+    private static void runCompleteCompilerLLVM() throws IOException, LexerException, ParserException {
+        try (var testFile = new FileInputStream("testfile.txt");
+             var outputFile = new FileOutputStream("llvm_ir.txt");
+             var errFile = new FileOutputStream("error.txt")) {
+            var out = new PrintStream(outputFile);
+            var err = new PrintStream(errFile);
+            var lexer = new Lexer(new InputStreamReader(testFile), recorder);
+            var parser = new Parser(lexer, recorder);
+            var result = parser.parse();
+
+            var visitor = new Visitor(recorder);
+
+            var module = visitor.generateIR(result);
+
+            if (!recorder.getErrors().isEmpty()) {
+                for (var error : recorder.getErrors()) {
+                    err.println(error);
+                }
+                return;
+            }
+
+            out.print("""
+                    declare i32 @getint()
+                    declare void @putint(i32)
+                    declare void @putch(i32)
+                    declare void @putstr(i8*)
+                    
+                    """);
+            module.dump(out);
         }
     }
 }

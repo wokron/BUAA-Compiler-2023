@@ -33,14 +33,14 @@ public class Target {
 
         out.print(".text\n");
         out.print("\tjal main\n");
-        out.print("\tj end\n");
+        out.print("\tj end.end\n");
         for (var text : textList) {
             if (text instanceof TextInst || text instanceof TextComment)
                 out.print("\t");
             out.print(text);
             out.print("\n");
         }
-        out.print("end:");
+        out.print("end.end:");
     }
 
     public static void main(String[] args) {
