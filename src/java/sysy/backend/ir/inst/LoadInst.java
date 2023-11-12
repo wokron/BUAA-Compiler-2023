@@ -12,6 +12,10 @@ public class LoadInst extends Instruction {
         this.ptr = ptr;
     }
 
+    public Value getPtr() {
+        return ptr;
+    }
+
     @Override
     public void dump(PrintStream out) {
         var dataType = ptr.getType().clone().ptr(ptr.getType().getPtrNum()-1); // remove the pointer

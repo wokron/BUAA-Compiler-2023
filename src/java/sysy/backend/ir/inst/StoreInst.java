@@ -15,6 +15,14 @@ public class StoreInst extends Instruction {
         this.ptr = ptr;
     }
 
+    public Value getValue() {
+        return value;
+    }
+
+    public Value getPtr() {
+        return ptr;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.printf("  store %s, %s\n", value.toString(), ptr.toString());

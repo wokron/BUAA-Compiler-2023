@@ -17,6 +17,18 @@ public class BinaryInst extends Instruction {
         this.right = right;
     }
 
+    public BinaryInstOp getOp() {
+        return op;
+    }
+
+    public Value getLeft() {
+        return left;
+    }
+
+    public Value getRight() {
+        return right;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.printf("  %s = %s %s %s, %s\n",

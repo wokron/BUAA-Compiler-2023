@@ -12,6 +12,14 @@ public class ArrayIRType extends IRType {
         this.arrayDims.addAll(arrayDims);
     }
 
+    public int getTotalSize() {
+        int total = 1;
+        for (var dim : arrayDims) {
+            total *= dim;
+        }
+        return total;
+    }
+
     @Override
     public ArrayIRType ptr(int num) {
         super.ptr(num);

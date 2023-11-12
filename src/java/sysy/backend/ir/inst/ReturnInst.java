@@ -13,6 +13,10 @@ public class ReturnInst extends Instruction {
         this.value = value;
     }
 
+    public Value getValue() {
+        return value;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.print("  ret ");

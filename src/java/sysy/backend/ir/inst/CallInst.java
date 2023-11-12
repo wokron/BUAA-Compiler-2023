@@ -18,6 +18,14 @@ public class CallInst extends Instruction {
         this.params.addAll(params);
     }
 
+    public Function getFunc() {
+        return func;
+    }
+
+    public List<Value> getParams() {
+        return params;
+    }
+
     @Override
     public void dump(PrintStream out) {
         out.print("  ");

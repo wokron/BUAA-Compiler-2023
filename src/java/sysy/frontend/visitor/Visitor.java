@@ -308,7 +308,7 @@ public class Visitor {
         currBasicBlock = currFunction.createBasicBlock();
 
         if (elm.params != null) {
-            for (int i = 0; i < currFunction.getArguments().size(); i++) {
+            for (int i = currFunction.getArguments().size()-1; i >= 0; i--) { // the order of alloca for args is reversed to fit mips
                 var currArgVal = currFunction.getArguments().get(i);
                 var currParamSym = currTable.getSymbol(elm.params.params.get(i).ident);
                 var currArgPtr = currFunction.getFirstBasicBlock().createAllocaInstAndInsertToFront(currArgVal.getType());
@@ -730,6 +730,7 @@ public class Visitor {
     public void visitStmtNodeForContinueBreak(StmtNodeForContinueBreak elm) {
         if (isInLoop == 0) {
             errorRecorder.addError(CompileErrorType.BREAK_OR_CONTINUE_NOT_IN_LOOP, elm.tkLineNum);
+            return;
         }
 
         if (elm.type == LexType.CONTINUETK) {
@@ -853,19 +854,24 @@ public class Visitor {
         var fCharNum = (elm.formatString.length() - String.join("", elm.formatString.split("%d")).length()) / 2;
         if (fCharNum != elm.exps.size()) {
             errorRecorder.addError(CompileErrorType.NUM_OF_PARAM_IN_PRINTF_NOT_MATCH, elm.printfLineNum);
+            return;
         }
 
-        for (int i = 1, j = 0; i < elm.formatString.length() - 1; i++) {
-            char ch = elm.formatString.charAt(i);
-            if (ch == '%') {
-                currBasicBlock.createCallInst(Function.BUILD_IN_PUTINT, List.of(expValues.get(j++)));
-                i++;
-            } else if (ch == '\\') {
-                currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue('\n')));
-                i++;
-            } else {
-                currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue(ch)));
+        try {
+            for (int i = 1, j = 0; i < elm.formatString.length() - 1; i++) {
+                char ch = elm.formatString.charAt(i);
+                if (ch == '%') {
+                    currBasicBlock.createCallInst(Function.BUILD_IN_PUTINT, List.of(expValues.get(j++)));
+                    i++;
+                } else if (ch == '\\') {
+                    currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue('\n')));
+                    i++;
+                } else {
+                    currBasicBlock.createCallInst(Function.BUILD_IN_PUTCH, List.of(new ImmediateValue(ch)));
+                }
             }
+        } catch (IndexOutOfBoundsException e) {
+            return; // exception means that the format string is illegal
         }
     }
 
