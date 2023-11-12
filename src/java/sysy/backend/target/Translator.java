@@ -31,15 +31,18 @@ public class Translator {
 
     private void translateGlobalValue(GlobalValue irGlobalValue) {
         var initVals = irGlobalValue.getInitVals();
+
+        Data newDataEntry;
         if (initVals.isEmpty()) {
             if (irGlobalValue.getType() instanceof ArrayIRType arrayType) {
-                initVals = new ArrayList<>(Collections.nCopies(arrayType.getTotalSize(), 0));
+                newDataEntry = new Data(irGlobalValue.getName().substring(1), "space", List.of(4 * arrayType.getTotalSize()));
             } else {
-                initVals = new ArrayList<>();
-                initVals.add(0);
+                newDataEntry = new Data(irGlobalValue.getName().substring(1), "word", List.of(0));
             }
+        } else {
+            newDataEntry = new Data(irGlobalValue.getName().substring(1), "word", Arrays.asList(initVals.toArray()));
         }
-        var newDataEntry = new Data(irGlobalValue.getName().substring(1), "word", Arrays.asList(initVals.toArray()));
+
         asmTarget.addData(newDataEntry);
         valueManager.putGlobal(irGlobalValue, newDataEntry.getLabel());
     }
@@ -51,7 +54,7 @@ public class Translator {
 
         if (memorySizeForLocal > 0) {
             var sp = Register.REGS.get("sp");
-            asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(memorySizeForLocal)));
+            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-memorySizeForLocal)));
         }
 
         for (var block : irFunction.getBasicBlocks()) {
@@ -236,6 +239,7 @@ public class Translator {
     }
 
     private void translateBrInst(BrInst inst) {
+        var nextBlock = inst.getBasicBlock().getNextBasicBlock();
         if (inst.getCond() != null) {
             var cond = valueManager.getTargetValue(inst.getCond());
             var registerCond = convertToRegister(cond);
@@ -244,12 +248,19 @@ public class Translator {
             var trueBranch = inst.getTrueBranch();
             var trueBranchName = buildBlockLabelName(trueBranch);
 
-            asmTarget.addText(new TextInst("beqz", registerCond, new Label(falseBranchName)));
-            asmTarget.addText(new TextInst("bnez", registerCond, new Label(trueBranchName)));
+            if (nextBlock != falseBranch) {
+                asmTarget.addText(new TextInst("beqz", registerCond, new Label(falseBranchName)));
+            }
+            if (nextBlock != trueBranch) {
+                asmTarget.addText(new TextInst("bnez", registerCond, new Label(trueBranchName)));
+            }
         } else {
             var destBranch = inst.getDest();
             var destBranchName = buildBlockLabelName(destBranch);
-            asmTarget.addText(new TextInst("j", new Label(destBranchName)));
+
+            if (nextBlock != destBranch) {
+                asmTarget.addText(new TextInst("j", new Label(destBranchName)));
+            }
         }
     }
 
@@ -292,10 +303,10 @@ public class Translator {
                     Register.freeAllTempRegisters(); // TODO: maybe wrong
                     base += 4;
                 }
-                asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(paramByteSize)));
+                asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-paramByteSize)));
             }
 
-            asmTarget.addText(new TextInst("subu", sp, sp, new Immediate(4)));
+            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-4)));
 
             asmTarget.addText(new TextInst("jal", new Label(func.getName().substring(1))));
 

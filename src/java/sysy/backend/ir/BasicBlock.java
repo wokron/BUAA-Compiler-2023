@@ -19,8 +19,19 @@ public class BasicBlock extends Value {
         return function;
     }
 
+    public BasicBlock getNextBasicBlock() {
+        var blocks = function.getBasicBlocks();
+        var idx = blocks.indexOf(this);
+        if (idx == -1 || idx == blocks.size()-1) {
+            return null;
+        } else {
+            return blocks.get(idx+1);
+        }
+    }
+
     private Value insertInstruction(Instruction inst) {
         instructions.add(inst);
+        inst.setBasicBlock(this);
         return inst;
     }
 
