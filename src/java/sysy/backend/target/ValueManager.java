@@ -1,10 +1,7 @@
 package sysy.backend.target;
 
 import sysy.backend.ir.*;
-import sysy.backend.ir.inst.BrInst;
-import sysy.backend.ir.inst.CallInst;
-import sysy.backend.ir.inst.ReturnInst;
-import sysy.backend.ir.inst.StoreInst;
+import sysy.backend.ir.inst.*;
 import sysy.backend.target.value.*;
 
 import java.util.HashMap;
@@ -45,8 +42,9 @@ public class ValueManager {
                         || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
                     continue;
                 }
-                var type = inst.getType();
-                if (type.getPtrNum() == 1 && type instanceof ArrayIRType arrayIRType) {
+                if (inst instanceof AllocaInst allocaInst
+                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
+                        && arrayIRType.getPtrNum() == 0) {
                     baseOffset += 4 * arrayIRType.getTotalSize();
                 } else {
                     baseOffset += 4;
@@ -64,8 +62,9 @@ public class ValueManager {
                         || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
                     continue;
                 }
-                var type = inst.getType();
-                if (type.getPtrNum() == 1 && type instanceof ArrayIRType arrayIRType) {
+                if (inst instanceof AllocaInst allocaInst
+                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
+                        && arrayIRType.getPtrNum() == 0) {
                     baseOffset -= 4 * arrayIRType.getTotalSize();
                 } else {
                     baseOffset -= 4;
