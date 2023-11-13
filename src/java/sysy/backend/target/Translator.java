@@ -196,7 +196,13 @@ public class Translator {
             var registerValue = convertToRegister(value);
 
             var registerTemp = Register.allocateTempRegister();
-            asmTarget.addText(new TextInst("lw", registerTemp, ptr)); // get addr
+
+            if (ptr instanceof Offset) {
+                asmTarget.addText(new TextInst("lw", registerTemp, ptr)); // get addr
+            } else if (ptr instanceof Register) {
+                asmTarget.addText(new TextInst("move", registerTemp, ptr)); // get addr
+            }
+
             asmTarget.addText(new TextInst("sw", registerValue, new Offset(registerTemp, 0)));
         } else {
             var ptr = valueManager.getTargetValue(inst.getPtr());
@@ -352,7 +358,15 @@ public class Translator {
         Register registerBase = Register.allocateTempRegister();
 
         if (base instanceof LoadInst || base instanceof GetElementPtrInst) { // if is pointer
-            asmTarget.addText(new TextInst("lw", registerBase, valueManager.getTargetValue(base)));
+            var baseVal = valueManager.getTargetValue(base);
+            if (baseVal instanceof Offset) {
+                asmTarget.addText(new TextInst("lw", registerBase, valueManager.getTargetValue(base)));
+            } else if (baseVal instanceof Register) {
+                asmTarget.addText(new TextInst("move", registerBase, valueManager.getTargetValue(base)));
+            } else {
+                throw new RuntimeException(); // impossible
+            }
+
         } else { // if is address
             asmTarget.addText(new TextInst("la", registerBase, valueManager.getTargetValue(base)));
         }
