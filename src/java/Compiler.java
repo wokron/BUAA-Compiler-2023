@@ -17,7 +17,7 @@ public class Compiler {
 //        task2();
 //        task3();
 //        task4LLVM();
-        task4MIPS();
+        task4MIPS(false);
 //        runCompleteCompilerLLVM();
 //        runCompleteCompilerMIPS();
     }
@@ -95,7 +95,7 @@ public class Compiler {
         }
     }
 
-    private static void task4MIPS() throws IOException, LexerException, ParserException {
+    private static void task4MIPS(boolean debugMode) throws IOException, LexerException, ParserException {
         try (var testFile = new FileInputStream("testfile.txt");
              var outputFile = new FileOutputStream("mips.txt")) {
             var out = new PrintStream(outputFile);
@@ -108,7 +108,7 @@ public class Compiler {
 
             var translator = new Translator();
             translator.translate(module);
-            translator.getAsmTarget().dump(out);
+            translator.getAsmTarget().dump(out, debugMode);
         }
     }
 
@@ -166,7 +166,7 @@ public class Compiler {
 
             var translator = new Translator();
             translator.translate(module);
-            translator.getAsmTarget().dump(out);
+            translator.getAsmTarget().dump(out, false);
         }
     }
 }
