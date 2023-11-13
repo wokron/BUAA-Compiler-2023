@@ -522,17 +522,25 @@ public class Visitor {
         type.dims.addAll(typeDims);
 
         rt.expType = type;
-        if (isGlobalVar && varSym.isConst) {
+        if (varSym.isConst) {
             if (!varSym.isArray()) {
                 rt.constVal = varSym.values.get(0);
             } else {
                 int accessIdx = 0;
                 int stride = 1;
+                boolean validConst = true;
                 for (int i = accessDims.size() - 1, j = varSym.varType.dims.size()-1; i >= 0; i--, j--) {
-                    accessIdx += accessDims.get(i) * stride;
+                    var accessDim = accessDims.get(i);
+                    if (accessDim == null) {
+                        validConst = false;
+                        break;
+                    }
+                    accessIdx += accessDim * stride;
                     stride *= varSym.varType.dims.get(j);
                 }
-                rt.constVal = varSym.values.get(accessIdx);
+                if (validConst) {
+                    rt.constVal = varSym.values.get(accessIdx);
+                }
             }
         }
 
