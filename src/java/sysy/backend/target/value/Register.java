@@ -25,10 +25,13 @@ public class Register extends TargetValue {
                 "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
                 "sp", "fp","ra"
         );
+
+        var tempRegistersName = List.of("t5", "t6", "t7"); // 3 temp register is enough to translate inst from ir to asm
+
         for (var name : registersName) {
             var reg = new Register(name);
             REGS.put(name, reg);
-            if (name.startsWith("t")) {
+            if (tempRegistersName.contains(name)) {
                 TEMP_REGS.add(reg);
             }
         }
