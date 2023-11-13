@@ -9,6 +9,7 @@ import sysy.backend.target.inst.TextLabel;
 import sysy.backend.target.value.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Translator {
     private final Target asmTarget = new Target();
@@ -309,44 +310,76 @@ public class Translator {
             }
 
         } else { // common func
-            int paramByteSize = func.calcParamSpace();
-            var sp = Register.REGS.get("sp");
-            asmTarget.addText(new TextInst("sw", Register.REGS.get("ra"), new Offset(sp, -4)));
+            translateCommonFuncCall(inst);
+        }
+    }
 
-            if (paramByteSize > 0) {
-                int base = -paramByteSize-4;
-                for (var param : inst.getParams()) {
-                    var registerParam = convertToRegister(valueManager.getTargetValue(param));
-                    asmTarget.addText(new TextInst("sw", registerParam, new Offset(sp, base)));
+    private void translateCommonFuncCall(CallInst inst) {
+        var registerToReserve = Stream.of(
+                "t0", "t1", "t2", "t3", "t4",
+                "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "ra"
+        ).map(Register.REGS::get).toList();
+        int registerByteSize = 4 * registerToReserve.size();
 
-                    Register.freeAllTempRegisters(); // TODO: maybe wrong
-                    base += 4;
-                }
-                asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-paramByteSize)));
+        var func = inst.getFunc();
+        int paramByteSize = func.calcParamSpace();
+        var sp = Register.REGS.get("sp");
+
+        reserveRegistersInFuncCall(registerToReserve);
+//        asmTarget.addText(new TextInst("sw", Register.REGS.get("ra"), new Offset(sp, -4)));
+
+        if (paramByteSize > 0) {
+            int base = -paramByteSize-registerByteSize;
+            for (var param : inst.getParams()) {
+                var registerParam = convertToRegister(valueManager.getTargetValue(param));
+                asmTarget.addText(new TextInst("sw", registerParam, new Offset(sp, base)));
+
+                Register.freeAllTempRegisters(); // TODO: maybe wrong
+                base += 4;
             }
+            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-paramByteSize)));
+        }
 
-            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-4)));
+        asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-registerByteSize)));
 
-            asmTarget.addText(new TextInst("jal", new Label(func.getName().substring(1))));
+        asmTarget.addText(new TextInst("jal", new Label(func.getName().substring(1))));
 
-            if (paramByteSize > 0) {
-                asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(paramByteSize)));
+        if (paramByteSize > 0) {
+            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(paramByteSize)));
+        }
+
+        recoverRegistersInFuncCall(registerToReserve);
+//        asmTarget.addText(new TextInst("lw", Register.REGS.get("ra"), new Offset(sp, 0)));
+        asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(registerByteSize)));
+
+        if (func.getRetType().getType() != IRTypeEnum.VOID) {
+            var target = valueManager.getTargetValue(inst);
+
+            if (target instanceof Offset) {
+                asmTarget.addText(new TextInst("sw", Register.REGS.get("v0"), target));
+            } else if (target instanceof Register) {
+                asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
+            } else {
+                throw new RuntimeException(); // impossible
             }
+        }
+    }
 
-            asmTarget.addText(new TextInst("lw", Register.REGS.get("ra"), new Offset(sp, 0)));
-            asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(4)));
+    private void reserveRegistersInFuncCall(List<Register> registersToReserve) {
+        var sp = Register.REGS.get("sp");
+        int offset = -registersToReserve.size() * 4;
+        for (var register : registersToReserve) {
+            asmTarget.addText(new TextInst("sw", register, new Offset(sp, offset)));
+            offset += 4;
+        }
+    }
 
-            if (func.getRetType().getType() != IRTypeEnum.VOID) {
-                var target = valueManager.getTargetValue(inst);
-
-                if (target instanceof Offset) {
-                    asmTarget.addText(new TextInst("sw", Register.REGS.get("v0"), target));
-                } else if (target instanceof Register) {
-                    asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
-                } else {
-                    throw new RuntimeException(); // impossible
-                }
-            }
+    private void recoverRegistersInFuncCall(List<Register> registersToRecover) {
+        var sp = Register.REGS.get("sp");
+        int offset = 0;
+        for (var register : registersToRecover) {
+            asmTarget.addText(new TextInst("lw", register, new Offset(sp, offset)));
+            offset += 4;
         }
     }
 
