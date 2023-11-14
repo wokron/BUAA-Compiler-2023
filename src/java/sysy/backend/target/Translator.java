@@ -122,6 +122,9 @@ public class Translator {
         switch (inst.getOp()) {
             case ADD:
             case SUB:
+                // use addu and subu to avoid overflow
+                asmTarget.addText(new TextInst(inst.getOp().name().toLowerCase() + "u", registerTarget, registerLeft, registerRight));
+                break;
             case MUL:
                 asmTarget.addText(new TextInst(inst.getOp().name().toLowerCase(), registerTarget, registerLeft, registerRight));
                 break;
