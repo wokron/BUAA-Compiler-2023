@@ -418,8 +418,19 @@ public class Translator {
             for (int i = currDim; i < dims.size(); i++) {
                 memSize *= dims.get(i);
             }
-            var registerOffset = convertToRegister(valueManager.getTargetValue(offset));
-            asmTarget.addText(new TextInst("move", registerTemp, registerOffset));
+
+            var offsetVal = valueManager.getTargetValue(offset);
+
+            if (offsetVal instanceof Immediate) {
+                asmTarget.addText(new TextInst("li", registerTemp, offsetVal));
+            } else if (offsetVal instanceof Offset) {
+                asmTarget.addText(new TextInst("lw", registerTemp, offsetVal));
+            } else if (offsetVal instanceof Register) {
+                asmTarget.addText(new TextInst("move", registerTemp, offsetVal));
+            } else {
+                throw new RuntimeException(); // impossible
+            }
+
             asmTarget.addText(new TextInst("mul", registerTemp, registerTemp, new Immediate(memSize)));
             asmTarget.addText(new TextInst("addu", registerBase, registerBase, registerTemp));
             currDim++;
