@@ -64,7 +64,8 @@ public class BasicBlock extends Value {
     }
 
     public Value createReturnInst(Value value) {
-        return insertInstruction(new ReturnInst(value));
+        var inst = value == null ? new ReturnInst() : new ReturnInst(value);
+        return insertInstruction(inst);
     }
 
     public Value createLoadInst(Value ptr) {

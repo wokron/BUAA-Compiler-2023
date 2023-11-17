@@ -1,8 +1,12 @@
 package sysy.backend.ir;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class Value {
     private String name = null;
     private final IRType type;
+    private final List<Use> useList = new ArrayList<>();
 
     public Value(IRType type) {
         this.type = type;
@@ -17,6 +21,14 @@ public abstract class Value {
             name = NameAllocator.getInstance().alloc();
         }
         return name;
+    }
+
+    public void addUse(User user) {
+        useList.add(new Use(user, this));
+    }
+
+    public List<Use> getUseList() {
+        return useList;
     }
 
     public IRType getType() {

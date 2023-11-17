@@ -13,7 +13,7 @@ public class CallInst extends Instruction {
     private final List<Value> params = new ArrayList<>();
 
     public CallInst(Function func, List<Value> params) {
-        super(func.getRetType().clone());
+        super(func.getRetType().clone(), params.toArray(new Value[0])); // TODO: func is used as well
         this.func = func;
         this.params.addAll(params);
     }

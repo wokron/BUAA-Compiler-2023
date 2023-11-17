@@ -13,7 +13,7 @@ public class BrInst extends Instruction {
     private BasicBlock dest;
 
     public BrInst(Value cond, BasicBlock ifTrue, BasicBlock ifFalse) {
-        super(IRType.getVoid());
+        super(IRType.getVoid(), cond); // TODO: basic block is used as well
         this.cond = cond;
         this.trueBranch = ifTrue;
         this.falseBranch = ifFalse;
@@ -21,7 +21,7 @@ public class BrInst extends Instruction {
     }
 
     public BrInst(BasicBlock dest) {
-        super(IRType.getVoid());
+        super(IRType.getVoid()); // TODO: basic block is used as well
         this.dest = dest;
         this.cond = null;
         this.trueBranch = null;

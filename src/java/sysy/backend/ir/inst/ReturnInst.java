@@ -9,8 +9,13 @@ public class ReturnInst extends Instruction {
     private final Value value;
 
     public ReturnInst(Value value) {
-        super(value == null ? IRType.getVoid() : value.getType());
+        super(value.getType(), value);
         this.value = value;
+    }
+
+    public ReturnInst() {
+        super(IRType.getVoid());
+        this.value = null;
     }
 
     public Value getValue() {

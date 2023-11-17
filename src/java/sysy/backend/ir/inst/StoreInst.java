@@ -10,7 +10,7 @@ public class StoreInst extends Instruction {
     Value ptr;
 
     public StoreInst(Value value, Value ptr) {
-        super(IRType.getVoid());
+        super(IRType.getVoid(), value, ptr);
         this.value = value;
         this.ptr = ptr;
     }

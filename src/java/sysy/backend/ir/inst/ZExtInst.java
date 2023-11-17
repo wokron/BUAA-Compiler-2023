@@ -11,7 +11,7 @@ public class ZExtInst extends Instruction {
     private final Value value;
 
     public ZExtInst(IRType dstType, Value value) {
-        super(dstType);
+        super(dstType, value);
         this.dstType = dstType;
         this.value = value;
     }
