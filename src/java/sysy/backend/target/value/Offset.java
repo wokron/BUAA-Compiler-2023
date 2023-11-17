@@ -10,6 +10,14 @@ public class Offset extends TargetValue {
         this.offset = offset;
     }
 
+    public int getOffset() {
+        return offset;
+    }
+
+    public Register getBase() {
+        return base;
+    }
+
     @Override
     public String toString() {
         return offset + "(" + base + ")";
