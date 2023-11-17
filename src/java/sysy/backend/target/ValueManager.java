@@ -85,6 +85,7 @@ public class ValueManager {
         );
 
         int baseOffset = 0;
+        int currArgAlloca = func.getArguments().size()-1;
         for (var block : func.getBasicBlocks()) {
             Stack<Register> registers = new Stack<>();
             for (var name : registersName) {
@@ -100,6 +101,9 @@ public class ValueManager {
                 }
                 if (!(inst instanceof AllocaInst) && !registers.isEmpty()) {
                     localValueMap.put(inst, registers.pop());
+                } else if (inst instanceof AllocaInst && currArgAlloca >= 0 && currArgAlloca < 4) { // if is top 4 arguments
+                    localValueMap.put(inst, Register.REGS.get("a" + currArgAlloca));
+                    baseOffset += 4;
                 } else if (inst instanceof AllocaInst allocaInst
                         && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
                         && arrayIRType.getPtrNum() == 0) {
@@ -107,6 +111,7 @@ public class ValueManager {
                 } else {
                     baseOffset += 4;
                 }
+                currArgAlloca--;
             }
         }
 
@@ -120,7 +125,10 @@ public class ValueManager {
                         || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
                     continue;
                 }
-                if (!(inst instanceof AllocaInst) && localValueMap.containsKey(inst)) {
+                if (localValueMap.containsKey(inst)) {
+                    if (inst instanceof AllocaInst) { // if is argument
+                        baseOffset -= 4;
+                    }
                     continue;
                 } else if (inst instanceof AllocaInst allocaInst
                         && allocaInst.getDataType() instanceof ArrayIRType arrayIRType

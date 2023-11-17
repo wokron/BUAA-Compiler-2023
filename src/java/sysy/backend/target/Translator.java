@@ -231,7 +231,14 @@ public class Translator {
 
             var registerValue = convertToRegister(value);
 
-            asmTarget.addText(new TextInst("sw", registerValue, ptr)); // TODO: ptr could be register
+            if (ptr instanceof Offset || ptr instanceof Label) {
+                asmTarget.addText(new TextInst("sw", registerValue, ptr));
+            } else if (ptr instanceof Register) {
+                asmTarget.addText(new TextInst("move", ptr, registerValue));
+            } else {
+                throw new RuntimeException(); // impossible
+            }
+
         }
 
     }
@@ -304,6 +311,9 @@ public class Translator {
             var inputVal = inst.getParams().get(0);
             var inputTargetValue = valueManager.getTargetValue(inputVal);
 
+            var tmpRegister = Register.allocateTempRegister();
+            asmTarget.addText(new TextInst("move", tmpRegister, Register.REGS.get("a0")));
+
             if (inputTargetValue instanceof Immediate) {
                 asmTarget.addText(new TextInst("li", Register.REGS.get("a0"), inputTargetValue));
             } else if (inputTargetValue instanceof Offset) {
@@ -315,6 +325,9 @@ public class Translator {
             }
 
             asmTarget.addText(new TextInst("syscall"));
+
+            asmTarget.addText(new TextInst("move", Register.REGS.get("a0"), tmpRegister));
+
         } else if (func == Function.BUILD_IN_GETINT) {
             asmTarget.addText(new TextInst("li", Register.REGS.get("v0"), new Immediate(5)));
             asmTarget.addText(new TextInst("syscall"));
@@ -337,7 +350,8 @@ public class Translator {
     private void translateCommonFuncCall(CallInst inst) {
         var registerToReserve = Stream.of(
                 "t0", "t1", "t2", "t3", "t4",
-                "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "ra"
+                "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+                "a0", "a1", "a2", "a3", "ra"
         ).map(Register.REGS::get).toList();
         int registerByteSize = 4 * registerToReserve.size();
 
@@ -346,16 +360,31 @@ public class Translator {
         var sp = Register.REGS.get("sp");
 
         reserveRegistersInFuncCall(registerToReserve);
-//        asmTarget.addText(new TextInst("sw", Register.REGS.get("ra"), new Offset(sp, -4)));
 
         if (paramByteSize > 0) {
             int base = -paramByteSize-registerByteSize;
-            for (var param : inst.getParams()) {
-                var registerParam = convertToRegister(valueManager.getTargetValue(param));
-                asmTarget.addText(new TextInst("sw", registerParam, new Offset(sp, base)));
 
-                Register.freeAllTempRegisters(); // TODO: maybe wrong
-                base += 4;
+            for (int paramCount = 0; paramCount < inst.getParams().size(); paramCount++, base += 4) {
+                var param = inst.getParams().get(paramCount);
+                var targetParam = valueManager.getTargetValue(param);
+                if (paramCount < 4) {
+                    var argReg = Register.REGS.get("a" + paramCount);
+
+                    if (targetParam instanceof Immediate) {
+                        asmTarget.addText(new TextInst("li", argReg, targetParam));
+                    } else if (targetParam instanceof Offset) {
+                        asmTarget.addText(new TextInst("lw", argReg, targetParam));
+                    } else if (targetParam instanceof Register) {
+                        asmTarget.addText(new TextInst("move", argReg, targetParam));
+                    } else {
+                        throw new RuntimeException(); //impossible
+                    }
+                } else {
+                    var registerParam = convertToRegister(targetParam);
+                    asmTarget.addText(new TextInst("sw", registerParam, new Offset(sp, base)));
+
+                    Register.freeAllTempRegisters(); // TODO: maybe wrong
+                }
             }
             asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-paramByteSize)));
         }
@@ -369,7 +398,7 @@ public class Translator {
         }
 
         recoverRegistersInFuncCall(registerToReserve);
-//        asmTarget.addText(new TextInst("lw", Register.REGS.get("ra"), new Offset(sp, 0)));
+
         asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(registerByteSize)));
 
         if (func.getRetType().getType() != IRTypeEnum.VOID) {
