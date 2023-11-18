@@ -36,30 +36,37 @@ public class BasicBlock extends Value {
     }
 
     public Value createAddInst(Value left, Value right) {
+        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
+            return new ImmediateValue(ileft.getValue() + iright.getValue());
+        }
         return insertInstruction(new BinaryInst(BinaryInstOp.ADD, left, right));
     }
 
     public Value createSubInst(Value left, Value right) {
+        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
+            return new ImmediateValue(ileft.getValue() - iright.getValue());
+        }
         return insertInstruction(new BinaryInst(BinaryInstOp.SUB, left, right));
     }
 
     public Value createMulInst(Value left, Value right) {
+        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
+            return new ImmediateValue(ileft.getValue() * iright.getValue());
+        }
         return insertInstruction(new BinaryInst(BinaryInstOp.MUL, left, right));
     }
 
     public Value createSDivInst(Value left, Value right) {
+        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
+            return new ImmediateValue(ileft.getValue() / iright.getValue());
+        }
         return insertInstruction(new BinaryInst(BinaryInstOp.SDIV, left, right));
     }
 
-    public Value createAndInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.AND, left, right));
-    }
-
-    public Value createOrInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.OR, left, right));
-    }
-
     public Value createSRemInst(Value left, Value right) {
+        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
+            return new ImmediateValue(ileft.getValue() % iright.getValue());
+        }
         return insertInstruction(new BinaryInst(BinaryInstOp.SREM, left, right));
     }
 
