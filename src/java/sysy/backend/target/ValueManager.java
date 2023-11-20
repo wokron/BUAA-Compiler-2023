@@ -35,47 +35,7 @@ public class ValueManager {
     }
 
     private int simpleManage(Function func) {
-        int baseOffset = 0;
-        for (var block : func.getBasicBlocks()) {
-            for (var inst : block.getInstructions()) {
-                if ((inst instanceof StoreInst)
-                        || (inst instanceof BrInst)
-                        || (inst instanceof ReturnInst)
-                        || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
-                    continue;
-                }
-                if (inst instanceof AllocaInst allocaInst
-                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
-                        && arrayIRType.getPtrNum() == 0) {
-                    baseOffset += 4 * arrayIRType.getTotalSize();
-                } else {
-                    baseOffset += 4;
-                }
-            }
-        }
-
-        int memorySize = baseOffset;
-
-        for (var block : func.getBasicBlocks()) {
-            for (var inst : block.getInstructions()) {
-                if ((inst instanceof StoreInst)
-                        || (inst instanceof BrInst)
-                        || (inst instanceof ReturnInst)
-                        || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
-                    continue;
-                }
-                if (inst instanceof AllocaInst allocaInst
-                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
-                        && arrayIRType.getPtrNum() == 0) {
-                    baseOffset -= 4 * arrayIRType.getTotalSize();
-                } else {
-                    baseOffset -= 4;
-                }
-                localValueMap.put(inst, new Offset(Register.REGS.get("sp"), baseOffset));
-            }
-        }
-
-        return memorySize;
+        return fastRegisterManage(func, List.of());
     }
 
     private int fastManage(Function func) {
@@ -84,13 +44,15 @@ public class ValueManager {
                 "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7"
         );
 
+        return fastRegisterManage(func, registersName.stream().map(Register.REGS::get).toList());
+    }
+
+    private int fastRegisterManage(Function func, List<Register> registersToAlloc) {
         int baseOffset = 0;
         int currArgAlloca = func.getArguments().size()-1;
         for (var block : func.getBasicBlocks()) {
             Stack<Register> registers = new Stack<>();
-            for (var name : registersName) {
-                registers.add(Register.REGS.get(name));
-            }
+            registers.addAll(registersToAlloc);
 
             for (var inst : block.getInstructions()) {
                 if ((inst instanceof StoreInst)
