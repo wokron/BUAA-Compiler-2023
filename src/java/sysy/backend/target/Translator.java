@@ -151,7 +151,12 @@ public class Translator {
             value = tryGetTempRegister(value);
 
             var v0 = Register.REGS.get("v0");
-            assignToRegister(v0, value);
+
+            if (value instanceof Immediate) {
+                asmTarget.addText(new TextInst("li", v0, value));
+            } else {
+                asmTarget.addText(new TextInst("move", v0, value));
+            }
         }
 
         if (memorySizeForLocal > 0) {
@@ -267,17 +272,15 @@ public class Translator {
         var target = valueManager.getTargetValue(inst);
         target = tryAllocTempRegisterForInst(target);
 
-        var registerLeft = convertToRegister(left);
-        var registerRight = convertToRegister(right);
+        if (left instanceof Immediate) {
+            asmTarget.addText(new TextInst("la", target, left));
+            left = target;
+        }
 
-        Register registerTarget;
-        if (target instanceof Offset) {
-            var newReg = Register.allocateTempRegister();
-            registerTarget = newReg;
-        } else if (target instanceof Register t) {
-            registerTarget = t;
-        } else {
-            throw new RuntimeException(); // impossible
+        if (right instanceof Immediate) {
+            var tmpReg = Register.allocateTempRegister();
+            asmTarget.addText(new TextInst("la", tmpReg, right));
+            right = tmpReg;
         }
 
         String instName = switch (inst.getCond()) {
@@ -289,11 +292,7 @@ public class Translator {
             case SLT -> "slt";
         };
 
-        asmTarget.addText(new TextInst(instName, registerTarget, registerLeft, registerRight));
-
-        if (target instanceof Offset) {
-            asmTarget.addText(new TextInst("sw", registerTarget, target));
-        }
+        asmTarget.addText(new TextInst(instName, target, left, right));
     }
 
     private void translateBrInst(BrInst inst) {
@@ -308,7 +307,7 @@ public class Translator {
             var trueBranch = inst.getTrueBranch();
             var trueBranchName = buildBlockLabelName(trueBranch);
 
-            tempRegisterPool.writeBackToMemoryForAll();
+//            tempRegisterPool.writeBackToMemoryForAll();
 
             if (nextBlock != falseBranch) {
                 asmTarget.addText(new TextInst("beqz", registerCond, new Label(falseBranchName)));
@@ -320,7 +319,8 @@ public class Translator {
             var destBranch = inst.getDest();
             var destBranchName = buildBlockLabelName(destBranch);
 
-            tempRegisterPool.writeBackToMemoryForAll();
+//            tempRegisterPool.writeBackToMemoryForAll();
+
             if (nextBlock != destBranch) {
                 asmTarget.addText(new TextInst("j", new Label(destBranchName)));
             }
@@ -336,17 +336,15 @@ public class Translator {
             var inputTargetValue = valueManager.getTargetValue(inputVal);
             inputTargetValue = tryGetTempRegister(inputTargetValue);
 
+            var a0 = Register.REGS.get("a0");
+
             var tmpRegister = Register.allocateTempRegister();
-            asmTarget.addText(new TextInst("move", tmpRegister, Register.REGS.get("a0")));
+            asmTarget.addText(new TextInst("move", tmpRegister, a0));
 
             if (inputTargetValue instanceof Immediate) {
-                asmTarget.addText(new TextInst("li", Register.REGS.get("a0"), inputTargetValue));
-            } else if (inputTargetValue instanceof Offset) {
-                asmTarget.addText(new TextInst("lw", Register.REGS.get("a0"), inputTargetValue));
-            } else if (inputTargetValue instanceof Register) {
-                asmTarget.addText(new TextInst("move", Register.REGS.get("a0"), inputTargetValue));
+                asmTarget.addText(new TextInst("li", a0, inputTargetValue));
             } else {
-                throw new RuntimeException(); // impossible
+                asmTarget.addText(new TextInst("move", a0, inputTargetValue));
             }
 
             asmTarget.addText(new TextInst("syscall"));
@@ -360,13 +358,7 @@ public class Translator {
             var target = valueManager.getTargetValue(inst);
             target = tryAllocTempRegisterForInst(target);
 
-            if (target instanceof Offset) {
-                asmTarget.addText(new TextInst("sw", Register.REGS.get("v0"), target));
-            } else if (target instanceof Register) {
-                asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
-            } else {
-                throw new RuntimeException(); // impossible
-            }
+            asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
 
         } else { // common func
             translateCommonFuncCall(inst);
@@ -426,13 +418,7 @@ public class Translator {
             var target = valueManager.getTargetValue(inst);
             target = tryAllocTempRegisterForInst(target);
 
-            if (target instanceof Offset) {
-                asmTarget.addText(new TextInst("sw", Register.REGS.get("v0"), target));
-            } else if (target instanceof Register) {
-                asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
-            } else {
-                throw new RuntimeException(); // impossible
-            }
+            asmTarget.addText(new TextInst("move", target, Register.REGS.get("v0")));
         }
     }
 
@@ -476,13 +462,8 @@ public class Translator {
         if (base instanceof LoadInst || base instanceof GetElementPtrInst) { // if is pointer
             var baseVal = valueManager.getTargetValue(base);
             baseVal = tryGetTempRegister(baseVal);
-            if (baseVal instanceof Offset) {
-                asmTarget.addText(new TextInst("lw", registerBase, baseVal));
-            } else if (baseVal instanceof Register) {
-                asmTarget.addText(new TextInst("move", registerBase, baseVal));
-            } else {
-                throw new RuntimeException(); // impossible
-            }
+
+            asmTarget.addText(new TextInst("move", registerBase, baseVal));
 
         } else { // if is address
             asmTarget.addText(new TextInst("la", registerBase, valueManager.getTargetValue(base)));
@@ -510,16 +491,10 @@ public class Translator {
             currDim++;
         }
 
-        var target = valueManager.getTargetValue(inst);
+        var target = valueManager.getTargetValue(inst); // TODO: target could replace register base
         target = tryAllocTempRegisterForInst(target);
 
-        if (target instanceof Register) {
-            asmTarget.addText(new TextInst("move", target, registerBase));
-        } else if (target instanceof Offset) {
-            asmTarget.addText(new TextInst("sw", registerBase, target));
-        } else {
-            throw new RuntimeException(); // impossible
-        }
+        asmTarget.addText(new TextInst("move", target, registerBase));
     }
 
     private void translateZExtInst(ZExtInst inst) {
@@ -529,14 +504,10 @@ public class Translator {
         var target = valueManager.getTargetValue(inst);
         target = tryAllocTempRegisterForInst(target);
 
-        var registerValue = convertToRegister(value);
-
-        if (target instanceof Offset) {
-            asmTarget.addText(new TextInst("sw", registerValue, target));
-        } else if (target instanceof Register) {
-            asmTarget.addText(new TextInst("move", target, registerValue));
+        if (value instanceof Immediate) {
+            asmTarget.addText(new TextInst("li", target, value));
         } else {
-            throw new RuntimeException(); // impossible
+            asmTarget.addText(new TextInst("move", target, value));
         }
     }
 
