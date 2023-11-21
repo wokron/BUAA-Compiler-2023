@@ -26,8 +26,8 @@ public class ValueManager {
 
     public int putLocals(Function func) {
         // TODO: need dataflow analysis
-//        return simpleManage(func);
-        return fastManage(func);
+        return simpleManage(func);
+//        return fastManage(func);
     }
 
     public void clearLocals() {
