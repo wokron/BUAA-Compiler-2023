@@ -114,40 +114,34 @@ public class Translator {
         var target = valueManager.getTargetValue(inst);
         target = tryAllocTempRegisterForInst(target);
 
-        var registerLeft = convertToRegister(left);
-        var registerRight = convertToRegister(right);
+        if (left instanceof Immediate) {
+            asmTarget.addText(new TextInst("la", target, left));
+            left = target;
+        }
 
-        Register registerTarget;
-        if (target instanceof Offset) {
-            var newReg = Register.allocateTempRegister();
-            registerTarget = newReg;
-        } else if (target instanceof Register t) {
-            registerTarget = t;
-        } else {
-            throw new RuntimeException(); // impossible
+        if (right instanceof Immediate) {
+            var tmpReg = Register.allocateTempRegister();
+            asmTarget.addText(new TextInst("la", tmpReg, right));
+            right = tmpReg;
         }
 
         switch (inst.getOp()) {
             case ADD:
             case SUB:
                 // use addu and subu to avoid overflow
-                asmTarget.addText(new TextInst(inst.getOp().name().toLowerCase() + "u", registerTarget, registerLeft, registerRight));
+                asmTarget.addText(new TextInst(inst.getOp().name().toLowerCase() + "u", target, left, right));
                 break;
             case MUL:
-                asmTarget.addText(new TextInst(inst.getOp().name().toLowerCase(), registerTarget, registerLeft, registerRight));
+                asmTarget.addText(new TextInst(inst.getOp().name().toLowerCase(), target, left, right));
                 break;
             case SDIV:
-                asmTarget.addText(new TextInst("div", registerLeft, registerRight));
-                asmTarget.addText(new TextInst("mflo", registerTarget));
+                asmTarget.addText(new TextInst("div", left, right));
+                asmTarget.addText(new TextInst("mflo", target));
                 break;
             case SREM:
-                asmTarget.addText(new TextInst("div", registerLeft, registerRight));
-                asmTarget.addText(new TextInst("mfhi", registerTarget));
+                asmTarget.addText(new TextInst("div", left, right));
+                asmTarget.addText(new TextInst("mfhi", target));
                 break;
-        }
-
-        if (target instanceof Offset) {
-            asmTarget.addText(new TextInst("sw", registerTarget, target));
         }
     }
 
