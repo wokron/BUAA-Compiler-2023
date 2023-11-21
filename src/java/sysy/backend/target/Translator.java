@@ -457,7 +457,9 @@ public class Translator {
         var offsets = inst.getOffsets();
         var dims = base.getType().getArrayDims();
 
-        Register registerBase = Register.allocateTempRegister();
+        var target = valueManager.getTargetValue(inst);
+        target = tryAllocTempRegisterForInst(target);
+        Register registerBase = (Register) target; // registerBase is just target
 
         if (base instanceof LoadInst || base instanceof GetElementPtrInst) { // if is pointer
             var baseVal = valueManager.getTargetValue(base);
@@ -490,11 +492,6 @@ public class Translator {
             asmTarget.addText(new TextInst("addu", registerBase, registerBase, registerTemp));
             currDim++;
         }
-
-        var target = valueManager.getTargetValue(inst); // TODO: target could replace register base
-        target = tryAllocTempRegisterForInst(target);
-
-        asmTarget.addText(new TextInst("move", target, registerBase));
     }
 
     private void translateZExtInst(ZExtInst inst) {
