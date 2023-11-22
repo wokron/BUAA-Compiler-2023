@@ -27,4 +27,17 @@ public class StoreInst extends Instruction {
     public void dump(PrintStream out) {
         out.printf("  store %s, %s\n", value.toString(), ptr.toString());
     }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        switch (pos) {
+            case 0:
+                value = newOperand;
+                break;
+            case 1:
+                ptr = newOperand;
+                break;
+        }
+    }
 }

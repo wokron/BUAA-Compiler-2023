@@ -23,8 +23,8 @@ public abstract class Value {
         return name;
     }
 
-    public void addUse(User user) {
-        useList.add(new Use(user, this));
+    public void addUse(User user, int pos) {
+        useList.add(new Use(user, this, pos));
     }
 
     public List<Use> getUseList() {

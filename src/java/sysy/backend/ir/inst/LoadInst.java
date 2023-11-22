@@ -21,4 +21,12 @@ public class LoadInst extends Instruction {
         var dataType = ptr.getType().clone().ptr(ptr.getType().getPtrNum()-1); // remove the pointer
         out.printf("  %s = load %s, %s\n", getName(), dataType.toString(), ptr.toString());
     }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        if (pos == 0) {
+            ptr = newOperand;
+        }
+    }
 }

@@ -1,3 +1,4 @@
+import sysy.backend.optim.PeepHolePass;
 import sysy.backend.target.Translator;
 import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
@@ -17,7 +18,8 @@ public class Compiler {
 //        task2();
 //        task3();
 //        task4LLVM();
-        task4MIPS(false);
+        task4LLVMWithOptim();
+//        task4MIPS(false);
 //        runCompleteCompilerLLVM();
 //        runCompleteCompilerMIPS();
     }
@@ -83,6 +85,31 @@ public class Compiler {
 
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
+
+            out.print("""
+                    declare i32 @getint()
+                    declare void @putint(i32)
+                    declare void @putch(i32)
+                    declare void @putstr(i8*)
+                    
+                    """);
+            module.dump(out);
+        }
+    }
+
+    private static void task4LLVMWithOptim() throws IOException, LexerException, ParserException {
+        try (var testFile = new FileInputStream("testfile.txt");
+             var outputFile = new FileOutputStream("llvm_ir.txt")) {
+            var out = new PrintStream(outputFile);
+            var lexer = new Lexer(new InputStreamReader(testFile), recorder);
+            var parser = new Parser(lexer, recorder);
+            var result = parser.parse();
+
+            var visitor = new Visitor(recorder);
+            var module = visitor.generateIR(result);
+
+            var optim1 = new PeepHolePass(module);
+            module = optim1.pass();
 
             out.print("""
                     declare i32 @getint()

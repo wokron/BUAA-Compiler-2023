@@ -16,7 +16,7 @@ public class Translator {
     private final ValueManager valueManager = new ValueManager();
     private final TempRegisterPool tempRegisterPool = new TempRegisterPool(
             asmTarget,
-            Stream.of("t0", "t1", "t2", "t3", "t4").map(Register.REGS::get).toList());
+            Stream.of("t0", "t1", "t2", "t3", "t4", "t5", "t6", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7").map(Register.REGS::get).toList());
     private int memorySizeForLocal = 0;
 
     public Target getAsmTarget() {

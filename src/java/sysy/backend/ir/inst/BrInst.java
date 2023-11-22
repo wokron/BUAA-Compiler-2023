@@ -7,7 +7,7 @@ import sysy.backend.ir.Value;
 import java.io.PrintStream;
 
 public class BrInst extends Instruction {
-    private final Value cond;
+    private Value cond;
     private BasicBlock trueBranch;
     private BasicBlock falseBranch;
     private BasicBlock dest;
@@ -65,6 +65,14 @@ public class BrInst extends Instruction {
                     falseBranch.toString());
         } else {
             out.printf("  br %s\n", dest.toString());
+        }
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        if (pos == 0) {
+            cond = newOperand;
         }
     }
 }

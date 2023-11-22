@@ -45,4 +45,10 @@ public class CallInst extends Instruction {
 
         out.print(")\n");
     }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        params.set(pos, newOperand);
+    }
 }

@@ -6,7 +6,8 @@ import java.io.PrintStream;
 
 public class BinaryInst extends Instruction {
     private final BinaryInstOp op;
-    private final Value left, right;
+    private Value left;
+    private Value right;
 
     public BinaryInst(BinaryInstOp op, Value left, Value right) {
         super(left.getType(), left, right);
@@ -37,5 +38,18 @@ public class BinaryInst extends Instruction {
                 getType().toString(),
                 left.getName(),
                 right.getName());
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        switch (pos) {
+            case 0:
+                left = newOperand;
+                break;
+            case 1:
+                right = newOperand;
+                break;
+        }
     }
 }

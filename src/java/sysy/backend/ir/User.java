@@ -9,10 +9,15 @@ public abstract class User extends Value {
     public User(IRType type, Value... operands) {
         super(type);
 
+        int pos = 0;
         for (var op : operands) {
-            op.addUse(this);
+            op.addUse(this, pos);
             this.operands.add(op);
+            pos++;
         }
     }
 
+    public void replaceOperand(int pos, Value newOperand) {
+        operands.set(pos, newOperand);
+    }
 }

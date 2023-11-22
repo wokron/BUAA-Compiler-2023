@@ -8,7 +8,7 @@ import java.io.PrintStream;
 public class ZExtInst extends Instruction {
     private final IRType dstType;
 
-    private final Value value;
+    private Value value;
 
     public ZExtInst(IRType dstType, Value value) {
         super(dstType, value);
@@ -23,5 +23,13 @@ public class ZExtInst extends Instruction {
     @Override
     public void dump(PrintStream out) {
         out.printf("  %s = zext %s to %s\n", getName(), value.toString(), dstType);
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        if (pos == 0) {
+            value = newOperand;
+        }
     }
 }

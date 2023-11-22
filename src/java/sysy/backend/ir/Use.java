@@ -2,9 +2,10 @@ package sysy.backend.ir;
 
 public class Use {
     private final User user;
-    public Value value;
+    private Value value;
+    private int pos;
 
-    public Use(User user, Value value) {
+    public Use(User user, Value value, int pos) {
         this.user = user;
         this.value = value;
     }
@@ -15,6 +16,10 @@ public class Use {
 
     public Value getValue() {
         return value;
+    }
+
+    public int getPos() {
+        return pos;
     }
 
     public void setValue(Value value) {

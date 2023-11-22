@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GetElementPtrInst extends Instruction {
-    private final Value elementBase;
+    private Value elementBase;
     private final List<Value> offsets = new ArrayList<>();
 
     public GetElementPtrInst(Value elementBase, List<Value> offsets) {
@@ -63,5 +63,15 @@ public class GetElementPtrInst extends Instruction {
             out.printf(", %s", offset.toString());
         }
         out.print("\n");
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        if (pos == 0) {
+            elementBase = newOperand;
+        } else {
+            offsets.set(pos-1, newOperand);
+        }
     }
 }
