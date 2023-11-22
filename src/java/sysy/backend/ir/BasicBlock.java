@@ -35,37 +35,87 @@ public class BasicBlock extends Value {
         return inst;
     }
 
-    public Value createAddInst(Value left, Value right) {
-        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
-            return new ImmediateValue(ileft.getValue() + iright.getValue());
+    private Integer tryGetImmediateValue(Value value) {
+        if (value instanceof ImmediateValue ivalue) {
+            return ivalue.getValue();
+        } else {
+            return null;
         }
+    }
+
+    public Value createAddInst(Value left, Value right) {
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft + iright);
+        }
+        if (ileft != null && ileft == 0) { // 0 + a = a
+            return right;
+        }
+        if (iright != null && iright == 0) { // a + 0 = a
+            return left;
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.ADD, left, right));
     }
 
     public Value createSubInst(Value left, Value right) {
-        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
-            return new ImmediateValue(ileft.getValue() - iright.getValue());
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft - iright);
         }
+        if (iright != null && iright == 0) { // a - 0 = a
+            return left;
+        }
+        if (left == right) { // a - a = 0
+            return new ImmediateValue(0);
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.SUB, left, right));
     }
 
     public Value createMulInst(Value left, Value right) {
-        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
-            return new ImmediateValue(ileft.getValue() * iright.getValue());
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft * iright);
         }
+        if (ileft != null && ileft == 0) { // 0 * a = 0
+            return new ImmediateValue(0);
+        }
+        if (iright != null && iright == 0) { // a * 0 = 0
+            return new ImmediateValue(0);
+        }
+        if (ileft != null && ileft == 1) { // 1 * a = a
+            return right;
+        }
+        if (iright != null && iright == 1) { // a * 1 = a
+            return left;
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.MUL, left, right));
     }
 
     public Value createSDivInst(Value left, Value right) {
-        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
-            return new ImmediateValue(ileft.getValue() / iright.getValue());
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft / iright);
         }
+        if (iright != null && iright == 1) { // a / 1 = a
+            return left;
+        }
+        if (ileft != null && ileft == 0) { // 0 / a = 0
+            return new ImmediateValue(0);
+        }
+        if (left == right) { // a / a = 1
+            return new ImmediateValue(1);
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.SDIV, left, right));
     }
 
     public Value createSRemInst(Value left, Value right) {
-        if (left instanceof ImmediateValue ileft && right instanceof ImmediateValue iright) {
-            return new ImmediateValue(ileft.getValue() % iright.getValue());
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft % iright);
         }
         return insertInstruction(new BinaryInst(BinaryInstOp.SREM, left, right));
     }
