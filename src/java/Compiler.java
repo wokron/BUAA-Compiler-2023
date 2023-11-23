@@ -1,4 +1,4 @@
-import sysy.backend.optim.PeepHolePass;
+import sysy.backend.optim.LVNPass;
 import sysy.backend.target.Translator;
 import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
@@ -18,8 +18,9 @@ public class Compiler {
 //        task2();
 //        task3();
 //        task4LLVM();
-        task4LLVMWithOptim();
+//        task4LLVMWithOptim();
 //        task4MIPS(false);
+        task4MIPSWithOptim(false);
 //        runCompleteCompilerLLVM();
 //        runCompleteCompilerMIPS();
     }
@@ -108,7 +109,7 @@ public class Compiler {
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
 
-            var optim1 = new PeepHolePass(module);
+            var optim1 = new LVNPass(module);
             module = optim1.pass();
 
             out.print("""
@@ -132,6 +133,26 @@ public class Compiler {
 
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
+
+            var translator = new Translator();
+            translator.translate(module);
+            translator.getAsmTarget().dump(out, debugMode);
+        }
+    }
+
+    private static void task4MIPSWithOptim(boolean debugMode) throws IOException, LexerException, ParserException {
+        try (var testFile = new FileInputStream("testfile.txt");
+             var outputFile = new FileOutputStream("mips.txt")) {
+            var out = new PrintStream(outputFile);
+            var lexer = new Lexer(new InputStreamReader(testFile), recorder);
+            var parser = new Parser(lexer, recorder);
+            var result = parser.parse();
+
+            var visitor = new Visitor(recorder);
+            var module = visitor.generateIR(result);
+
+            var optim1 = new LVNPass(module);
+            module = optim1.pass();
 
             var translator = new Translator();
             translator.translate(module);
