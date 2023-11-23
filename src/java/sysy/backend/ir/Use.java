@@ -8,6 +8,7 @@ public class Use {
     public Use(User user, Value value, int pos) {
         this.user = user;
         this.value = value;
+        this.pos = pos;
     }
 
     public User getUser() {

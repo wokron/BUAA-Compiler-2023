@@ -146,6 +146,7 @@ public class BasicBlock extends Value {
         int insertPos;
         for (insertPos = 0; insertPos < instructions.size() && instructions.get(insertPos) instanceof AllocaInst; insertPos++);
         instructions.add(insertPos, allocaInst);
+        allocaInst.setBasicBlock(this);
         return allocaInst;
     }
 

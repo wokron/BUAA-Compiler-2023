@@ -17,6 +17,10 @@ public abstract class User extends Value {
         }
     }
 
+    public List<Value> getOperands() {
+        return operands;
+    }
+
     public void replaceOperand(int pos, Value newOperand) {
         operands.set(pos, newOperand);
     }
