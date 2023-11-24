@@ -115,13 +115,13 @@ public class Translator {
         target = tryAllocTempRegisterForInst(target);
 
         if (left instanceof Immediate) {
-            asmTarget.addText(new TextInst("la", target, left));
+            asmTarget.addText(new TextInst("li", target, left));
             left = target;
         }
 
         if (right instanceof Immediate) {
             var tmpReg = Register.allocateTempRegister();
-            asmTarget.addText(new TextInst("la", tmpReg, right));
+            asmTarget.addText(new TextInst("li", tmpReg, right));
             right = tmpReg;
         }
 
@@ -242,13 +242,13 @@ public class Translator {
         target = tryAllocTempRegisterForInst(target);
 
         if (left instanceof Immediate) {
-            asmTarget.addText(new TextInst("la", target, left));
+            asmTarget.addText(new TextInst("li", target, left));
             left = target;
         }
 
         if (right instanceof Immediate) {
             var tmpReg = Register.allocateTempRegister();
-            asmTarget.addText(new TextInst("la", tmpReg, right));
+            asmTarget.addText(new TextInst("li", tmpReg, right));
             right = tmpReg;
         }
 
