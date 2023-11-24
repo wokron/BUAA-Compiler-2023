@@ -42,8 +42,12 @@ public class LVNPass {
             if (inst instanceof BrInst || inst instanceof ReturnInst) {
                 continue;
             }
-            if (inst instanceof StoreInst) {
-                hashHelper.incStoreTime();
+            if (inst instanceof StoreInst storeInst) {
+                var ptr = storeInst.getPtr();
+                while (ptr instanceof GetElementPtrInst gepPtr) {
+                    ptr = gepPtr.getElementBase();
+                }
+                hashHelper.removeHash(storeInst.getPtr());
                 continue;
             }
 
@@ -63,39 +67,32 @@ class HashHelper {
     private final Map<Value, Integer> valToHash = new HashMap<>();
     private int nextHashValue = 0;
 
-    private int storeTime = 0;
-
     public void reset() {
         descToHash.clear();
         valToHash.clear();
-        storeTime = 0;
         nextHashValue = 0;
-    }
-
-    public void incStoreTime() {
-        storeTime++;
     }
 
     public String createValueDesc(Value value) {
         if (value instanceof GlobalValue gvalue) {
-            return "G " + gvalue.getName();
+            return "g " + gvalue.getName();
         }
 
         if (value instanceof ImmediateValue ivalue) {
-            return "Imm " + ivalue.getValue();
+            return "imm " + ivalue.getValue();
         }
 
         // else value instanceof inst
         if (value instanceof AllocaInst) {
-            return "Alloca" + value.hashCode();
+            return "alloca" + value.hashCode();
         }
 
         if (value instanceof CallInst) {
-            return "Call" + value.hashCode();
+            return "call" + value.hashCode();
         }
 
         if (value instanceof LoadInst loadInst) {
-            return "Load "  + hash(loadInst.getPtr()) + " " + storeTime; // load inst will be different after store inst even if ptr is the same
+            return "load "  + hash(loadInst.getPtr());
         }
 
         var hashList = ((User)value).getOperands().stream().map(this::hash).map(Object::toString).toList();
@@ -114,6 +111,12 @@ class HashHelper {
         }
 
         return "";
+    }
+
+    public void removeHash(Value value) {
+        var desc = createValueDesc(value);
+        valToHash.remove(value);
+        descToHash.remove(desc);
     }
 
     public int hash(Value value) {
@@ -182,7 +185,8 @@ class HashHelper {
         System.out.printf("loadx1 = %d\n", helper.hash(loadx1));
         var loadx2 = new LoadInst(x);
         System.out.printf("loadx2 = %d\n", helper.hash(loadx2));
-        var store1 = new StoreInst(loadx2, x); helper.incStoreTime();
+        var store1 = new StoreInst(loadx2, x);
+        helper.removeHash(x);
         var loadx3 = new LoadInst(x);
         System.out.printf("loadx3 = %d\n", helper.hash(loadx3));
     }
