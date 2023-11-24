@@ -455,9 +455,13 @@ public class Translator {
             var offsetVal = valueManager.getTargetValue(offset);
             offsetVal = tryGetTempRegister(offsetVal);
 
-            assignToRegister(registerTemp, offsetVal);
+            if (offsetVal instanceof Immediate) {
+                asmTarget.addText(new TextInst("li", registerTemp, offsetVal));
+                asmTarget.addText(new TextInst("mul", registerTemp, registerTemp, new Immediate(memSize)));
+            } else {
+                asmTarget.addText(new TextInst("mul", registerTemp, offsetVal, new Immediate(memSize)));
+            }
 
-            asmTarget.addText(new TextInst("mul", registerTemp, registerTemp, new Immediate(memSize)));
             asmTarget.addText(new TextInst("addu", registerBase, registerBase, registerTemp));
             currDim++;
         }
