@@ -20,7 +20,7 @@ public class Compiler {
 //        task4LLVM();
 //        task4LLVMWithOptim();
 //        task4MIPS(false);
-        task4MIPSWithOptim(false);
+        task4MIPSWithOptim(true);
 //        runCompleteCompilerLLVM();
 //        runCompleteCompilerMIPS();
     }
