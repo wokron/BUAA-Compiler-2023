@@ -73,7 +73,21 @@ public class Translator {
         var label = new TextLabel(buildBlockLabelName(irBlock));
         asmTarget.addText(label);
 
+        var t7 = Register.REGS.get("t7");
+        var a0 = Register.REGS.get("a0");
+        boolean inPrintf = false;
         for (var inst : irBlock.getInstructions()) {
+            if (inst instanceof CallInst callInst && (callInst.getFunc() == Function.BUILD_IN_PUTCH || callInst.getFunc() == Function.BUILD_IN_PUTINT)) {
+                if (!inPrintf) {
+                    inPrintf = true;
+                    asmTarget.addText(new TextInst("move", t7, a0));
+                }
+            } else {
+                if (inPrintf) {
+                    inPrintf = false;
+                    asmTarget.addText(new TextInst("move", a0, t7));
+                }
+            }
             translateInstruction(inst);
         }
     }
@@ -308,7 +322,6 @@ public class Translator {
             var a0 = Register.REGS.get("a0");
 
             var tmpRegister = Register.allocateTempRegister();
-            asmTarget.addText(new TextInst("move", tmpRegister, a0));
 
             if (inputTargetValue instanceof Immediate) {
                 asmTarget.addText(new TextInst("li", a0, inputTargetValue));
@@ -317,8 +330,6 @@ public class Translator {
             }
 
             asmTarget.addText(new TextInst("syscall"));
-
-            asmTarget.addText(new TextInst("move", Register.REGS.get("a0"), tmpRegister));
 
         } else if (func == Function.BUILD_IN_GETINT) {
             asmTarget.addText(new TextInst("li", Register.REGS.get("v0"), new Immediate(5)));
