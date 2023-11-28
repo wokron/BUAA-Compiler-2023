@@ -28,7 +28,23 @@ public class ValueManager {
 
     public int basicManage(Function func) {
         var registersName = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
-        return basicRegisterManage(func, registersName.stream().map(Register.REGS::get).toList());
+        return manageMemory(func, registersName.stream().map(Register.REGS::get).toList(), this::basicGlobalRegisterManage);
+    }
+
+    private void basicGlobalRegisterManage(List<Register> registers, List<AllocaInst> varInsts, Function func) {
+        Stack<Register> registersAllocator = new Stack<>();
+        registersAllocator.addAll(registers);
+
+        for (var varInst : varInsts) {
+            if (registersAllocator.isEmpty()) {
+                break;
+            }
+            if (!varInst.getDataType().getArrayDims().isEmpty()) { // if is arrray
+                continue;
+            }
+
+            localValueMap.put(varInst, registersAllocator.pop());
+        }
     }
 
     public List<Register> getRegistersInUse() {
@@ -40,7 +56,7 @@ public class ValueManager {
     }
 
 
-    private int basicRegisterManage(Function func, List<Register> registersToAlloc) {
+    private int manageMemory(Function func, List<Register> registersToAlloc, GlobalRegisterManager globalRegisterManager) {
         int argNum = func.getArguments().size();
         List<AllocaInst> allAllocaInsts = new ArrayList<>(func.getFirstBasicBlock().getInstructions()
                 .stream()
@@ -57,19 +73,7 @@ public class ValueManager {
             localValueMap.put(inst, Register.REGS.get("a" + i));
         }
 
-        Stack<Register> registers = new Stack<>();
-        registers.addAll(registersToAlloc);
-
-        for (var varInst : varAllocaInsts) {
-            if (registers.isEmpty()) {
-                break;
-            }
-            if (!varInst.getDataType().getArrayDims().isEmpty()) { // if is arrray
-                continue;
-            }
-
-            localValueMap.put(varInst, registers.pop());
-        }
+        globalRegisterManager.manageGlobalRegister(registersToAlloc, varAllocaInsts, func);
 
         int numOfArgOnRegister = Math.min(argNum, 4);
         int memoryRequire = numOfArgOnRegister * 4;
@@ -138,4 +142,8 @@ public class ValueManager {
 
         return memoryRequire;
     }
+}
+
+interface GlobalRegisterManager {
+    void manageGlobalRegister(List<Register> registers, List<AllocaInst> varInsts, Function func);
 }
