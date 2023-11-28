@@ -64,6 +64,7 @@ public class Translator {
 
         for (var block : irFunction.getBasicBlocks()) {
             tempRegisterPool.reset();
+            registerTempMap.clear();
             translateBasicBlock(block);
         }
 
@@ -176,11 +177,14 @@ public class Translator {
         } else {
             var ptr = valueManager.getTargetValue(inst.getPtr());
 
+            if (ptr instanceof Register regPtr) {
+                registerTempMap.put(inst, regPtr);
+                return;
+            }
+
             var target = tryAllocTempRegisterForInst(inst);
 
-            if (ptr instanceof Register) {
-                asmTarget.addText(new TextInst("move", target, ptr));
-            } else if (ptr instanceof Offset || ptr instanceof Label) {
+            if (ptr instanceof Offset || ptr instanceof Label) {
                 asmTarget.addText(new TextInst("lw", target, ptr));
             } else {
                 throw new RuntimeException(); // impossible
@@ -344,7 +348,15 @@ public class Translator {
                 var param = inst.getParams().get(paramCount);
                 var targetParam = valueManager.getTargetValue(param);
 
-                if (targetParam instanceof Offset offsetParam) { // sp has changed, so offset change as well
+                if (registerTempMap.containsKey(param)) {
+                    var reg = registerTempMap.get(param);
+                    if (!registerToReserve.contains(reg)) {
+                        throw new RuntimeException(); // impossible
+                    }
+                    var savedRegisterOffset = registerToReserve.indexOf(reg) * 4 + paramByteSize;
+                    targetParam = new Offset(sp, savedRegisterOffset);
+                } else
+                    if (targetParam instanceof Offset offsetParam) { // sp has changed, so offset change as well
                     targetParam = new Offset(offsetParam.getBase(), offsetParam.getOffset() + newAllocByteSize);
                 }
 
@@ -469,6 +481,10 @@ public class Translator {
     }
 
     private TargetValue tryAllocTempRegisterForInst(Value inst) {
+        if (registerTempMap.containsKey(inst)) {
+            return registerTempMap.get(inst);
+        }
+
         var instValue = valueManager.getTargetValue(inst);
         if (instValue instanceof Offset offsetInstValue) {
             return tempRegisterPool.allocTempRegister(offsetInstValue, true);
@@ -478,6 +494,10 @@ public class Translator {
     }
 
     private TargetValue tryGetTempRegister(Value value) {
+        if (registerTempMap.containsKey(value)) {
+            return registerTempMap.get(value);
+        }
+
         var targetValue = valueManager.getTargetValue(value);
         if (targetValue instanceof Offset offsetValue) {
             return tempRegisterPool.allocTempRegister(offsetValue, false);
