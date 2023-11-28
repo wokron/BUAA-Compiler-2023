@@ -131,7 +131,10 @@ public class ValueManager {
                 if (inst instanceof AllocaInst && currArgAlloca >= 0 && currArgAlloca < 4) { // if is top 4 arguments
                     localValueMap.put(inst, Register.REGS.get("a" + currArgAlloca));
                     baseOffset += 4;
-                } else if (inst instanceof AllocaInst allocaInst && allocaInst.getDataType().getArrayDims().isEmpty() && !registers.isEmpty()) {
+                } else if (inst instanceof AllocaInst allocaInst
+                        && allocaInst.getDataType().getArrayDims().isEmpty()
+                        && !registers.isEmpty()
+                        && currArgAlloca < 0) {
                     localValueMap.put(inst, registers.pop());
                 } else if (inst instanceof AllocaInst allocaInst
                         && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
