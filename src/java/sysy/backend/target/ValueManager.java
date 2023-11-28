@@ -23,15 +23,12 @@ public class ValueManager {
 
     public int putLocals(Function func) {
         // TODO: need dataflow analysis
-        return refactorManage(func);
-//        return fastGlobalManage(func);
-//        return simpleManage(func);
-//        return fastManage(func);
+        return basicManage(func);
     }
 
-    public int refactorManage(Function func) {
+    public int basicManage(Function func) {
         var registersName = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
-        return refactorRegisterManage(func, registersName.stream().map(Register.REGS::get).toList());
+        return basicRegisterManage(func, registersName.stream().map(Register.REGS::get).toList());
     }
 
     public List<Register> getRegistersInUse() {
@@ -42,148 +39,8 @@ public class ValueManager {
         localValueMap.clear();
     }
 
-    private int simpleManage(Function func) {
-        return fastRegisterManage(func, List.of());
-    }
 
-    private int fastManage(Function func) {
-        var registersName = List.of(
-                "t0", "t1", "t2", "t3", "t4",
-                "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7"
-        );
-
-        return fastRegisterManage(func, registersName.stream().map(Register.REGS::get).toList());
-    }
-
-    private int fastGlobalManage(Function func) {
-        var registersName = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
-        return fastGlobalRegisterManage(func, registersName.stream().map(Register.REGS::get).toList());
-    }
-
-    private int fastRegisterManage(Function func, List<Register> registersToAlloc) {
-        int baseOffset = 0;
-        int currArgAlloca = func.getArguments().size()-1;
-        for (var block : func.getBasicBlocks()) {
-            Stack<Register> registers = new Stack<>();
-            registers.addAll(registersToAlloc);
-
-            for (var inst : block.getInstructions()) {
-                if ((inst instanceof StoreInst)
-                        || (inst instanceof BrInst)
-                        || (inst instanceof ReturnInst)
-                        || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
-                    continue;
-                }
-                if (!(inst instanceof AllocaInst) && !registers.isEmpty()) {
-                    localValueMap.put(inst, registers.pop());
-                } else if (inst instanceof AllocaInst && currArgAlloca >= 0 && currArgAlloca < 4) { // if is top 4 arguments
-                    localValueMap.put(inst, Register.REGS.get("a" + currArgAlloca));
-                    baseOffset += 4;
-                } else if (inst instanceof AllocaInst allocaInst
-                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
-                        && arrayIRType.getPtrNum() == 0) {
-                    baseOffset += 4 * arrayIRType.getTotalSize();
-                } else {
-                    baseOffset += 4;
-                }
-                currArgAlloca--;
-            }
-        }
-
-        int memorySize = baseOffset;
-
-        for (var block : func.getBasicBlocks()) {
-            for (var inst : block.getInstructions()) {
-                if ((inst instanceof StoreInst)
-                        || (inst instanceof BrInst)
-                        || (inst instanceof ReturnInst)
-                        || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
-                    continue;
-                }
-                if (localValueMap.containsKey(inst)) {
-                    if (inst instanceof AllocaInst) { // if is argument
-                        baseOffset -= 4;
-                    }
-                    continue;
-                } else if (inst instanceof AllocaInst allocaInst
-                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
-                        && arrayIRType.getPtrNum() == 0) {
-                    baseOffset -= 4 * arrayIRType.getTotalSize();
-                } else {
-                    baseOffset -= 4;
-                }
-                localValueMap.put(inst, new Offset(Register.REGS.get("sp"), baseOffset));
-            }
-        }
-
-        return memorySize;
-    }
-
-
-    private int fastGlobalRegisterManage(Function func, List<Register> registersToAlloc) {
-        int baseOffset = 0;
-        int currArgAlloca = func.getArguments().size()-1;
-        for (var block : func.getBasicBlocks()) {
-            Stack<Register> registers = new Stack<>();
-            registers.addAll(registersToAlloc);
-
-            for (var inst : block.getInstructions()) {
-                if ((inst instanceof StoreInst)
-                        || (inst instanceof BrInst)
-                        || (inst instanceof ReturnInst)
-                        || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
-                    continue;
-                }
-
-                if (inst instanceof AllocaInst && currArgAlloca >= 0 && currArgAlloca < 4) { // if is top 4 arguments
-                    localValueMap.put(inst, Register.REGS.get("a" + currArgAlloca));
-                    baseOffset += 4;
-                } else if (inst instanceof AllocaInst allocaInst
-                        && allocaInst.getDataType().getArrayDims().isEmpty()
-                        && !registers.isEmpty()
-                        && currArgAlloca < 0) {
-                    localValueMap.put(inst, registers.pop());
-                } else if (inst instanceof AllocaInst allocaInst
-                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
-                        && arrayIRType.getPtrNum() == 0) {
-                    baseOffset += 4 * arrayIRType.getTotalSize();
-                } else {
-                    baseOffset += 4;
-                }
-                currArgAlloca--;
-            }
-        }
-
-        int memorySize = baseOffset;
-
-        for (var block : func.getBasicBlocks()) {
-            for (var inst : block.getInstructions()) {
-                if ((inst instanceof StoreInst)
-                        || (inst instanceof BrInst)
-                        || (inst instanceof ReturnInst)
-                        || (inst instanceof CallInst callInst && callInst.getType().getType() == IRTypeEnum.VOID)) {
-                    continue;
-                }
-                if (localValueMap.containsKey(inst)) {
-//                    if (inst instanceof AllocaInst) { // if is argument
-//                        baseOffset -= 4;
-//                    }
-                    continue;
-                } else if (inst instanceof AllocaInst allocaInst
-                        && allocaInst.getDataType() instanceof ArrayIRType arrayIRType
-                        && arrayIRType.getPtrNum() == 0) {
-                    baseOffset -= 4 * arrayIRType.getTotalSize();
-                } else {
-                    baseOffset -= 4;
-                }
-                localValueMap.put(inst, new Offset(Register.REGS.get("sp"), baseOffset));
-            }
-        }
-
-        return memorySize;
-    }
-
-    private int refactorRegisterManage(Function func, List<Register> registersToAlloc) {
+    private int basicRegisterManage(Function func, List<Register> registersToAlloc) {
         int argNum = func.getArguments().size();
         List<AllocaInst> allAllocaInsts = new ArrayList<>(func.getFirstBasicBlock().getInstructions()
                 .stream()
