@@ -31,6 +31,10 @@ public class ValueManager {
 //        return fastManage(func);
     }
 
+    public List<Register> getRegistersInUse() {
+        return localValueMap.values().stream().filter(elm -> elm instanceof Register).map(elm -> (Register)elm).toList();
+    }
+
     public void clearLocals() {
         localValueMap.clear();
     }

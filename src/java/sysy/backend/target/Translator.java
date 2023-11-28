@@ -323,11 +323,18 @@ public class Translator {
     }
 
     private void translateCommonFuncCall(CallInst inst) {
-        var registerToReserve = Stream.of(
+
+
+
+        List<Register> registerToReserve = new ArrayList<>();
+        registerToReserve.addAll(Stream.of(
 //                "t0", "t1", "t2", "t3", "t4",
-                "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-                "a0", "a1", "a2", "a3", "ra"
-        ).map(Register.REGS::get).toList();
+//                "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+//                "a0", "a1", "a2", "a3",
+                "ra"
+        ).map(Register.REGS::get).toList());
+        registerToReserve.addAll(valueManager.getRegistersInUse());
+
         var func = inst.getFunc();
         var sp = Register.REGS.get("sp");
 
