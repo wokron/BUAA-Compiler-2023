@@ -28,7 +28,7 @@ public class ValueManager {
 
     public int basicManage(Function func) {
         var registersName = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
-        return manageMemory(func, registersName.stream().map(Register.REGS::get).toList(), this::basicGlobalRegisterManage);
+        return manageMemory(func, registersName.stream().map(Register.REGS::get).toList(), this::refCountGlobalRegisterManage);
     }
 
     private void basicGlobalRegisterManage(List<Register> registers, List<AllocaInst> varInsts, Function func) {
@@ -44,6 +44,32 @@ public class ValueManager {
             }
 
             localValueMap.put(varInst, registersAllocator.pop());
+        }
+    }
+
+    private void refCountGlobalRegisterManage(List<Register> registers, List<AllocaInst> varInsts, Function func) {
+        Stack<Register> registersAllocator = new Stack<>();
+        registersAllocator.addAll(registers);
+
+        var integerVarInsts = varInsts
+                .stream()
+                .filter(inst -> inst.getDataType().getArrayDims().isEmpty())
+                .toList();
+
+        Map<AllocaInst, Integer> refCounts = new HashMap<>();
+
+        for (var inst : integerVarInsts) {
+            refCounts.put(inst, inst.getUseList().size());
+        }
+
+        var varInstsOrderByRefCount = new ArrayList<>(refCounts.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList());
+        Collections.reverse(varInstsOrderByRefCount);
+
+        for (var inst : varInstsOrderByRefCount) {
+            if (registersAllocator.isEmpty()) {
+                break;
+            }
+            localValueMap.put(inst, registersAllocator.pop());
         }
     }
 
