@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 public class Translator {
     private final Target asmTarget = new Target();
     private final ValueManager valueManager = new ValueManager();
-    private final TempRegisterPool tempRegisterPool = new TempRegisterPool(
+    private TempRegisterPool tempRegisterPool = new TempRegisterPool(
             asmTarget,
             Stream.of("t0", "t1", "t2", "t3", "t4", "t5", "t6").map(Register.REGS::get).toList());
     private int memorySizeForLocal = 0;
@@ -61,6 +61,14 @@ public class Translator {
             var sp = Register.REGS.get("sp");
             asmTarget.addText(new TextInst("addiu", sp, sp, new Immediate(-memorySizeForLocal)));
         }
+
+        Set<Register> tempRegisters = new HashSet<>(
+                Stream.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+                        "t0", "t1", "t2", "t3", "t4", "t5", "t6")
+                        .map(Register.REGS::get)
+                        .toList());
+        valueManager.getRegistersInUse().forEach(tempRegisters::remove);
+        tempRegisterPool = new TempRegisterPool(asmTarget, new ArrayList<>(tempRegisters));
 
         for (var block : irFunction.getBasicBlocks()) {
             tempRegisterPool.reset();
