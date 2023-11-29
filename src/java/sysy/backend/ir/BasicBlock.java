@@ -9,10 +9,19 @@ import java.util.List;
 public class BasicBlock extends Value {
     private final List<Instruction> instructions = new ArrayList<>();
     private final Function function;
+    private int loopNum = 0;
 
     public BasicBlock(Function belongFunc) {
         super(new BasicIRType(IRTypeEnum.LABEL));
         this.function = belongFunc;
+    }
+
+    public int getLoopNum() {
+        return loopNum;
+    }
+
+    public void setLoopNum(int loopNum) {
+        this.loopNum = loopNum;
     }
 
     public Function getFunction() {

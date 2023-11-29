@@ -59,7 +59,16 @@ public class ValueManager {
         Map<AllocaInst, Integer> refCounts = new HashMap<>();
 
         for (var inst : integerVarInsts) {
-            refCounts.put(inst, inst.getUseList().size());
+            int refCount = 0;
+            for (var use  : inst.getUseList()) {
+                var loopWeight = ((Instruction)use.getUser()).getBasicBlock().getLoopNum();
+                if (loopWeight > 0) {
+                    refCount += 5 * loopWeight;
+                } else {
+                    refCount++;
+                }
+            }
+            refCounts.put(inst, refCount);
         }
 
         var varInstsOrderByRefCount = new ArrayList<>(refCounts.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList());

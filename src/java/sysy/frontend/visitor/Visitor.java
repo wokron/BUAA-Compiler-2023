@@ -306,6 +306,7 @@ public class Visitor {
         currFunction.setName(sym.ident);
         sym.targetValue = currFunction;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
 
         if (elm.params != null) {
             for (int i = currFunction.getArguments().size()-1; i >= 0; i--) { // the order of alloca for args is reversed to fit mips
@@ -428,6 +429,8 @@ public class Visitor {
         currBasicBlock.createBrInstWithCond(r2.irValue, null, null);
         rt.andBlocks.add(currBasicBlock);
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         return rt;
     }
 
@@ -441,6 +444,8 @@ public class Visitor {
         currBasicBlock.createBrInstWithCond(r.irValue, null, null);
         rt.andBlocks.add(currBasicBlock);
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         return rt;
     }
 
@@ -588,6 +593,7 @@ public class Visitor {
         currFunction.setName("main");
         sym.targetValue = currFunction;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
 
         visitBlockNode(elm.mainBlock);
 
@@ -744,9 +750,13 @@ public class Visitor {
         if (elm.type == LexType.CONTINUETK) {
             continueBrInsts.peek().add((BrInst) currBasicBlock.createBrInstWithoutCond(null));
             currBasicBlock = currFunction.createBasicBlock();
+            currBasicBlock.setLoopNum(isInLoop);
+
         } else if (elm.type == LexType.BREAKTK) {
             breakBrInsts.peek().add((BrInst) currBasicBlock.createBrInstWithoutCond(null));
             currBasicBlock = currFunction.createBasicBlock();
+            currBasicBlock.setLoopNum(isInLoop);
+
         } else {
             assert false; // impossible
         }
@@ -776,12 +786,16 @@ public class Visitor {
 
         var lastBlockInTrue = currBasicBlock;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         var falseBlock = currBasicBlock;
 
         if (elm.elseStmt != null) {
             visitStmtNode(elm.elseStmt);
             var lastBlockInFalse = currBasicBlock;
             currBasicBlock = currFunction.createBasicBlock();
+            currBasicBlock.setLoopNum(isInLoop);
+
             lastBlockInFalse.createBrInstWithoutCond(currBasicBlock);
         }
         lastBlockInTrue.createBrInstWithoutCond(currBasicBlock);
@@ -807,6 +821,8 @@ public class Visitor {
         }
 
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         forStmt1Block.createBrInstWithoutCond(currBasicBlock);
         var loopEntryBlock = currBasicBlock;
 
@@ -822,6 +838,7 @@ public class Visitor {
 
         var lastBlockInStmt = currBasicBlock;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
 
         lastBlockInStmt.createBrInstWithoutCond(currBasicBlock);
         var forStmt2Block = currBasicBlock;
@@ -832,6 +849,8 @@ public class Visitor {
         forStmt2Block.createBrInstWithoutCond(loopEntryBlock);
 
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         var loopExitBlock = currBasicBlock;
 
         for (var blockToTrue : condRt.blocksToTrue) {
