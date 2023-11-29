@@ -13,7 +13,7 @@ public class LiveVariableAnalyzer {
     private final Map<BasicBlock, Set<AllocaInst>> inSets = new HashMap<>();
     private final Map<BasicBlock, Set<AllocaInst>> outSets = new HashMap<>();
     private final List<BasicBlock> basicBlocks = new ArrayList<>();
-    private boolean updateInIterate = false;
+    private boolean updateInIterate = true;
 
     public LiveVariableAnalyzer(Function func) {
         basicBlocks.addAll(func.getBasicBlocks());
@@ -92,7 +92,8 @@ public class LiveVariableAnalyzer {
     }
 
     private void iterate() {
-        for (var block : basicBlocks) {
+        for (int i = basicBlocks.size()-1; i >= 0; i--) {
+            var block = basicBlocks.get(i);
             updateOutSet(block);
             updateInSet(block);
         }
