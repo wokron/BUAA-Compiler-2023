@@ -2,6 +2,8 @@ package sysy.backend.target;
 
 import sysy.backend.ir.*;
 import sysy.backend.ir.inst.*;
+import sysy.backend.optim.ConflictDiagramBuilder;
+import sysy.backend.optim.LiveVariableAnalyzer;
 import sysy.backend.target.value.*;
 
 import java.util.*;
@@ -22,13 +24,18 @@ public class ValueManager {
     }
 
     public int putLocals(Function func) {
-        // TODO: need dataflow analysis
-        return basicManage(func);
+//        return basicManage(func);
+        return graphColoringManage(func);
     }
 
-    public int basicManage(Function func) {
+    private int basicManage(Function func) {
         var registersName = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
         return manageMemory(func, registersName.stream().map(Register.REGS::get).toList(), this::refCountGlobalRegisterManage);
+    }
+
+    private int graphColoringManage(Function func) {
+        var registersName = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
+        return manageMemory(func, registersName.stream().map(Register.REGS::get).toList(), this::graphColoringGlobalRegisterManage);
     }
 
     private void basicGlobalRegisterManage(List<Register> registers, List<AllocaInst> varInsts, Function func) {
@@ -82,8 +89,81 @@ public class ValueManager {
         }
     }
 
+    private void graphColoringGlobalRegisterManage(List<Register> registers, List<AllocaInst> varInsts, Function func) {
+        var liveVarAnalyzer = new LiveVariableAnalyzer(func);
+        liveVarAnalyzer.analyze();
+
+        varInsts = varInsts
+                .stream()
+                .filter(inst -> inst.getDataType().getArrayDims().isEmpty())
+                .toList();
+
+        var inSets = liveVarAnalyzer.getInSets();
+        var outSets = liveVarAnalyzer.getOutSets();
+        Map<BasicBlock, Set<AllocaInst>> activeSets = new HashMap<>();
+        for (var block : func.getBasicBlocks()) {
+            var activeSet = new HashSet<AllocaInst>();
+            activeSets.put(block, activeSet);
+            activeSet.addAll(inSets.get(block));
+            activeSet.addAll(outSets.get(block));
+        }
+
+        var conflictDiagram = new ConflictDiagramBuilder(varInsts, liveVarAnalyzer.getDefSets(), activeSets).getDiagram();
+
+        var diagramForColor = conflictDiagram.copy();
+
+        int degreeThreshold = registers.size();
+
+        Stack<AllocaInst> nodesToColor = new Stack<>();
+
+        while (!diagramForColor.isEmpty()) {
+            AllocaInst candidate = null;
+            for (var node : diagramForColor.getNodes()) {
+                if (diagramForColor.getConflict(node).size() >= degreeThreshold) {
+                    continue;
+                }
+                candidate = node;
+                break;
+            }
+
+            if (candidate == null) {
+                int maxDegree = degreeThreshold - 1;
+                for (var node : diagramForColor.getNodes()) {
+                    int degree = diagramForColor.getConflict(node).size();
+                    if (diagramForColor.getConflict(node).size() <= maxDegree) {
+                        continue;
+                    }
+                    maxDegree = degree;
+                    candidate = node;
+                    break;
+                }
+            } else {
+                nodesToColor.push(candidate);
+            }
+            diagramForColor.removeNode(candidate);
+        }
+
+        while (!nodesToColor.isEmpty()) {
+            var node = nodesToColor.pop();
+            Set<Register> preservedRegs = new HashSet<>();
+            for (var conflictNode : conflictDiagram.getConflict(node)) {
+                if (localValueMap.containsKey(conflictNode) && localValueMap.get(conflictNode) instanceof Register registerInUse) {
+                    preservedRegs.add(registerInUse);
+                }
+            }
+
+            for (var reg : registers) {
+                if (preservedRegs.contains(reg)) {
+                    continue;
+                }
+                localValueMap.put(node, reg);
+                break;
+            }
+        }
+    }
+
     public List<Register> getRegistersInUse() {
-        return localValueMap.values().stream().filter(elm -> elm instanceof Register).map(elm -> (Register)elm).toList();
+        return localValueMap.values().stream().filter(elm -> elm instanceof Register).map(elm -> (Register)elm).distinct().toList();
     }
 
     public void clearLocals() {

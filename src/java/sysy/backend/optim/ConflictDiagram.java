@@ -19,7 +19,7 @@ public class ConflictDiagram {
     }
 
     public void removeNode(AllocaInst node) {
-        conflict.get(node).clear();
+        conflict.remove(node);
         for (var otherNode : conflict.keySet()) {
             conflict.get(otherNode).remove(node);
         }
@@ -32,5 +32,17 @@ public class ConflictDiagram {
             newDiagram.conflict.put(node, newSet);
         }
         return newDiagram;
+    }
+
+    public boolean isEmpty() {
+        return conflict.isEmpty();
+    }
+
+    public Set<AllocaInst> getConflict(AllocaInst a) {
+        return conflict.get(a);
+    }
+
+    public Set<AllocaInst> getNodes() {
+        return conflict.keySet();
     }
 }
