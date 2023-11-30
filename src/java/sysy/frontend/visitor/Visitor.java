@@ -571,7 +571,12 @@ public class Visitor {
                 rt.irValue = arrayPtr;
                 rt.lvalLoadNotNeed = dims.size() != irVisitDims.size();
             } else {
-                rt.irValue = varSym.targetValue;
+                if (varSym.isConst) {
+                    rt.irValue = new ImmediateValue(varSym.values.get(0));
+                    rt.lvalLoadNotNeed = true;
+                } else {
+                    rt.irValue = varSym.targetValue;
+                }
             }
         }
 
