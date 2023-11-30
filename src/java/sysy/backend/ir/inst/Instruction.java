@@ -22,19 +22,23 @@ public abstract class Instruction extends User {
         this.basicBlock = basicBlock;
     }
 
-    public void replaceAllUseWith(Instruction newInst, boolean needInsert) {
+    public void replaceAllUseWith(Value newValue, boolean needInsert) {
         var idx = basicBlock.getInstructions().indexOf(this);
         if (idx < 0) {
             throw new RuntimeException(); // impossible
         }
         if (needInsert) {
-            basicBlock.getInstructions().set(idx, newInst);
+            if (newValue instanceof Instruction newInst) {
+                basicBlock.getInstructions().set(idx, newInst);
+            } else {
+                throw new RuntimeException();
+            }
         } else {
             basicBlock.getInstructions().remove(idx);
         }
 
         for (var use : getUseList()) {
-            use.getUser().replaceOperand(use.getPos(), newInst);
+            use.getUser().replaceOperand(use.getPos(), newValue);
         }
     }
 
