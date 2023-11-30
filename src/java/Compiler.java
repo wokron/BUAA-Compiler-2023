@@ -1,3 +1,5 @@
+import sysy.backend.optim.ConstFoldPass;
+import sysy.backend.optim.ConstPropagatePass;
 import sysy.backend.optim.LVNPass;
 import sysy.backend.target.Translator;
 import sysy.error.ErrorRecorder;
@@ -20,7 +22,7 @@ public class Compiler {
 //        task4LLVM();
 //        task4LLVMWithOptim();
 //        task4MIPS(false);
-        task4MIPSWithOptim(true);
+        task4MIPSWithOptim(false);
 //        runCompleteCompilerLLVM();
 //        runCompleteCompilerMIPS();
     }
@@ -109,8 +111,11 @@ public class Compiler {
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
 
-            var optim1 = new LVNPass(module);
-            module = optim1.pass();
+            for (int i = 0; i < 3; i ++) {
+                module = new ConstPropagatePass(module).pass();
+                module = new ConstFoldPass(module).pass();
+            }
+            module = new LVNPass(module).pass();
 
             out.print("""
                     declare i32 @getint()
@@ -151,8 +156,11 @@ public class Compiler {
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
 
-            var optim1 = new LVNPass(module);
-            module = optim1.pass();
+            for (int i = 0; i < 3; i ++) {
+                module = new ConstPropagatePass(module).pass();
+                module = new ConstFoldPass(module).pass();
+            }
+            module = new LVNPass(module).pass();
 
             var translator = new Translator();
             translator.translate(module);
