@@ -6,9 +6,14 @@ import sysy.backend.ir.inst.BinaryInst;
 
 public class ConstFoldPass {
     private final Module irModule;
+    private boolean improve = false;
 
     public ConstFoldPass(Module irModule) {
         this.irModule = irModule;
+    }
+
+    public boolean isImprove() {
+        return improve;
     }
 
     public Module pass() {
@@ -33,6 +38,7 @@ public class ConstFoldPass {
                 Value valueToReplace = getValueToReplace(binaryInst);
                 if (valueToReplace != null) {
                     inst.replaceAllUseWith(valueToReplace, false);
+                    improve = true;
                     i--;
                 }
             }

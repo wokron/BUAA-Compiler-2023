@@ -10,9 +10,14 @@ import java.util.Map;
 public class ConstPropagatePass {
     private final Module irModule;
     private final Map<Value, ImmediateValue> immediateMap = new HashMap<>();
+    private boolean improve = false;
 
     public ConstPropagatePass(Module irModule) {
         this.irModule = irModule;
+    }
+
+    public boolean isImprove() {
+        return improve;
     }
 
     public Module pass() {
@@ -45,6 +50,7 @@ public class ConstPropagatePass {
             } else if (inst instanceof LoadInst loadInst) {
                 if (immediateMap.containsKey(loadInst.getPtr())) {
                     inst.replaceAllUseWith(immediateMap.get(loadInst.getPtr()), false);
+                    improve = true;
                     i--;
                 }
             }

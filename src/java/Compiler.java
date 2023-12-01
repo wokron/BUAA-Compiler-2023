@@ -109,9 +109,15 @@ public class Compiler {
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
 
-            for (int i = 0; i < 3; i ++) {
-                module = new ConstPropagatePass(module).pass();
-                module = new ConstFoldPass(module).pass();
+            while (true) {
+                var pass1 = new ConstPropagatePass(module);
+                module = pass1.pass();
+                var pass2 = new ConstFoldPass(module);
+                module = pass2.pass();
+
+                if (!pass1.isImprove() && !pass2.isImprove()) {
+                    break;
+                }
             }
             module = new LVNPass(module).pass();
             module = new DeadStoreEliminationPass(module).pass();
@@ -156,9 +162,15 @@ public class Compiler {
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
 
-            for (int i = 0; i < 3; i ++) {
-                module = new ConstPropagatePass(module).pass();
-                module = new ConstFoldPass(module).pass();
+            while (true) {
+                var pass1 = new ConstPropagatePass(module);
+                module = pass1.pass();
+                var pass2 = new ConstFoldPass(module);
+                module = pass2.pass();
+
+                if (!pass1.isImprove() && !pass2.isImprove()) {
+                    break;
+                }
             }
             module = new LVNPass(module).pass();
             module = new DeadStoreEliminationPass(module).pass();
