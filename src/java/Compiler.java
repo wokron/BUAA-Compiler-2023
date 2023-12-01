@@ -1,7 +1,4 @@
-import sysy.backend.optim.ConstFoldPass;
-import sysy.backend.optim.ConstPropagatePass;
-import sysy.backend.optim.DeadStoreEliminationPass;
-import sysy.backend.optim.LVNPass;
+import sysy.backend.optim.*;
 import sysy.backend.target.Translator;
 import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
@@ -118,6 +115,7 @@ public class Compiler {
             }
             module = new LVNPass(module).pass();
             module = new DeadStoreEliminationPass(module).pass();
+            module = new DeadCodeEliminationPass(module).pass();
 
             out.print("""
                     declare i32 @getint()
@@ -164,6 +162,7 @@ public class Compiler {
             }
             module = new LVNPass(module).pass();
             module = new DeadStoreEliminationPass(module).pass();
+            module = new DeadCodeEliminationPass(module).pass();
 
             var translator = new Translator();
             translator.translate(module);
