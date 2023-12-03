@@ -32,8 +32,10 @@ public class Target {
         out.println();
 
         out.print(".text\n");
-        out.print("\tjal main\n");
-        out.print("\tj end.end\n");
+        out.print("\tla $ra end.end\n");
+        out.print("\tj main\n");
+
+        int count = 0;
         for (var text : textList) {
             if (text instanceof TextComment && !debugMode) {
                 continue;
