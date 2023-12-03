@@ -370,9 +370,14 @@ public class Translator {
                     }
                     var savedRegisterOffset = registerToReserve.indexOf(reg) * 4 + paramByteSize;
                     targetParam = new Offset(sp, savedRegisterOffset);
-                } else
+                } else {
                     if (targetParam instanceof Offset offsetParam) { // sp has changed, so offset change as well
-                    targetParam = new Offset(offsetParam.getBase(), offsetParam.getOffset() + newAllocByteSize);
+                        if (tempRegisterPool.getRegister(offsetParam) != null) {
+                            targetParam = tempRegisterPool.getRegister(offsetParam);
+                        } else {
+                            targetParam = new Offset(offsetParam.getBase(), offsetParam.getOffset() + newAllocByteSize);
+                        }
+                    }
                 }
 
                 if (paramCount < 4) {
@@ -387,6 +392,8 @@ public class Translator {
                 }
             }
         }
+
+        tempRegisterPool.reset();
 
         asmTarget.addText(new TextInst("jal", new Label(func.getName().substring(1))));
 

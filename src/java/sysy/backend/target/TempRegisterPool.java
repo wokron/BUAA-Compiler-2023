@@ -57,7 +57,6 @@ public class TempRegisterPool {
             var addr = registerAddrMap.get(reg);
             target.addText(new TextInst("sw", reg, addr));
         }
-        reset();
     }
 
     public void reset() {
