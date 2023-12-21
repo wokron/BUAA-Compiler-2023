@@ -10,7 +10,7 @@ public class StoreInst extends Instruction {
     Value ptr;
 
     public StoreInst(Value value, Value ptr) {
-        super(IRType.getVoid());
+        super(IRType.getVoid(), value, ptr);
         this.value = value;
         this.ptr = ptr;
     }
@@ -26,5 +26,18 @@ public class StoreInst extends Instruction {
     @Override
     public void dump(PrintStream out) {
         out.printf("  store %s, %s\n", value.toString(), ptr.toString());
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        switch (pos) {
+            case 0:
+                value = newOperand;
+                break;
+            case 1:
+                ptr = newOperand;
+                break;
+        }
     }
 }

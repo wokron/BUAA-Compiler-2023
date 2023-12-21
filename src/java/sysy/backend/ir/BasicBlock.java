@@ -9,51 +9,129 @@ import java.util.List;
 public class BasicBlock extends Value {
     private final List<Instruction> instructions = new ArrayList<>();
     private final Function function;
+    private int loopNum = 0;
 
     public BasicBlock(Function belongFunc) {
         super(new BasicIRType(IRTypeEnum.LABEL));
         this.function = belongFunc;
     }
 
+    public int getLoopNum() {
+        return loopNum;
+    }
+
+    public void setLoopNum(int loopNum) {
+        this.loopNum = loopNum;
+    }
+
     public Function getFunction() {
         return function;
     }
 
+    public BasicBlock getNextBasicBlock() {
+        var blocks = function.getBasicBlocks();
+        var idx = blocks.indexOf(this);
+        if (idx == -1 || idx == blocks.size()-1) {
+            return null;
+        } else {
+            return blocks.get(idx+1);
+        }
+    }
+
     private Value insertInstruction(Instruction inst) {
         instructions.add(inst);
+        inst.setBasicBlock(this);
         return inst;
     }
 
+    private Integer tryGetImmediateValue(Value value) {
+        if (value instanceof ImmediateValue ivalue) {
+            return ivalue.getValue();
+        } else {
+            return null;
+        }
+    }
+
     public Value createAddInst(Value left, Value right) {
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft + iright);
+        }
+        if (ileft != null && ileft == 0) { // 0 + a = a
+            return right;
+        }
+        if (iright != null && iright == 0) { // a + 0 = a
+            return left;
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.ADD, left, right));
     }
 
     public Value createSubInst(Value left, Value right) {
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft - iright);
+        }
+        if (iright != null && iright == 0) { // a - 0 = a
+            return left;
+        }
+        if (left == right) { // a - a = 0
+            return new ImmediateValue(0);
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.SUB, left, right));
     }
 
     public Value createMulInst(Value left, Value right) {
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft * iright);
+        }
+        if (ileft != null && ileft == 0) { // 0 * a = 0
+            return new ImmediateValue(0);
+        }
+        if (iright != null && iright == 0) { // a * 0 = 0
+            return new ImmediateValue(0);
+        }
+        if (ileft != null && ileft == 1) { // 1 * a = a
+            return right;
+        }
+        if (iright != null && iright == 1) { // a * 1 = a
+            return left;
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.MUL, left, right));
     }
 
     public Value createSDivInst(Value left, Value right) {
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft / iright);
+        }
+        if (iright != null && iright == 1) { // a / 1 = a
+            return left;
+        }
+        if (ileft != null && ileft == 0) { // 0 / a = 0
+            return new ImmediateValue(0);
+        }
+        if (left == right) { // a / a = 1
+            return new ImmediateValue(1);
+        }
+
         return insertInstruction(new BinaryInst(BinaryInstOp.SDIV, left, right));
     }
 
-    public Value createAndInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.AND, left, right));
-    }
-
-    public Value createOrInst(Value left, Value right) {
-        return insertInstruction(new BinaryInst(BinaryInstOp.OR, left, right));
-    }
-
     public Value createSRemInst(Value left, Value right) {
+        Integer ileft = tryGetImmediateValue(left), iright = tryGetImmediateValue(right);
+        if (ileft != null && iright != null) {
+            return new ImmediateValue(ileft % iright);
+        }
         return insertInstruction(new BinaryInst(BinaryInstOp.SREM, left, right));
     }
 
     public Value createReturnInst(Value value) {
-        return insertInstruction(new ReturnInst(value));
+        var inst = value == null ? new ReturnInst() : new ReturnInst(value);
+        return insertInstruction(inst);
     }
 
     public Value createLoadInst(Value ptr) {
@@ -77,6 +155,7 @@ public class BasicBlock extends Value {
         int insertPos;
         for (insertPos = 0; insertPos < instructions.size() && instructions.get(insertPos) instanceof AllocaInst; insertPos++);
         instructions.add(insertPos, allocaInst);
+        allocaInst.setBasicBlock(this);
         return allocaInst;
     }
 

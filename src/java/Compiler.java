@@ -1,3 +1,5 @@
+import sysy.backend.ir.Module;
+import sysy.backend.optim.*;
 import sysy.backend.target.Translator;
 import sysy.error.ErrorRecorder;
 import sysy.exception.LexerException;
@@ -16,10 +18,10 @@ public class Compiler {
 //        task1();
 //        task2();
 //        task3();
-//        task4LLVM();
-        task4MIPS();
+//        task4LLVM(false);
+//        task4MIPS(false, true);
 //        runCompleteCompilerLLVM();
-//        runCompleteCompilerMIPS();
+        runCompleteCompilerMIPS();
     }
 
     private static void task1() throws IOException, LexerException {
@@ -73,7 +75,7 @@ public class Compiler {
         }
     }
 
-    private static void task4LLVM() throws IOException, LexerException, ParserException {
+    private static void task4LLVM(boolean optimize) throws IOException, LexerException, ParserException {
         try (var testFile = new FileInputStream("testfile.txt");
              var outputFile = new FileOutputStream("llvm_ir.txt")) {
             var out = new PrintStream(outputFile);
@@ -83,6 +85,10 @@ public class Compiler {
 
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
+
+            if (optimize) {
+                module = optimize(module);
+            }
 
             out.print("""
                     declare i32 @getint()
@@ -95,7 +101,25 @@ public class Compiler {
         }
     }
 
-    private static void task4MIPS() throws IOException, LexerException, ParserException {
+    private static Module optimize(Module module) {
+        while (true) {
+            var pass1 = new ConstPropagatePass(module);
+            module = pass1.pass();
+            var pass2 = new ConstFoldPass(module);
+            module = pass2.pass();
+
+            if (!pass1.isImprove() && !pass2.isImprove()) {
+                break;
+            }
+        }
+        module = new LVNPass(module).pass();
+        module = new DeadStoreEliminationPass(module).pass();
+        module = new DeadCodeEliminationPass(module).pass();
+
+        return module;
+    }
+
+    private static void task4MIPS(boolean debugMode, boolean optimize) throws IOException, LexerException, ParserException {
         try (var testFile = new FileInputStream("testfile.txt");
              var outputFile = new FileOutputStream("mips.txt")) {
             var out = new PrintStream(outputFile);
@@ -106,9 +130,13 @@ public class Compiler {
             var visitor = new Visitor(recorder);
             var module = visitor.generateIR(result);
 
+            if (optimize) {
+                module = optimize(module);
+            }
+
             var translator = new Translator();
             translator.translate(module);
-            translator.getAsmTarget().dump(out);
+            translator.getAsmTarget().dump(out, debugMode);
         }
     }
 
@@ -166,7 +194,7 @@ public class Compiler {
 
             var translator = new Translator();
             translator.translate(module);
-            translator.getAsmTarget().dump(out);
+            translator.getAsmTarget().dump(out, false);
         }
     }
 }

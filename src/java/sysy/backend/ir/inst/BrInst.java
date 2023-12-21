@@ -7,13 +7,13 @@ import sysy.backend.ir.Value;
 import java.io.PrintStream;
 
 public class BrInst extends Instruction {
-    private final Value cond;
+    private Value cond;
     private BasicBlock trueBranch;
     private BasicBlock falseBranch;
     private BasicBlock dest;
 
     public BrInst(Value cond, BasicBlock ifTrue, BasicBlock ifFalse) {
-        super(IRType.getVoid());
+        super(IRType.getVoid(), cond); // TODO: basic block is used as well
         this.cond = cond;
         this.trueBranch = ifTrue;
         this.falseBranch = ifFalse;
@@ -21,7 +21,7 @@ public class BrInst extends Instruction {
     }
 
     public BrInst(BasicBlock dest) {
-        super(IRType.getVoid());
+        super(IRType.getVoid()); // TODO: basic block is used as well
         this.dest = dest;
         this.cond = null;
         this.trueBranch = null;
@@ -65,6 +65,14 @@ public class BrInst extends Instruction {
                     falseBranch.toString());
         } else {
             out.printf("  br %s\n", dest.toString());
+        }
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        if (pos == 0) {
+            cond = newOperand;
         }
     }
 }

@@ -23,7 +23,7 @@ public class Target {
         textList.add(entry);
     }
 
-    public void dump(PrintStream out) {
+    public void dump(PrintStream out, boolean debugMode) {
         out.print(".data\n");
         for (var data: dataList) {
             out.print(data);
@@ -32,9 +32,14 @@ public class Target {
         out.println();
 
         out.print(".text\n");
-        out.print("\tjal main\n");
-        out.print("\tj end.end\n");
+        out.print("\tla $ra end.end\n");
+        out.print("\tj main\n");
+
+        int count = 0;
         for (var text : textList) {
+            if (text instanceof TextComment && !debugMode) {
+                continue;
+            }
             if (text instanceof TextInst || text instanceof TextComment)
                 out.print("\t");
             out.print(text);
@@ -53,6 +58,6 @@ public class Target {
         target.addText(new TextInst("erjfe", new Register("t0")));
         target.addText(new TextLabel("label1"));
 
-        target.dump(System.out);
+        target.dump(System.out, true);
     }
 }

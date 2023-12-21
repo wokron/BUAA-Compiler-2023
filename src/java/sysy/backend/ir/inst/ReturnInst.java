@@ -6,11 +6,16 @@ import sysy.backend.ir.Value;
 import java.io.PrintStream;
 
 public class ReturnInst extends Instruction {
-    private final Value value;
+    private Value value;
 
     public ReturnInst(Value value) {
-        super(value == null ? IRType.getVoid() : value.getType());
+        super(value.getType(), value);
         this.value = value;
+    }
+
+    public ReturnInst() {
+        super(IRType.getVoid());
+        this.value = null;
     }
 
     public Value getValue() {
@@ -26,5 +31,14 @@ public class ReturnInst extends Instruction {
             out.printf("%s", value);
         }
         out.print("\n");
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        if (pos == 0) {
+            assert value != null;
+            value = newOperand;
+        }
     }
 }

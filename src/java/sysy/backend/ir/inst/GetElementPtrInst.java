@@ -10,13 +10,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GetElementPtrInst extends Instruction {
-    private final Value elementBase;
+    private Value elementBase;
     private final List<Value> offsets = new ArrayList<>();
 
     public GetElementPtrInst(Value elementBase, List<Value> offsets) {
-        super(getGEPInstType(elementBase.getType(), offsets.size()));
+        super(getGEPInstType(elementBase.getType(), offsets.size()),
+                buildOperands(elementBase, offsets).toArray(new Value[0]));
+
         this.elementBase = elementBase;
         this.offsets.addAll(offsets);
+    }
+
+    private static List<Value> buildOperands(Value elementBase, List<Value> offsets) {
+        List<Value> rt = new ArrayList<>();
+        rt.add(elementBase);
+        rt.addAll(offsets);
+        return rt;
     }
 
     private static IRType getGEPInstType(IRType elementBaseType, int offsetCount) {
@@ -54,5 +63,15 @@ public class GetElementPtrInst extends Instruction {
             out.printf(", %s", offset.toString());
         }
         out.print("\n");
+    }
+
+    @Override
+    public void replaceOperand(int pos, Value newOperand) {
+        super.replaceOperand(pos, newOperand);
+        if (pos == 0) {
+            elementBase = newOperand;
+        } else {
+            offsets.set(pos-1, newOperand);
+        }
     }
 }

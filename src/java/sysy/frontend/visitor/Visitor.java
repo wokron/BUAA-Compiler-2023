@@ -306,6 +306,7 @@ public class Visitor {
         currFunction.setName(sym.ident);
         sym.targetValue = currFunction;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
 
         if (elm.params != null) {
             for (int i = currFunction.getArguments().size()-1; i >= 0; i--) { // the order of alloca for args is reversed to fit mips
@@ -428,6 +429,8 @@ public class Visitor {
         currBasicBlock.createBrInstWithCond(r2.irValue, null, null);
         rt.andBlocks.add(currBasicBlock);
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         return rt;
     }
 
@@ -441,6 +444,8 @@ public class Visitor {
         currBasicBlock.createBrInstWithCond(r.irValue, null, null);
         rt.andBlocks.add(currBasicBlock);
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         return rt;
     }
 
@@ -522,17 +527,25 @@ public class Visitor {
         type.dims.addAll(typeDims);
 
         rt.expType = type;
-        if (isGlobalVar && varSym.isConst) {
+        if (varSym.isConst) {
             if (!varSym.isArray()) {
                 rt.constVal = varSym.values.get(0);
             } else {
                 int accessIdx = 0;
                 int stride = 1;
+                boolean validConst = true;
                 for (int i = accessDims.size() - 1, j = varSym.varType.dims.size()-1; i >= 0; i--, j--) {
-                    accessIdx += accessDims.get(i) * stride;
+                    var accessDim = accessDims.get(i);
+                    if (accessDim == null) {
+                        validConst = false;
+                        break;
+                    }
+                    accessIdx += accessDim * stride;
                     stride *= varSym.varType.dims.get(j);
                 }
-                rt.constVal = varSym.values.get(accessIdx);
+                if (validConst) {
+                    rt.constVal = varSym.values.get(accessIdx);
+                }
             }
         }
 
@@ -558,7 +571,12 @@ public class Visitor {
                 rt.irValue = arrayPtr;
                 rt.lvalLoadNotNeed = dims.size() != irVisitDims.size();
             } else {
-                rt.irValue = varSym.targetValue;
+                if (varSym.isConst) {
+                    rt.irValue = new ImmediateValue(varSym.values.get(0));
+                    rt.lvalLoadNotNeed = true;
+                } else {
+                    rt.irValue = varSym.targetValue;
+                }
             }
         }
 
@@ -580,6 +598,7 @@ public class Visitor {
         currFunction.setName("main");
         sym.targetValue = currFunction;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
 
         visitBlockNode(elm.mainBlock);
 
@@ -736,9 +755,13 @@ public class Visitor {
         if (elm.type == LexType.CONTINUETK) {
             continueBrInsts.peek().add((BrInst) currBasicBlock.createBrInstWithoutCond(null));
             currBasicBlock = currFunction.createBasicBlock();
+            currBasicBlock.setLoopNum(isInLoop);
+
         } else if (elm.type == LexType.BREAKTK) {
             breakBrInsts.peek().add((BrInst) currBasicBlock.createBrInstWithoutCond(null));
             currBasicBlock = currFunction.createBasicBlock();
+            currBasicBlock.setLoopNum(isInLoop);
+
         } else {
             assert false; // impossible
         }
@@ -768,12 +791,16 @@ public class Visitor {
 
         var lastBlockInTrue = currBasicBlock;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         var falseBlock = currBasicBlock;
 
         if (elm.elseStmt != null) {
             visitStmtNode(elm.elseStmt);
             var lastBlockInFalse = currBasicBlock;
             currBasicBlock = currFunction.createBasicBlock();
+            currBasicBlock.setLoopNum(isInLoop);
+
             lastBlockInFalse.createBrInstWithoutCond(currBasicBlock);
         }
         lastBlockInTrue.createBrInstWithoutCond(currBasicBlock);
@@ -799,6 +826,8 @@ public class Visitor {
         }
 
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         forStmt1Block.createBrInstWithoutCond(currBasicBlock);
         var loopEntryBlock = currBasicBlock;
 
@@ -814,6 +843,7 @@ public class Visitor {
 
         var lastBlockInStmt = currBasicBlock;
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
 
         lastBlockInStmt.createBrInstWithoutCond(currBasicBlock);
         var forStmt2Block = currBasicBlock;
@@ -824,6 +854,8 @@ public class Visitor {
         forStmt2Block.createBrInstWithoutCond(loopEntryBlock);
 
         currBasicBlock = currFunction.createBasicBlock();
+        currBasicBlock.setLoopNum(isInLoop);
+
         var loopExitBlock = currBasicBlock;
 
         for (var blockToTrue : condRt.blocksToTrue) {
