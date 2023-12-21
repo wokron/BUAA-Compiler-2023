@@ -11,7 +11,9 @@ public abstract class User extends Value {
 
         int pos = 0;
         for (var op : operands) {
-            op.addUse(this, pos);
+            if (op != null) {
+                op.addUse(this, pos);
+            }
             this.operands.add(op);
             pos++;
         }

@@ -18,10 +18,10 @@ public class Compiler {
 //        task1();
 //        task2();
 //        task3();
-        task4LLVM(false);
-        task4MIPS(false, false);
+//        task4LLVM(false);
+//        task4MIPS(false, true);
 //        runCompleteCompilerLLVM();
-//        runCompleteCompilerMIPS();
+        runCompleteCompilerMIPS();
     }
 
     private static void task1() throws IOException, LexerException {
