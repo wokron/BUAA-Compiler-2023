@@ -6,3 +6,6 @@
 ---
 - **pack.sh**：将源程序打包，方便提交
 - **run_llvm_ir.sh**：解释执行 LLVM 文件。例：`bash run_llvm_ir.sh llvm_ir.ll`
+
+---
+**2024.09.02**：这个项目写得不好，如果希望参考的话可以考虑本人参与编译大赛时所写的编译器：[sysyc](https://github.com/wokron/sysyc)。
